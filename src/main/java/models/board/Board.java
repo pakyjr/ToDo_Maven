@@ -84,7 +84,7 @@ public class Board {
 
     public void deleteTodo(ToDo todo){
         //1) Handle users
-        //2) Handle position
+        //2) TODO Handle position
         int position = todo.getPosition();
         ToDo T = todoList.get(position-1);
         todoList.remove(position-1);

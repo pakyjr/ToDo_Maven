@@ -50,6 +50,25 @@ public class User {
     }
 
     public Board getBoard(BoardName boardName) {
+        if(!boardList.containsKey(boardName.toString())) {
+            System.out.println("Board does not exist");
+            return null;
+        }
         return boardList.get(boardName.toString());
+    }
+
+
+    //TODO TO TEST!
+    public void changeBoard(BoardName oldBoardName, BoardName newBoardName, int position){
+                    
+        Board oldBoard = getBoard(oldBoardName);
+        Board newBoard = getBoard(newBoardName);
+
+        ArrayList<ToDo> oldTodoList = oldBoard.getTodoList();
+        ToDo todo = oldTodoList.get(position - 1);
+        oldBoard.deleteTodo(todo);
+
+        ArrayList<ToDo> newTodoList = newBoard.getTodoList();
+        newTodoList.add(todo); //TODO va aggioranta la posizione nella lista nuova.
     }
 }

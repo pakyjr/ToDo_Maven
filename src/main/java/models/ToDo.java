@@ -42,7 +42,6 @@ public class ToDo {
         this.dueDate = dueDate;
     } //TODO testare implementazione e capire come passare la data.
 
-
     public String getUrl() {
         return url;
     }
@@ -122,5 +121,9 @@ public class ToDo {
 
     public void toggle(){
         this.done = !done;
+    }
+
+    public void changeBoard(){
+
     }
 }
