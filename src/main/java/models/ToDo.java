@@ -25,6 +25,7 @@ public class ToDo {
         this.activityList = new HashMap<>();
     }
 
+    //REGION SET & GET
     public int getPosition() {
         return position;
     }
@@ -80,6 +81,7 @@ public class ToDo {
     public void setColor(String color) {
         this.color = color;
     }
+    //END REGION
 
     public void addActivity(String title){
         this.activityList.put(title, false);

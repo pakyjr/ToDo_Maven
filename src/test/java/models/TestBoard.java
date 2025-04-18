@@ -5,6 +5,7 @@ import models.board.Board;
 import models.board.BoardName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,5 +50,32 @@ public class TestBoard {
         board.deleteTodo(todo1);
 
         assertEquals(2, todo2.getPosition()); // note: this may need manual position fix if not updated
+    }
+
+    @Test
+    void testChangePosition(){
+        Board board = new Board(BoardName.WORK, "user1");
+
+        ToDo todo1 = new ToDo("Task 1");
+        ToDo todo2 = new ToDo("Task 2");
+        ToDo todo3 = new ToDo("Task 3");
+        ToDo todo4 = new ToDo("Task 4");
+
+        board.addTodo(todo1);
+        board.addTodo(todo2);
+        board.addTodo(todo3);
+        board.addTodo(todo4);
+
+        board.changePosition(todo3, 1);
+
+        assertEquals(1, todo3.getPosition());
+        assertEquals(2, todo1.getPosition());
+
+        ArrayList<ToDo> list = board.getTodoList();
+        //TODO put assertions. 
+        for(ToDo item : list){
+            System.out.println(item.getTitle());
+            System.out.println(item.getPosition());
+        }
     }
 }

@@ -28,6 +28,10 @@ public class Board {
         todoList = new ArrayList<>();
     }
 
+    public ArrayList<ToDo> getTodoList() {
+        return todoList;
+    }
+
     public Set<String> getAllowedUsers() {
         return users;
     }
@@ -36,11 +40,28 @@ public class Board {
         this.users.add(user_id);
     }
 
-    public void addTodo(ToDo todo){
+    public void changePosition(ToDo todo, int newPosition){
+        int oldPosition = todo.getPosition();
+        todo.setPosition(newPosition);
+
+        int i = 0;
+        for(ToDo item : todoList){
+            if(i >= newPosition - 1 && i < oldPosition - 1){
+                item.setPosition(item.getPosition() + 1);
+            }
+            i++;
+        }
+
+        todoList.sort(Comparator.comparingInt(ToDo::getPosition));
+    }
+
+    public ToDo addTodo(ToDo todo){
         todoList.add(todo);
 
         int listSize = todoList.size();
         todo.setPosition(listSize);
+
+        return todo;
     }
 
     public void deleteTodo(ToDo todo){
@@ -50,7 +71,4 @@ public class Board {
         ToDo T = todoList.get(position-1);
         todoList.remove(position-1);
     }
-
-
-
 }
