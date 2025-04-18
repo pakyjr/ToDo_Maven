@@ -92,6 +92,9 @@ public class ToDo {
     }
 
     public void setActivityTrue(String title){
+        if(!checkValidActivity(title)){
+            return;
+        }
         this.activityList.put(title, true);
         if(activityList.values().stream().allMatch(status -> status)){
             this.done = true;
@@ -99,7 +102,22 @@ public class ToDo {
     }
 
     public void setActivityFalse(String title){
+        if(!checkValidActivity(title)){
+            return;
+        }
         this.activityList.put(title, false);
         this.done = false;
+    }
+
+    private boolean checkValidActivity(String title){
+        if(!activityList.containsKey(title)){
+            System.out.println("Invalid activity: " + title);
+            return false;
+        }
+        return true;
+    }
+
+    public void toggle(){
+        this.done = !done;
     }
 }
