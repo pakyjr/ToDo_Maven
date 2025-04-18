@@ -2,6 +2,7 @@ package models;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 //TODO handle date
 
@@ -13,13 +14,15 @@ public class ToDo {
     private String title;
     private String description;
     private String owner;
-    private List<String> users;
+    private ArrayList<String> users;
     private String color = "white";
     private boolean done = false;
+    private HashMap<String, Boolean> activityList;
 
     public ToDo(String title) {
         this.title = title;
         this.users = new ArrayList<>();
+        this.activityList = new HashMap<>();
     }
 
     public int getPosition() {
@@ -76,5 +79,27 @@ public class ToDo {
 
     public void setColor(String color) {
         this.color = color;
+    }
+
+    public void addActivity(String title){
+        this.activityList.put(title, false);
+        System.out.printf("Added activity: %s\n", title);
+    }
+
+    public void deleteActivity(String title){
+        this.activityList.remove(title);
+        System.out.printf("Deleted activity: %s\n", title);
+    }
+
+    public void setActivityTrue(String title){
+        this.activityList.put(title, true);
+        if(activityList.values().stream().allMatch(status -> status)){
+            this.done = true;
+        }
+    }
+
+    public void setActivityFalse(String title){
+        this.activityList.put(title, false);
+        this.done = false;
     }
 }
