@@ -1,30 +1,33 @@
 package models.board;
 
 import models.ToDo;
+import models.User;
 
 import java.util.*;
 
 public class Board {
     private BoardName name;
     private String description;
-    private String owner_id;
+    private String owner;
     private Set<String> users;
     private ArrayList<ToDo> todoList;
 
 
-    public Board(BoardName name, String owner_id){
+    public Board(BoardName name, String owner){
         this.name = name;
-        this.owner_id = owner_id;
+        this.owner = owner;
         todoList = new ArrayList<>();
+        this.users = new HashSet<>();
+        this.users.add(owner);
     }
 
-    public Board(BoardName name, String owner_id, String description){
+    public Board(BoardName name, String owner, String description){
         this.name = name;
         this.description = description;
-        this.owner_id = owner_id;
+        this.owner = owner;
         this.users = new HashSet<>();
 
-        this.users.add(owner_id);
+        this.users.add(owner);
         todoList = new ArrayList<>();
     }
 
@@ -36,8 +39,22 @@ public class Board {
         return users;
     }
 
-    public void addUser(String user_id){
-        this.users.add(user_id);
+    private void addUser(User guest) {
+        if (users.contains(guest.getUsername())) {
+            return;
+        }
+
+        this.users.add(guest.getUsername());
+
+        if (!guest.getBoardList().containsKey(name.toString())) {
+            guest.addBoard(name, this.owner);
+        }
+    }
+
+    public void shareTodo(User guest, ToDo todo) {
+        addUser(guest);
+        guest.getBoard(name).addTodo(todo);
+        guest.getBoard(name).addUser(guest);
     }
 
     public void changePosition(ToDo todo, int newPosition){
@@ -55,6 +72,7 @@ public class Board {
         todoList.sort(Comparator.comparingInt(ToDo::getPosition));
     }
 
+    //TODO inconsistent, we should make the todo inside? idk
     public ToDo addTodo(ToDo todo){
         todoList.add(todo);
 
@@ -70,5 +88,22 @@ public class Board {
         int position = todo.getPosition();
         ToDo T = todoList.get(position-1);
         todoList.remove(position-1);
+    }
+
+    public BoardName getName() {
+        return name;
+    }
+
+    //override, crei una che non ha argomenti, e quella controlla la data odierna.
+    //TODO metodo che crea una lista vuota, e ci aggiunge solo i todo che hanno la due date che coincide con la data passata in parametro
+    //sortDueData(Date dueDate) --> creare una lista che ha solo i todo che hanno duedate == dueDate
+
+    public void sortDueDate(){
+        //data odierna
+        Date today = new Date();
+    }
+
+    public void sortDueDate(Date dueDate){
+        //data
     }
 }

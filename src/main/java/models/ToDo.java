@@ -40,7 +40,8 @@ public class ToDo {
 
     public void setDueDate(Date dueDate) {
         this.dueDate = dueDate;
-    }
+    } //TODO testare implementazione e capire come passare la data.
+
 
     public String getUrl() {
         return url;
