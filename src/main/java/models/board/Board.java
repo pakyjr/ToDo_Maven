@@ -44,16 +44,13 @@ public class Board {
     }
 
     public void deleteTodo(ToDo todo){
-
+        //1) Handle users
+        //2) Handle position
+        int position = todo.getPosition();
+        ToDo T = todoList.get(position-1);
+        todoList.remove(position-1);
     }
 
-
-
-
-
-    //il todo deve essere in grado di referenziare la sua bacheca di appartenenza!
-    //perche la lista di todo, sta nella bacheca, quindi se il add e il delete sta nel todo, allora il todo deve manipolare la sua bacheca!
-    //nella classe todo, se aggiungo un todo alla bacheca, allora la classe todo sta manipolando l'array di todo dentro la bacheca.
 
 
 }
