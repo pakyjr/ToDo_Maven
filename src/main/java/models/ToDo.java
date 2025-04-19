@@ -23,6 +23,7 @@ public class ToDo {
         this.title = title;
         this.users = new ArrayList<>();
         this.activityList = new HashMap<>();
+        this.dueDate = new Date();
     }
 
     //REGION SET & GET
@@ -39,7 +40,7 @@ public class ToDo {
     }
 
     public void setDueDate(Date dueDate) {
-        this.dueDate = dueDate;
+        this.dueDate.setTime(dueDate.getTime());
     } //TODO testare implementazione e capire come passare la data.
 
     public String getUrl() {
