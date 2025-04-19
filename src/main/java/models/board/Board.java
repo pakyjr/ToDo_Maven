@@ -9,7 +9,6 @@ public class Board {
     private BoardName name;
     private String description;
     private String owner;
-    private Set<String> users;
     private ArrayList<ToDo> todoList;
 
 
@@ -17,44 +16,37 @@ public class Board {
         this.name = name;
         this.owner = owner;
         todoList = new ArrayList<>();
-        this.users = new HashSet<>();
-        this.users.add(owner);
     }
 
     public Board(BoardName name, String owner, String description){
         this.name = name;
         this.description = description;
         this.owner = owner;
-        this.users = new HashSet<>();
-
-        this.users.add(owner);
         todoList = new ArrayList<>();
+    }
+
+    public ToDo addTodo(String title) {
+        return addTodo(title, this.owner);
+
+    }
+
+    public ToDo addTodo(String title, String owner){
+        ToDo todo = new ToDo(title);
+        todo.setOwner(this.owner);
+        todoList.add(todo);
+
+        int listSize = todoList.size();
+        todo.setPosition(listSize);
+
+        return todo;
     }
 
     public ArrayList<ToDo> getTodoList() {
         return todoList;
     }
 
-    public Set<String> getAllowedUsers() {
-        return users;
-    }
-
-    private void addUser(User guest) {
-        if (users.contains(guest.getUsername())) {
-            return;
-        }
-
-        this.users.add(guest.getUsername());
-
-        if (!guest.getBoardList().containsKey(name.toString())) {
-            guest.addBoard(name, this.owner);
-        }
-    }
-
     public void shareTodo(User guest, ToDo todo) {
-        addUser(guest);
-        guest.getBoard(name).addTodo(todo);
-        guest.getBoard(name).addUser(guest);
+        guest.getBoard(name).addTodo(todo.getTitle(), guest.getUsername());
     }
 
     public void changePosition(ToDo todo, int newPosition){
@@ -73,21 +65,20 @@ public class Board {
     }
 
     //TODO inconsistent, we should make the todo inside? idk
-    public ToDo addTodo(ToDo todo){
-        todoList.add(todo);
 
-        int listSize = todoList.size();
-        todo.setPosition(listSize);
-
-        return todo;
-    }
 
     public void deleteTodo(ToDo todo){
-        //1) Handle users
+        //1) TODO Handle users (if the to do we are deleting is shared this method must handle the users)
         //2) TODO Handle position
+
         int position = todo.getPosition();
-        ToDo T = todoList.get(position-1);
         todoList.remove(position-1);
+
+        for(ToDo item: todoList) {
+            if(item.getPosition() >= position){ //shift every item back
+                item.setPosition(item.getPosition() - 1);
+            }
+        }
     }
 
     public BoardName getName() {

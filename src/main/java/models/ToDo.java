@@ -7,7 +7,7 @@ import java.util.List;
 //TODO handle date
 
 public class ToDo {
-    private int position; //
+    private int position;
     private Date dueDate;
     private String url;
     private String image;
@@ -41,6 +41,14 @@ public class ToDo {
     public void setDueDate(Date dueDate) {
         this.dueDate = dueDate;
     } //TODO testare implementazione e capire come passare la data.
+
+    public void setOwner(String owner) {
+        this.owner = owner;
+    }
+
+    public String getOwner() {
+        return owner;
+    }
 
     public String getUrl() {
         return url;
@@ -121,9 +129,5 @@ public class ToDo {
 
     public void toggle(){
         this.done = !done;
-    }
-
-    public void changeBoard(){
-
     }
 }

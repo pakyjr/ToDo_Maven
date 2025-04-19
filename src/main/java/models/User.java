@@ -68,7 +68,7 @@ public class User {
         ToDo todo = oldTodoList.get(position - 1);
         oldBoard.deleteTodo(todo);
 
-        newBoard.addTodo(todo);
+        newBoard.addTodo(todo.getTitle());
         newBoard.changePosition(todo, position);
          //TODO va aggioranta la posizione nella lista nuova.
     }
