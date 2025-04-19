@@ -2,8 +2,9 @@ package models.board;
 
 import models.ToDo;
 import models.User;
-
+import java.time.LocalDate;
 import java.util.*;
+
 
 public class Board {
     private BoardName name;
@@ -99,11 +100,30 @@ public class Board {
     //sortDueData(Date dueDate) --> creare una lista che ha solo i todo che hanno duedate == dueDate
 
     public void sortDueDate(){
-        //data odierna
-        Date today = new Date();
+        LocalDate today = LocalDate.now();
+        ArrayList<ToDo> filterList = new ArrayList<>();
+        for(ToDo todo:todoList){
+            if(todo.getDueDate().equals(today)){
+                System.out.println(todo.getTitle());
+            }
+        }
     }
 
-    public void sortDueDate(Date dueDate){
-        //data
+    public void sortDueDate(LocalDate dueDate){
+        ArrayList<ToDo> filterList = new ArrayList<>();
+        for(ToDo todo:todoList){
+            if(todo.getDueDate().equals(dueDate)){
+                System.out.println(todo.getTitle());
+            }
+        }
+    }
+
+    public void SearchTitle(String title){
+        ArrayList<ToDo> filterList = new ArrayList<>();
+        for(ToDo todo:todoList) {
+            if (todo.getTitle().equals(title)) {
+                System.out.println(todo.getTitle());
+            }
+        }
     }
 }

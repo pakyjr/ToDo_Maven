@@ -1,14 +1,18 @@
 package models;
-
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.time.LocalDate;
+
+import java.time.LocalDate;
+import java.time.LocalDate;
 //TODO handle date
 
 public class ToDo {
     private int position; //
-    private Date dueDate;
+    private LocalDate dueDate;
     private String url;
     private String image;
     private String title;
@@ -23,7 +27,7 @@ public class ToDo {
         this.title = title;
         this.users = new ArrayList<>();
         this.activityList = new HashMap<>();
-        this.dueDate = new Date();
+        this.dueDate = LocalDate.now();
     }
 
     //REGION SET & GET
@@ -35,12 +39,12 @@ public class ToDo {
         this.position = position;
     }
 
-    public Date getDueDate() {
+    public LocalDate getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(Date dueDate) {
-        this.dueDate.setTime(dueDate.getTime());
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = LocalDate.of(dueDate.getYear(), dueDate.getMonth(), dueDate.getDayOfMonth());
     } //TODO testare implementazione e capire come passare la data.
 
     public String getUrl() {
