@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-//TODO handle date
+import java.util.Map;
 
 public class ToDo {
     private int position;
@@ -14,10 +14,10 @@ public class ToDo {
     private String title;
     private String description;
     private String owner;
-    private ArrayList<String> users;
+    private List<String> users;
     private String color = "white";
     private boolean done = false;
-    private HashMap<String, Boolean> activityList;
+    private Map<String, Boolean> activityList;
 
     public ToDo(String title) {
         this.title = title;
@@ -25,7 +25,6 @@ public class ToDo {
         this.activityList = new HashMap<>();
     }
 
-    //REGION SET & GET
     public int getPosition() {
         return position;
     }
@@ -40,14 +39,14 @@ public class ToDo {
 
     public void setDueDate(Date dueDate) {
         this.dueDate = dueDate;
-    } //TODO testare implementazione e capire come passare la data.
-
-    public void setOwner(String owner) {
-        this.owner = owner;
     }
 
     public String getOwner() {
         return owner;
+    }
+
+    public void setOwner(String owner) {
+        this.owner = owner;
     }
 
     public String getUrl() {
@@ -78,8 +77,8 @@ public class ToDo {
         return description;
     }
 
-    public void setDescription(String detailedDescription) {
-        this.description = detailedDescription;
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public String getColor() {
@@ -89,45 +88,69 @@ public class ToDo {
     public void setColor(String color) {
         this.color = color;
     }
-    //END REGION
 
-    public void addActivity(String title){
-        this.activityList.put(title, false);
-        System.out.printf("Added activity: %s\n", title);
+    public boolean isDone() {
+        return done;
     }
 
-    public void deleteActivity(String title){
+    public void addActivity(String title) {
+        this.activityList.put(title, false);
+        System.out.printf("Added activity: %s%n", title);
+    }
+
+    public void deleteActivity(String title) {
         this.activityList.remove(title);
-        System.out.printf("Deleted activity: %s\n", title);
+        System.out.printf("Deleted activity: %s%n", title);
     }
 
-    public void setActivityTrue(String title){
-        if(!checkValidActivity(title)){
+    public void setActivityStatus(String title, boolean completed) {
+        if (!checkValidActivity(title)) {
             return;
         }
-        this.activityList.put(title, true);
-        if(activityList.values().stream().allMatch(status -> status)){
-            this.done = true;
-        }
+
+        this.activityList.put(title, completed);
+        updateDoneStatus();
     }
 
-    public void setActivityFalse(String title){
-        if(!checkValidActivity(title)){
-            return;
-        }
-        this.activityList.put(title, false);
-        this.done = false;
+    public void setActivityTrue(String title) {
+        setActivityStatus(title, true);
     }
 
-    private boolean checkValidActivity(String title){
-        if(!activityList.containsKey(title)){
+    public void setActivityFalse(String title) {
+        setActivityStatus(title, false);
+    }
+
+    private boolean checkValidActivity(String title) {
+        if (!activityList.containsKey(title)) {
             System.out.println("Invalid activity: " + title);
             return false;
         }
         return true;
     }
 
-    public void toggle(){
+    private void updateDoneStatus() {
+        this.done = !activityList.isEmpty() && activityList.values().stream().allMatch(Boolean::booleanValue);
+    }
+
+    public void toggle() {
         this.done = !done;
+    }
+
+    public Map<String, Boolean> getActivityList() {
+        return new HashMap<>(activityList);
+    }
+
+    public List<String> getUsers() {
+        return new ArrayList<>(users);
+    }
+
+    public void addUser(String username) {
+        if (!users.contains(username)) {
+            users.add(username);
+        }
+    }
+
+    public void removeUser(String username) {
+        users.remove(username);
     }
 }
