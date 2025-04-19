@@ -60,7 +60,7 @@ public class User {
 
     //TODO TO TEST!
     public void changeBoard(BoardName oldBoardName, BoardName newBoardName, int position){
-                    
+
         Board oldBoard = getBoard(oldBoardName);
         Board newBoard = getBoard(newBoardName);
 
@@ -68,7 +68,8 @@ public class User {
         ToDo todo = oldTodoList.get(position - 1);
         oldBoard.deleteTodo(todo);
 
-        ArrayList<ToDo> newTodoList = newBoard.getTodoList();
-        newTodoList.add(todo); //TODO va aggioranta la posizione nella lista nuova.
+        newBoard.addTodo(todo);
+        newBoard.changePosition(todo, position);
+         //TODO va aggioranta la posizione nella lista nuova.
     }
 }
