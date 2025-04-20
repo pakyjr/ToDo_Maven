@@ -57,6 +57,8 @@ public class Board {
         }
     }
 
+    //if i move a value from and index i to index i+n, then all the values before i, do not vchange
+
     public void changePosition(ToDo todo, int newPosition) {
         if (newPosition < 1 || newPosition > todoList.size()) {
             System.out.println("Invalid position");
@@ -74,12 +76,12 @@ public class Board {
             ToDo item = todoList.get(i);
             if (oldPosition < newPosition) {
                 // Moving down - shift items in between up
-                if (item.getPosition() > oldPosition && item.getPosition() <= newPosition) {
+                if (i > oldPosition - 1 && i <= newPosition - 1) {
                     item.setPosition(item.getPosition() - 1);
                 }
             } else {
                 // Moving up - shift items in between down
-                if (item.getPosition() >= newPosition && item.getPosition() < oldPosition) {
+                if (i >= newPosition - 1 && i < oldPosition) {
                     item.setPosition(item.getPosition() + 1);
                 }
             }
@@ -98,6 +100,8 @@ public class Board {
                 item.setPosition(item.getPosition() - 1);
             }
         }
+
+        //TODO HANDLE DELETION ON OTHER USER BOARDS
     }
 
     public BoardName getName() {
