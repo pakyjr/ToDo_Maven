@@ -53,7 +53,7 @@ public class Board {
     public void shareTodo(User guest, ToDo todo) {
         Board guestBoard = guest.getBoard(name);
         if (guestBoard != null) {
-            guestBoard.addTodo(todo.getTitle(), this.owner);
+            guestBoard.addExistingTodo(todo);
         }
     }
 
@@ -100,6 +100,8 @@ public class Board {
         }
 
         //TODO HANDLE DELETION ON OTHER USER BOARDS
+        //TO DO NEEDS TO HAVE AN ID, AND IT NEEDS TO HAVE  A SET OF USERS WHERE IT'S SHARED.
+        //WE CAN'T HAVE 
     }
 
     public BoardName getName() {
