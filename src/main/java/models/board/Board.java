@@ -53,11 +53,9 @@ public class Board {
     public void shareTodo(User guest, ToDo todo) {
         Board guestBoard = guest.getBoard(name);
         if (guestBoard != null) {
-            guestBoard.addTodo(todo.getTitle(), guest.getUsername());
+            guestBoard.addTodo(todo.getTitle(), this.owner);
         }
     }
-
-    //if i move a value from and index i to index i+n, then all the values before i, do not vchange
 
     public void changePosition(ToDo todo, int newPosition) {
         if (newPosition < 1 || newPosition > todoList.size()) {
