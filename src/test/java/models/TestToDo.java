@@ -168,41 +168,47 @@ public class TestToDo {
 
     @Test
     public void testAddUser() {
-        todo.addUser("user1");
+        User user = new User("user1", "password1");
+        todo.addUser(user);
 
         assertEquals(1, todo.getUsers().size());
-        assertTrue(todo.getUsers().contains("user1"));
+        assertTrue(todo.getUsers().contains(user));
     }
 
     @Test
     public void testAddDuplicateUser() {
-        todo.addUser("user1");
-        todo.addUser("user1");
+        User user = new User("user1", "password");
+        todo.addUser(user);
+        todo.addUser(user);
 
         assertEquals(1, todo.getUsers().size());
     }
 
     @Test
     public void testRemoveUser() {
-        todo.addUser("user1");
-        todo.addUser("user2");
+        User user = new User("user1", "password");
+        User user2 = new User("user2", "password2");
+        todo.addUser(user);
+        todo.addUser(user2);
 
-        todo.removeUser("user1");
+        todo.removeUser(user);
 
         assertEquals(1, todo.getUsers().size());
-        assertTrue(todo.getUsers().contains("user2"));
-        assertFalse(todo.getUsers().contains("user1"));
+        assertTrue(todo.getUsers().contains(user2));
+        assertFalse(todo.getUsers().contains(user));
     }
 
     @Test
     public void testGetUsersReturnsDefensiveCopy() {
-        todo.addUser("user1");
+        User user = new User("user1", "password");
+        User user2 = new User("user2", "password2");
+        todo.addUser(user);
 
         // Modify the returned list
-        todo.getUsers().add("user2");
+        todo.getUsers().add(user2);
 
         // Verify the todo's user list is unchanged
         assertEquals(1, todo.getUsers().size());
-        assertFalse(todo.getUsers().contains("user2"));
+        assertFalse(todo.getUsers().contains(user2));
     }
 }

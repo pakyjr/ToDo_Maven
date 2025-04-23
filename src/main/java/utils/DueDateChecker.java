@@ -27,6 +27,7 @@ public class DueDateChecker {
                         Date dueDate = todo.getDueDate();
                         if (dueDate != null && isSameDay(today, dueDate)) {
                             System.out.println("ToDo due today: " + todo.getTitle());
+                            todo.setColor("red");
                             // Add any additional actions here (e.g., notify users)
                         }
                     }

@@ -52,6 +52,7 @@ public class Board {
     }
 
     public void shareTodo(User guest, ToDo todo) {
+        todo.addUser(guest);
         Board guestBoard = guest.getBoard(name);
         if (guestBoard != null) {
             guestBoard.addExistingTodo(todo);
@@ -74,12 +75,12 @@ public class Board {
         for (int i = 0; i < todoList.size(); i++) {
             ToDo item = todoList.get(i);
             if (oldPosition < newPosition) {
-                // Moving down - shift items in between up
+                // Moving down
                 if (i > oldPosition - 1 && i <= newPosition - 1) {
                     item.setPosition(item.getPosition() - 1);
                 }
             } else {
-                // Moving up - shift items in between down
+                // Moving up
                 if (i >= newPosition - 1 && i < oldPosition) {
                     item.setPosition(item.getPosition() + 1);
                 }
@@ -100,9 +101,14 @@ public class Board {
             }
         }
 
-        //TODO HANDLE DELETION ON OTHER USER BOARDS
-        //TO DO NEEDS TO HAVE AN ID, AND IT NEEDS TO HAVE  A SET OF USERS WHERE IT'S SHARED.
-        //WE CAN'T HAVE 
+        //handle boards of other users where the to do is shared
+        Set<User> users = todo.getUsers();
+        if(!users.isEmpty()) { //if the list is not empty, the to do is shared (recursive case)
+            for (User user : users) {
+                Board board = user.getBoard(this.name);
+                board.deleteTodo(todo);
+            }
+        }
     }
 
     public BoardName getName() {

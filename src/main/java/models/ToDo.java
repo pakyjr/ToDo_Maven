@@ -1,12 +1,9 @@
 package models;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ToDo {
+    private UUID id;
     private int position;
     private Date dueDate;
     private String url;
@@ -14,14 +11,15 @@ public class ToDo {
     private String title;
     private String description;
     private String owner;
-    private List<String> users;
+    private Set<User> users;
     private String color = "white";
     private boolean done = false;
     private Map<String, Boolean> activityList;
 
     public ToDo(String title) {
+        this.id = UUID.randomUUID();
         this.title = title;
-        this.users = new ArrayList<>();
+        this.users = new HashSet<>();
         this.activityList = new HashMap<>();
     }
 
@@ -140,17 +138,15 @@ public class ToDo {
         return new HashMap<>(activityList);
     }
 
-    public List<String> getUsers() {
-        return new ArrayList<>(users);
+    public Set<User> getUsers() {
+        return new HashSet<>(users);
     }
 
-    public void addUser(String username) {
-        if (!users.contains(username)) {
-            users.add(username);
-        }
+    public void addUser(User user) {
+        users.add(user);
     }
 
-    public void removeUser(String username) {
-        users.remove(username);
+    public void removeUser(User user) {
+        users.remove(user);
     }
 }

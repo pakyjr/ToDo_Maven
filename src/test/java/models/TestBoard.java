@@ -1,7 +1,10 @@
-package models.board;
+package models;
 
 import models.ToDo;
 import models.User;
+import models.board.Board;
+import models.board.BoardName;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -158,6 +161,8 @@ public class TestBoard {
         assertEquals(1, todo1.getPosition());
         assertEquals(2, todo3.getPosition());
     }
+
+    //TODO TEST SHARED BOARDS ON DELETE
 
 //    @Test
 //    public void testGetTodosDueOn() {
