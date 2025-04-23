@@ -3,6 +3,7 @@ package models.board;
 import models.ToDo;
 import models.User;
 
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -108,25 +109,31 @@ public class Board {
         return name;
     }
 
-//    public List<ToDo> getTodosDueOn(Date dueDate) {
-//        return todoList.stream()
-//                .filter(todo -> {
-//                    Date todoDueDate = todo.getDueDate();
-//                    return todoDueDate != null && isSameDay(todoDueDate, dueDate);
-//                })
-//                .collect(Collectors.toList());
-//    }
-//
-//    public List<ToDo> getTodosDueToday() {
-//        return getTodosDueOn(new Date());
-//    }
-//
-//    private boolean isSameDay(Date date1, Date date2) {
-//        Calendar cal1 = Calendar.getInstance();
-//        Calendar cal2 = Calendar.getInstance();
-//        cal1.setTime(date1);
-//        cal2.setTime(date2);
-//        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
-//                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
-//    }
+    public void sortDueDate(){
+        LocalDate today = LocalDate.now();
+        ArrayList<ToDo> filterList = new ArrayList<>();
+        for(ToDo todo:todoList){
+            if(todo.getDueDate().equals(today)){
+                System.out.println(todo.getTitle());
+            }
+        }
+    }
+
+    public void sortDueDate(LocalDate dueDate){
+        ArrayList<ToDo> filterList = new ArrayList<>();
+        for(ToDo todo:todoList){
+            if(todo.getDueDate().equals(dueDate)){
+                System.out.println(todo.getTitle());
+            }
+        }
+    }
+
+    public void SearchTitle(String title){
+        ArrayList<ToDo> filterList = new ArrayList<>();
+        for(ToDo todo:todoList) {
+            if (todo.getTitle().equals(title)) {
+                System.out.println(todo.getTitle());
+            }
+        }
+    }
 }
