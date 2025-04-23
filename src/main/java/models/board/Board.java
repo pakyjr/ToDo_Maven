@@ -115,31 +115,34 @@ public class Board {
         return name;
     }
 
-    public void sortDueDate(){
+    public ArrayList<ToDo> sortDueDate(){
         LocalDate today = LocalDate.now();
         ArrayList<ToDo> filterList = new ArrayList<>();
         for(ToDo todo:todoList){
             if(todo.getDueDate().equals(today)){
-                System.out.println(todo.getTitle());
+                filterList.add(todo);
             }
         }
+        return filterList;
     }
 
-    public void sortDueDate(LocalDate dueDate){
+    public ArrayList<ToDo> sortDueDate(LocalDate dueDate){
         ArrayList<ToDo> filterList = new ArrayList<>();
         for(ToDo todo:todoList){
             if(todo.getDueDate().equals(dueDate)){
-                System.out.println(todo.getTitle());
+                filterList.add(todo);
             }
         }
+        return filterList;
     }
 
-    public void SearchTitle(String title){
+    public ToDo SearchTitle(String title){
         ArrayList<ToDo> filterList = new ArrayList<>();
         for(ToDo todo:todoList) {
             if (todo.getTitle().equals(title)) {
-                System.out.println(todo.getTitle());
+                return todo;
             }
         }
+        return null;
     }
 }

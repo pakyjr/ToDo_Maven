@@ -1,11 +1,12 @@
 package models;
 
+import java.time.LocalDate;
 import java.util.*;
 
 public class ToDo {
     private UUID id;
     private int position;
-    private Date dueDate;
+    private LocalDate dueDate;
     private String url;
     private String image;
     private String title;
@@ -31,11 +32,11 @@ public class ToDo {
         this.position = position;
     }
 
-    public Date getDueDate() {
+    public LocalDate getDueDate() {
         return dueDate;
     }
 
-    public void setDueDate(Date dueDate) {
+    public void setDueDate(LocalDate dueDate) {
         this.dueDate = dueDate;
     }
 
