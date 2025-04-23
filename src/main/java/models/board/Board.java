@@ -3,77 +3,36 @@ package models.board;
 import models.ToDo;
 import models.User;
 
+import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Board {
-    private BoardName name;
+    private final BoardName name;
     private String description;
-    private String owner;
-    private Set<String> users;
-    private ArrayList<ToDo> todoList;
+    private final String owner;
+    private final List<ToDo> todoList;
 
-
-    public Board(BoardName name, String owner){
+    public Board(BoardName name, String owner) {
         this.name = name;
         this.owner = owner;
-        todoList = new ArrayList<>();
-        this.users = new HashSet<>();
-        this.users.add(owner);
+        this.todoList = new ArrayList<>();
     }
 
-    public Board(BoardName name, String owner, String description){
+    public Board(BoardName name, String owner, String description) {
         this.name = name;
         this.description = description;
         this.owner = owner;
-        this.users = new HashSet<>();
-
-        this.users.add(owner);
-        todoList = new ArrayList<>();
+        this.todoList = new ArrayList<>();
     }
 
-    public ArrayList<ToDo> getTodoList() {
-        return todoList;
+    public ToDo addTodo(String title) {
+        return addTodo(title, this.owner);
     }
 
-    public Set<String> getAllowedUsers() {
-        return users;
-    }
-
-    private void addUser(User guest) {
-        if (users.contains(guest.getUsername())) {
-            return;
-        }
-
-        this.users.add(guest.getUsername());
-
-        if (!guest.getBoardList().containsKey(name.toString())) {
-            guest.addBoard(name, this.owner);
-        }
-    }
-
-    public void shareTodo(User guest, ToDo todo) {
-        addUser(guest);
-        guest.getBoard(name).addTodo(todo);
-        guest.getBoard(name).addUser(guest);
-    }
-
-    public void changePosition(ToDo todo, int newPosition){
-        int oldPosition = todo.getPosition();
-        todo.setPosition(newPosition);
-
-        int i = 0;
-        for(ToDo item : todoList){
-            if(i >= newPosition - 1 && i < oldPosition - 1){
-                item.setPosition(item.getPosition() + 1);
-            }
-            i++;
-        }
-
-        todoList.sort(Comparator.comparingInt(ToDo::getPosition));
-    }
-
-    //TODO inconsistent, we should make the todo inside? idk
-    public ToDo addTodo(ToDo todo){
+    public ToDo addTodo(String title, String owner) {
+        ToDo todo = new ToDo(title);
+        todo.setOwner(owner);
         todoList.add(todo);
 
         int listSize = todoList.size();
@@ -82,28 +41,105 @@ public class Board {
         return todo;
     }
 
-    public void deleteTodo(ToDo todo){
-        //1) Handle users
-        //2) TODO Handle position
+    public void addExistingTodo(ToDo todo) {
+        todoList.add(todo);
+        int listSize = todoList.size();
+        todo.setPosition(listSize);
+    }
+
+    public List<ToDo> getTodoList() {
+        return new ArrayList<>(todoList);
+    }
+
+    public void shareTodo(User guest, ToDo todo) {
+        todo.addUser(guest);
+        Board guestBoard = guest.getBoard(name);
+        if (guestBoard != null) {
+            guestBoard.addExistingTodo(todo);
+        }
+    }
+
+    public void changePosition(ToDo todo, int newPosition) {
+        if (newPosition < 1 || newPosition > todoList.size()) {
+            System.out.println("Invalid position");
+            return;
+        }
+
+        int oldPosition = todo.getPosition();
+        if (oldPosition == newPosition) {
+            return;
+        }
+
+        todo.setPosition(newPosition);
+
+        for (int i = 0; i < todoList.size(); i++) {
+            ToDo item = todoList.get(i);
+            if (oldPosition < newPosition) {
+                // Moving down
+                if (i > oldPosition - 1 && i <= newPosition - 1) {
+                    item.setPosition(item.getPosition() - 1);
+                }
+            } else {
+                // Moving up
+                if (i >= newPosition - 1 && i < oldPosition) {
+                    item.setPosition(item.getPosition() + 1);
+                }
+            }
+        }
+
+        todoList.sort(Comparator.comparingInt(ToDo::getPosition));
+    }
+
+    public void deleteTodo(ToDo todo) {
         int position = todo.getPosition();
-        ToDo T = todoList.get(position-1);
-        todoList.remove(position-1);
+        todoList.remove(todo);
+
+        // Update positions of remaining todos
+        for (ToDo item : todoList) {
+            if (item.getPosition() > position) {
+                item.setPosition(item.getPosition() - 1);
+            }
+        }
+
+        //handle boards of other users where the to do is shared
+        Set<User> users = todo.getUsers();
+        if(!users.isEmpty()) { //if the list is not empty, the to do is shared (recursive case)
+            for (User user : users) {
+                Board board = user.getBoard(this.name);
+                board.deleteTodo(todo);
+            }
+        }
     }
 
     public BoardName getName() {
         return name;
     }
 
-    //override, crei una che non ha argomenti, e quella controlla la data odierna.
-    //TODO metodo che crea una lista vuota, e ci aggiunge solo i todo che hanno la due date che coincide con la data passata in parametro
-    //sortDueData(Date dueDate) --> creare una lista che ha solo i todo che hanno duedate == dueDate
-
     public void sortDueDate(){
-        //data odierna
-        Date today = new Date();
+        LocalDate today = LocalDate.now();
+        ArrayList<ToDo> filterList = new ArrayList<>();
+        for(ToDo todo:todoList){
+            if(todo.getDueDate().equals(today)){
+                System.out.println(todo.getTitle());
+            }
+        }
     }
 
-    public void sortDueDate(Date dueDate){
-        //data
+    public void sortDueDate(LocalDate dueDate){
+        ArrayList<ToDo> filterList = new ArrayList<>();
+        for(ToDo todo:todoList){
+            if(todo.getDueDate().equals(dueDate)){
+                System.out.println(todo.getTitle());
+            }
+        }
+    }
+
+    public void SearchTitle(String title){
+        ArrayList<ToDo> filterList = new ArrayList<>();
+        for(ToDo todo:todoList) {
+            if (todo.getTitle().equals(title)) {
+                System.out.println(todo.getTitle());
+            }
+        }
     }
 }

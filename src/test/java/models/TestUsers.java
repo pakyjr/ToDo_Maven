@@ -1,56 +1,148 @@
 package models;
 
-import models.User;
-
 import models.board.Board;
 import models.board.BoardName;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TestUsers {
 
-    @Test
-    void testUserCreationWithPassword() {
-        User user = new User("bob", "mypassword");
-        assertNotNull(user.getUsername());
+    private User user;
+    private BoardName testBoardName;
+    private BoardName secondBoardName;
+
+    @BeforeEach
+    public void setUp() {
+        user = new User("testUser", "password123");
+        testBoardName = BoardName.UNIVERSITY;
+        secondBoardName = BoardName.WORK;
     }
 
     @Test
-    void testAddAndDeleteBoard() {
-        User user = new User("charlie", "mypassword");
-        user.addBoard(BoardName.FREE_TIME, user.getUsername());
-        user.deleteBoard(BoardName.FREE_TIME);
+    public void testUserCreation() {
+        assertEquals("testUser", user.getUsername());
+        assertTrue(user.getBoardList().isEmpty());
     }
 
     @Test
-    void testDeleteNonExistentBoard() {
-        User user = new User("dave", "mypassword");
-        assertDoesNotThrow(() -> user.deleteBoard(BoardName.WORK));
+    public void testAddBoard() {
+        Optional<Board> boardOptional = user.addBoard(testBoardName, user.getUsername());
+
+        assertTrue(boardOptional.isPresent());
+        assertEquals(1, user.getBoardList().size());
+        assertTrue(user.getBoardList().containsKey(testBoardName.toString()));
     }
 
     @Test
-    void testSharedBoard() {
-        User user = new User("dave", "mypassword");
-        User user2 = new User("charlie", "mypassword");
+    public void testAddDuplicateBoard() {
+        user.addBoard(testBoardName, user.getUsername());
+        Optional<Board> duplicateBoardOptional = user.addBoard(testBoardName, user.getUsername());
 
-        Optional<Board> optionalBoard = user.addBoard(BoardName.UNIVERSITY, user.getUsername());
+        assertFalse(duplicateBoardOptional.isPresent());
+        assertEquals(1, user.getBoardList().size());
+    }
 
-        if(optionalBoard.isPresent()) {
-            ToDo todo = new ToDo("esame");
-            Board userBoard = optionalBoard.get(); //optional unwrapping
-            userBoard.addTodo(todo);
-            userBoard.shareTodo(user2, todo);
+    @Test
+    public void testDeleteBoard() {
+        user.addBoard(testBoardName, user.getUsername());
+        assertEquals(1, user.getBoardList().size());
 
-            //controllare che user2 ha una board nuova
-            //controllare che nella board nuyova ci sia il todo che abbiuamo aggiunto
+        user.deleteBoard(testBoardName);
+        assertEquals(0, user.getBoardList().size());
+        assertFalse(user.getBoardList().containsKey(testBoardName.toString()));
+    }
 
-            assertEquals(1, user2.getBoardList().size());
-        }
+    @Test
+    public void testDeleteNonExistentBoard() {
+        user.deleteBoard(testBoardName);
+        assertEquals(0, user.getBoardList().size());
+    }
 
+    @Test
+    public void testGetBoard() {
+        user.addBoard(testBoardName, user.getUsername());
+        Board board = user.getBoard(testBoardName);
 
+        assertNotNull(board);
+        assertEquals(testBoardName, board.getName());
+    }
 
+    @Test
+    public void testGetNonExistentBoard() {
+        Board board = user.getBoard(testBoardName);
+        assertNull(board);
+    }
+
+    @Test
+    public void testGetBoardListReturnsUnmodifiableMap() {
+        user.addBoard(testBoardName, user.getUsername());
+        Map<String, Board> boardList = user.getBoardList();
+
+        assertThrows(UnsupportedOperationException.class, () ->
+                boardList.put("New Board", new Board(BoardName.UNIVERSITY, user.getUsername())));
+    }
+
+    @Test
+    public void testMoveToDoToAnotherBoard() {
+        // Setup boards
+        user.addBoard(testBoardName, user.getUsername());
+        user.addBoard(secondBoardName, user.getUsername());
+
+        Board sourceBoard = user.getBoard(testBoardName);
+        Board targetBoard = user.getBoard(secondBoardName);
+
+        // Add todo to source board
+        ToDo todo = sourceBoard.addTodo("Test ToDo");
+        assertEquals(1, sourceBoard.getTodoList().size());
+        assertEquals(0, targetBoard.getTodoList().size());
+
+        // Move todo
+        user.moveToDoToAnotherBoard(testBoardName, secondBoardName, 1);
+
+        // Verify todo moved
+        assertEquals(0, sourceBoard.getTodoList().size());
+        assertEquals(1, targetBoard.getTodoList().size());
+        assertEquals("Test ToDo", targetBoard.getTodoList().getFirst().getTitle());
+    }
+
+    @Test
+    public void testMoveToDoWithInvalidPositionDoesNothing() {
+        // Setup boards
+        user.addBoard(testBoardName, user.getUsername());
+        user.addBoard(secondBoardName, user.getUsername());
+
+        Board sourceBoard = user.getBoard(testBoardName);
+        Board targetBoard = user.getBoard(secondBoardName);
+
+        // Add todo to source board
+        sourceBoard.addTodo("Test ToDo");
+
+        // Try to move with invalid position
+        user.moveToDoToAnotherBoard(testBoardName, secondBoardName, 2); // Position 2 doesn't exist
+
+        // Verify no changes
+        assertEquals(1, sourceBoard.getTodoList().size());
+        assertEquals(0, targetBoard.getTodoList().size());
+    }
+
+    @Test
+    public void testMoveToDoWithNonExistentBoardDoesNothing() {
+        // Setup source board only
+        user.addBoard(testBoardName, user.getUsername());
+        Board sourceBoard = user.getBoard(testBoardName);
+
+        // Add todo to source board
+        sourceBoard.addTodo("Test ToDo");
+
+        // Try to move to non-existent board
+        user.moveToDoToAnotherBoard(testBoardName, secondBoardName, 1);
+
+        // Verify no changes
+        assertEquals(1, sourceBoard.getTodoList().size());
     }
 }

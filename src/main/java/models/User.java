@@ -5,19 +5,18 @@ import models.board.*;
 import java.util.*;
 
 public class User {
-    private String username;
-    private String hashedPassword;
-    private HashMap<String, Board> boardList;
+    private final String username;
+    private final String hashedPassword;
+    private final Map<String, Board> boardList;
 
     public User(String username, String plainPassword) {
         this.username = username;
-        hashedPassword = hashPassword(plainPassword);
-        boardList = new HashMap<>();
+        this.hashedPassword = hashPassword(plainPassword);
+        this.boardList = new HashMap<>();
     }
 
     public Optional<Board> addBoard(BoardName boardName, String username) {
-
-        if(boardList.containsKey(boardName.toString())) {
+        if (boardList.containsKey(boardName.toString())) {
             System.out.println("Board already exists");
             return Optional.empty();
         }
@@ -29,47 +28,53 @@ public class User {
     }
 
     public void deleteBoard(BoardName boardName) {
-        if(!boardList.containsKey(boardName.toString())) {
+        String boardNameStr = boardName.toString();
+        if (!boardList.containsKey(boardNameStr)) {
             System.out.println("Board does not exist");
             return;
         }
-        boardList.remove(boardName.toString());
-        System.out.printf("Board %s deleted%n", boardName.toString());
+        boardList.remove(boardNameStr);
+        System.out.printf("Board %s deleted%n", boardNameStr);
     }
 
     private String hashPassword(String password) {
         return Integer.toHexString(password.hashCode());
     }
 
-    public String getUsername(){
+    public String getUsername() {
         return username;
     }
 
-    public HashMap<String, Board> getBoardList() {
-        return boardList;
+    public Map<String, Board> getBoardList() {
+        return Collections.unmodifiableMap(boardList);
     }
 
     public Board getBoard(BoardName boardName) {
-        if(!boardList.containsKey(boardName.toString())) {
+        String boardNameStr = boardName.toString();
+        if (!boardList.containsKey(boardNameStr)) {
             System.out.println("Board does not exist");
             return null;
         }
-        return boardList.get(boardName.toString());
+        return boardList.get(boardNameStr);
     }
 
+    public void moveToDoToAnotherBoard(BoardName sourceBoardName, BoardName targetBoardName, int position) {
+        Board sourceBoard = getBoard(sourceBoardName);
+        Board targetBoard = getBoard(targetBoardName);
 
-    //TODO TO TEST!
-    public void changeBoard(BoardName oldBoardName, BoardName newBoardName, int position){
+        if (sourceBoard == null || targetBoard == null) {
+            return;
+        }
 
-        Board oldBoard = getBoard(oldBoardName);
-        Board newBoard = getBoard(newBoardName);
+        List<ToDo> sourceTodoList = sourceBoard.getTodoList();
+        if (position < 1 || position > sourceTodoList.size()) {
+            System.out.println("Invalid position");
+            return;
+        }
 
-        ArrayList<ToDo> oldTodoList = oldBoard.getTodoList();
-        ToDo todo = oldTodoList.get(position - 1);
-        oldBoard.deleteTodo(todo);
+        ToDo todo = sourceTodoList.get(position - 1);
+        sourceBoard.deleteTodo(todo);
 
-        newBoard.addTodo(todo);
-        newBoard.changePosition(todo, position);
-         //TODO va aggioranta la posizione nella lista nuova.
+        targetBoard.addExistingTodo(todo);
     }
 }
