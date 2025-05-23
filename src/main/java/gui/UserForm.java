@@ -21,7 +21,8 @@ public class UserForm {
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.pack();
         mainFrame.setVisible(true);
-        mainFrame.setSize(800, 400);
+        mainFrame.setSize(300, 400);
+
     }
 
     // Costruttore che accetta il JFrame padre
