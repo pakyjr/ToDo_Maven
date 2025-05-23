@@ -32,6 +32,9 @@ public class registerForm {
     private void registraUtente() {
         String username = userField1.getText();
         String password = new String(passwordField1.getPassword());
+        if(username.equals("") || password.equals("")){
+            JOptionPane.showMessageDialog(frameRegisterForm, "You need to insert username and password.", "Error while creating the account", JOptionPane.ERROR_MESSAGE);
+        }
 
         // Qui puoi salvare i dati su file o database
         System.out.println("Utente registrato:");
