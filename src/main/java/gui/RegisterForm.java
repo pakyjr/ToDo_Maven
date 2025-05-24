@@ -33,11 +33,20 @@ public class RegisterForm {
         if(username.equals("") || password.equals("")){
             JOptionPane.showMessageDialog(frameRegisterForm, "You need to insert username and password.", "Error while creating the account", JOptionPane.ERROR_MESSAGE);
         }
+        else{
+            frameRegisterForm.setVisible(false);
+
+            BoardForm boardForm = new BoardForm(frameRegisterForm);
+            boardForm.frameBoardForm.setVisible(true);
+
+            System.out.println("Utente registrato:");
+            System.out.println("Username: " + username);
+            System.out.println("Password: " + password);
+        }
 
         // Qui puoi salvare i dati su file o database
-        System.out.println("Utente registrato:");
-        System.out.println("Username: " + username);
-        System.out.println("Password: " + password);
+
+
     }
 
 }

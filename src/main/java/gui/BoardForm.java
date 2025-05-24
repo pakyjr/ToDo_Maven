@@ -9,4 +9,14 @@ public class BoardForm {
     private JButton membersBoardButton;
     private JButton addBoardButton;
     private JButton shareBoardButton;
+    private JButton membersButton;
+    private JButton button1;
+    public JFrame frameBoardForm;
+
+    public BoardForm(JFrame frame){
+    frameBoardForm = new JFrame("Personal Area");
+    frameBoardForm.setContentPane(board);
+    frameBoardForm.pack();
+        frameBoardForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    }
 }

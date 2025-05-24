@@ -10,7 +10,7 @@ public class UserForm {
     private JButton donTHaveAccountButton;
     private JTextField usernameField1;
     private JPasswordField passwordField1;
-    public JFrame frame; // Il JFrame associato a questo form
+    public JFrame frame;
 
     public static void main(String[] args) {
         // Crea il JFrame principale
@@ -25,21 +25,23 @@ public class UserForm {
 
     }
 
-    // Costruttore che accetta il JFrame padre
+
     public UserForm(JFrame parentFrame) {
-        this.frame = parentFrame; // Assegna il JFrame passato
+        this.frame = parentFrame;
 
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String username = usernameField1.getText();
-                char[] passwordChars = passwordField1.getPassword(); // Get password as char array
-                String password = new String(passwordChars); // Convert char array to String
+                String password = passwordField1.getPassword().toString();
 
                 System.out.println("Username: " + username);
                 System.out.println("Password (for demonstration purposes, handle securely in production): " + password);
 
+                frame.setVisible(false);
 
+                BoardForm boardForm = new BoardForm(frame);
+                boardForm.frameBoardForm.setVisible(true);
             }
         });
 
