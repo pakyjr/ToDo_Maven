@@ -1,19 +1,17 @@
 package gui;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-public class registerForm {
+public class RegisterForm {
     private JPanel register;
     private JTextField userField1;
     private JButton registerButton;
     private JPasswordField passwordField1;
     public JFrame frameRegisterForm;
 
-    public registerForm(JFrame parent){
+    public RegisterForm(JFrame parent){
 
         frameRegisterForm=new JFrame("Registrazione");
         frameRegisterForm.setContentPane(register);

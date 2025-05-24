@@ -21,7 +21,7 @@ public class UserForm {
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.pack();
         mainFrame.setVisible(true);
-        mainFrame.setSize(300, 400);
+        mainFrame.setSize(300, 500);
 
     }
 
@@ -48,7 +48,7 @@ public class UserForm {
 
                 frame.setVisible(false);
 
-                registerForm registerinterface = new registerForm(frame);
+                RegisterForm registerinterface = new RegisterForm(frame);
                 registerinterface.frameRegisterForm.setVisible(true);
             }
         });
