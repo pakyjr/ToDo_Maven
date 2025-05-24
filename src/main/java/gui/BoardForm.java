@@ -6,14 +6,13 @@ import java.awt.event.ActionListener;
 
 public class BoardForm {
     private JPanel board;
-    private JButton addToDoButton;
     private JComboBox comboBox1;
-    private JButton membersBoardButton;
     private JButton addBoardButton;
     private JButton shareBoardButton;
+    private JButton addToDoButton;
+    private JButton modifyToDoButton;
+    private JButton deleteToDoButton;
     private JButton membersButton;
-    private JButton buttonDelete;
-    private JButton buttonModify;
     public JFrame frameBoardForm;
 
     public BoardForm(JFrame frame){
