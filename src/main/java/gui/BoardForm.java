@@ -1,6 +1,8 @@
 package gui;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 public class BoardForm {
     private JPanel board;
@@ -10,7 +12,8 @@ public class BoardForm {
     private JButton addBoardButton;
     private JButton shareBoardButton;
     private JButton membersButton;
-    private JButton button1;
+    private JButton buttonDelete;
+    private JButton buttonModify;
     public JFrame frameBoardForm;
 
     public BoardForm(JFrame frame){
@@ -18,5 +21,13 @@ public class BoardForm {
     frameBoardForm.setContentPane(board);
     frameBoardForm.pack();
         frameBoardForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        addBoardButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+
     }
 }

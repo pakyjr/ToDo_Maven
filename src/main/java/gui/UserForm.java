@@ -13,9 +13,7 @@ public class UserForm {
     public static JFrame frame;
 
     public static void main(String[] args) {
-        // Crea il JFrame principale
         JFrame mainFrame = new JFrame("Login");
-        // Crea un'istanza di userform passando il JFrame
         UserForm loginForm = new UserForm(mainFrame);
         mainFrame.setContentPane(loginForm.panel1);
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
