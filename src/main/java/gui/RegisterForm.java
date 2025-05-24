@@ -9,13 +9,24 @@ public class RegisterForm {
     private JTextField userField1;
     private JButton registerButton;
     private JPasswordField passwordField1;
-    public JFrame frameRegisterForm;
+    public JFrame frameRegisterForm, frame;
 
     public RegisterForm(JFrame parent){
+
+        frame = parent;
 
         frameRegisterForm=new JFrame("Registrazione");
         frameRegisterForm.setContentPane(register);
         frameRegisterForm.pack();
+
+        frameRegisterForm.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent windowEvent) {
+                frame.setVisible(true);
+                frameRegisterForm.setVisible(false);
+                frameRegisterForm.dispose();
+            }
+        });
 
         frameRegisterForm.addWindowListener(new WindowAdapter(){
             @Override

@@ -10,7 +10,7 @@ public class UserForm {
     private JButton donTHaveAccountButton;
     private JTextField usernameField1;
     private JPasswordField passwordField1;
-    public JFrame frame;
+    public static JFrame frame;
 
     public static void main(String[] args) {
         // Crea il JFrame principale
