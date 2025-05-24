@@ -24,7 +24,7 @@ public class BoardForm {
         addBoardButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-            //ok
+
             }
         });
 
