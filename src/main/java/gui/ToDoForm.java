@@ -1,8 +1,7 @@
 package gui;
 
 import javax.swing.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 
 public class ToDoForm {
     private JPanel todoPanel;
@@ -14,9 +13,8 @@ public class ToDoForm {
     private JButton changeShareButton;
     private JComboBox comboBox1;
     private JTextField textField5;
-    private JCheckBox londraCheckBox;
-    private JCheckBox milanoCheckBox;
     private JButton buttonSave;
+    private JPanel panelActivity;
     public JFrame frameToDoForm, frame;
 
     public ToDoForm(JFrame parent){
@@ -29,6 +27,31 @@ public class ToDoForm {
         frameToDoForm.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent windowEvent) {
+                frame.setVisible(true);
+                frameToDoForm.setVisible(false);
+                frameToDoForm.dispose();
+            }
+        });
+
+        panelActivity.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                String label = JOptionPane.showInputDialog(panelActivity, "Inserert the Activity name:");
+                if (label != null && !label.trim().isEmpty()) {
+                    JCheckBox checkBox = new JCheckBox(label);
+                    checkBox.setBounds(e.getX(), e.getY(), 150, 20);
+                    panelActivity.add(checkBox);
+                    panelActivity.revalidate();
+                    panelActivity.repaint();
+                }
+
+            }
+        });
+
+        buttonSave.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //creaiamo un nuovo oggetto toDo da salvare nel database
                 frame.setVisible(true);
                 frameToDoForm.setVisible(false);
                 frameToDoForm.dispose();
