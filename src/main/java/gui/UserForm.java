@@ -1,5 +1,7 @@
 package gui;
 
+import models.User;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,7 +37,6 @@ public class UserForm {
 
                 System.out.println("Username: " + username);
                 System.out.println("Password (for demonstration purposes, handle securely in production): " + password);
-
                 frame.setVisible(false);
 
                 BoardForm boardForm = new BoardForm(frame);
