@@ -32,7 +32,7 @@
             </properties>
             <border type="none"/>
             <children>
-              <component id="4f6ef" class="javax.swing.JComboBox" binding="comboBox1" default-binding="true">
+              <component id="4f6ef" class="javax.swing.JComboBox" binding="comboBoxBoards">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -40,12 +40,7 @@
                   <background color="-16759297"/>
                   <font name="Microsoft Himalaya" size="20" style="0"/>
                   <foreground color="-394241"/>
-                  <model>
-                    <item value="My Boards"/>
-                    <item value="Università"/>
-                    <item value="Lavoro"/>
-                    <item value="Tempo Libero"/>
-                  </model>
+                  <model/>
                 </properties>
               </component>
               <component id="4ba17" class="javax.swing.JButton" binding="shareBoardButton" default-binding="true">
