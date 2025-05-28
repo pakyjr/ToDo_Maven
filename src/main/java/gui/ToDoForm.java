@@ -1,6 +1,7 @@
 package gui;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 
 public class ToDoForm {
@@ -40,6 +41,10 @@ public class ToDoForm {
                 if (label != null && !label.trim().isEmpty()) {
                     JCheckBox checkBox = new JCheckBox(label);
                     checkBox.setBounds(e.getX(), e.getY(), 150, 20);
+                    GridLayout b = new GridLayout();
+                    b.setColumns(1);
+                    b.setRows(5);
+                    panelActivity.setLayout(b);
                     panelActivity.add(checkBox);
                     panelActivity.revalidate();
                     panelActivity.repaint();
