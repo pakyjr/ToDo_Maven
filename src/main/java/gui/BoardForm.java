@@ -7,14 +7,15 @@ import java.awt.event.ActionListener;
 public class BoardForm {
     private JPanel board;
     private JComboBox comboBoxBoards;
-    private JButton addBoardButton;
     private JButton shareBoardButton;
     private JButton addToDoButton;
     private JButton orderToDoButton;
     private JButton deleteToDoButton;
     private JButton dueDateButton;
-    private JButton membersButton;
+    public JScrollPane ScrollPanel;
+    public JTable table1;
     public JFrame frameBoardForm;
+
 
     public BoardForm(JFrame frame){
     frameBoardForm = new JFrame("Personal Area");

@@ -6,16 +6,17 @@ import java.awt.event.*;
 
 public class ToDoForm {
     private JPanel todoPanel;
-    private JTextField textField1;
-    private JTextField textField2;
-    private JTextField textField3;
-    private JTextField textField4;
+    private JTextField nameField;
+    private JTextField DescriptionField;
+    private JTextField dueDateField;
+    private JTextField urlField;
     private JButton shareButton;
     private JButton changeShareButton;
-    private JComboBox comboBox1;
-    private JTextField textField5;
+    private JComboBox members;
+    private JTextField statusField;
     private JButton buttonSave;
     private JPanel panelActivity;
+    private JLabel image;
     public JFrame frameToDoForm, frame;
 
     public ToDoForm(JFrame parent){
@@ -43,7 +44,7 @@ public class ToDoForm {
                     checkBox.setBounds(e.getX(), e.getY(), 150, 20);
                     GridLayout b = new GridLayout();
                     b.setColumns(1);
-                    b.setRows(5);
+                    b.setRows(1000);
                     panelActivity.setLayout(b);
                     panelActivity.add(checkBox);
                     panelActivity.revalidate();
