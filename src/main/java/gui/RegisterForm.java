@@ -1,5 +1,7 @@
 package gui;
 
+import controller.Controller;
+
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -10,10 +12,12 @@ public class RegisterForm {
     private JButton registerButton;
     private JPasswordField passwordField1;
     public JFrame frameRegisterForm, frame;
+    private Controller controller;
 
-    public RegisterForm(JFrame parent){
+    public RegisterForm(JFrame parent, Controller c){
 
-        frame = parent;
+        this.frame = parent;
+        this.controller = c;
 
         frameRegisterForm=new JFrame("Registrazione");
         frameRegisterForm.setContentPane(register);

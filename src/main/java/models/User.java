@@ -15,6 +15,7 @@ public class User {
         this.boardList = new HashMap<>();
     }
 
+    /*
     public Optional<Board> addBoard(BoardName boardName, String username) {
         if (boardList.containsKey(boardName.toString())) {
             System.out.println("Board already exists");
@@ -36,6 +37,8 @@ public class User {
         boardList.remove(boardNameStr);
         System.out.printf("Board %s deleted%n", boardNameStr);
     }
+
+     */
 
     private String hashPassword(String password) {
         return Integer.toHexString(password.hashCode());

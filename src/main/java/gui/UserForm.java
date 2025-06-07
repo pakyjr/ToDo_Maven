@@ -1,6 +1,9 @@
 package gui;
 
+import controller.Controller;
+
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -11,6 +14,7 @@ public class UserForm {
     private JTextField usernameField1;
     private JPasswordField passwordField1;
     public static JFrame frame;
+    private Controller controller;
 
     public static void main(String[] args) {
         JFrame mainFrame = new JFrame("Login");
@@ -37,7 +41,7 @@ public class UserForm {
                 System.out.println("Password (for demonstration purposes, handle securely in production): " + password);
                 frame.setVisible(false);
 
-                BoardForm boardForm = new BoardForm(frame);
+                BoardForm boardForm = new BoardForm(frame, controller);
                 boardForm.frameBoardForm.setVisible(true);
             }
         });
@@ -48,7 +52,7 @@ public class UserForm {
 
                 frame.setVisible(false);
 
-                RegisterForm registerinterface = new RegisterForm(frame);
+                RegisterForm registerinterface = new RegisterForm(frame, controller);
                 registerinterface.frameRegisterForm.setVisible(true);
             }
         });
