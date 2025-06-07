@@ -14,6 +14,7 @@ public class BoardForm {
     private JButton dueDateButton;
     public JScrollPane ScrollPanel;
     public JList toDoList;
+    public JPanel toDoInfo;
     public JFrame frameBoardForm;
 
 

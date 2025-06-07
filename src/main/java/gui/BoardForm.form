@@ -119,10 +119,106 @@
         <properties/>
         <border type="none"/>
         <children>
-          <component id="bf2e6" class="javax.swing.JList" binding="toDoList">
+          <splitpane id="d4dbb">
             <constraints/>
             <properties/>
-          </component>
+            <border type="none"/>
+            <children>
+              <component id="15d40" class="javax.swing.JList" binding="toDoList">
+                <constraints>
+                  <splitpane position="left"/>
+                </constraints>
+                <properties/>
+              </component>
+              <grid id="c4e2c" binding="toDoInfo" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <splitpane position="right"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="3103" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="[nameToDo]"/>
+                    </properties>
+                  </component>
+                  <vspacer id="1a1b6">
+                    <constraints>
+                      <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                  </vspacer>
+                  <component id="4505" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Description:"/>
+                    </properties>
+                  </component>
+                  <component id="8cc5" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="[descriptionText]"/>
+                    </properties>
+                  </component>
+                  <component id="7ef08" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Due Date:"/>
+                    </properties>
+                  </component>
+                  <component id="1f714" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="[dueDateText]"/>
+                    </properties>
+                  </component>
+                  <component id="c8837" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="URL:"/>
+                    </properties>
+                  </component>
+                  <component id="87f42" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="[URLText]"/>
+                    </properties>
+                  </component>
+                  <component id="e0451" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Status:"/>
+                    </properties>
+                  </component>
+                  <component id="761ef" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="[Status]"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </splitpane>
         </children>
       </scrollpane>
     </children>
