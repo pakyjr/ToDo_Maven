@@ -13,7 +13,7 @@ public class BoardForm {
     private JButton deleteToDoButton;
     private JButton dueDateButton;
     public JScrollPane ScrollPanel;
-    public JTable table1;
+    public JList toDoList;
     public JFrame frameBoardForm;
 
 
