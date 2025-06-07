@@ -17,7 +17,7 @@ public class BoardForm {
     public JPanel toDoInfo;
     public JFrame frameBoardForm;
 
-
+//prova1
     public BoardForm(JFrame frame){
     frameBoardForm = new JFrame("Personal Area");
     frameBoardForm.setContentPane(board);
