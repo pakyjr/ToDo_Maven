@@ -1,5 +1,7 @@
 package gui;
 
+import controller.Controller;
+
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -11,9 +13,10 @@ public class RegisterForm {
     private JPasswordField passwordField1;
     public JFrame frameRegisterForm, frame;
 
-    public RegisterForm(JFrame parent){
-
-        frame = parent;
+    private Controller controller;
+    public RegisterForm(JFrame parent, Controller c){
+        this.controller = c;
+        this.frame = parent;
 
         frameRegisterForm=new JFrame("Registrazione");
         frameRegisterForm.setContentPane(register);
@@ -45,17 +48,13 @@ public class RegisterForm {
             JOptionPane.showMessageDialog(frameRegisterForm, "You need to insert username and password.", "Error while creating the account", JOptionPane.ERROR_MESSAGE);
         }
         else{
+            controller.register(username, password);
             frameRegisterForm.setVisible(false);
 
-            BoardForm boardForm = new BoardForm(frameRegisterForm);
+            BoardForm boardForm = new BoardForm(frameRegisterForm, controller);
             boardForm.frameBoardForm.setVisible(true);
 
-            System.out.println("Utente registrato:");
-            System.out.println("Username: " + username);
-            System.out.println("Password: " + password);
         }
-
-        // Qui puoi salvare i dati su file o database
 
 
     }

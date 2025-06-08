@@ -1,5 +1,5 @@
 package gui;
-
+import controller.*;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,6 +11,8 @@ public class UserForm {
     private JTextField usernameField1;
     private JPasswordField passwordField1;
     public static JFrame frame;
+
+    private Controller controller;
 
     public static void main(String[] args) {
         JFrame mainFrame = new JFrame("Login");
@@ -25,6 +27,7 @@ public class UserForm {
 
 
     public UserForm(JFrame parentFrame) {
+        this.controller = new Controller();
         this.frame = parentFrame;
 
         loginButton.addActionListener(new ActionListener() {
@@ -48,7 +51,7 @@ public class UserForm {
 
                 frame.setVisible(false);
 
-                RegisterForm registerinterface = new RegisterForm(frame);
+                RegisterForm registerinterface = new RegisterForm(frame, controller);
                 registerinterface.frameRegisterForm.setVisible(true);
             }
         });

@@ -13,18 +13,20 @@ public class User {
         this.username = username;
         this.hashedPassword = hashPassword(plainPassword);
         this.boardList = new HashMap<>();
+        fillBoard(this.username);
     }
 
-    public Optional<Board> addBoard(BoardName boardName, String username) {
-        if (boardList.containsKey(boardName.toString())) {
-            System.out.println("Board already exists");
-            return Optional.empty();
-        }
-
+    public Board addBoard(BoardName boardName, String username) {
         Board board = new Board(boardName, username);
         boardList.put(boardName.toString(), board);
 
-        return Optional.of(board);
+        return board;
+    }
+
+    public void fillBoard(String user) {
+        addBoard(BoardName.WORK, user);
+        addBoard(BoardName.UNIVERSITY, user);
+        addBoard(BoardName.FREE_TIME, user);
     }
 
     public void deleteBoard(BoardName boardName) {

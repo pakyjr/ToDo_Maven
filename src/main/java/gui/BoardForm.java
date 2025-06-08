@@ -1,5 +1,7 @@
 package gui;
 
+import controller.Controller;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -17,12 +19,16 @@ public class BoardForm {
     public JPanel toDoInfo;
     public JFrame frameBoardForm;
 
+    private Controller controller;
 
-    public BoardForm(JFrame frame){
+
+    public BoardForm(JFrame frame, Controller c){
     frameBoardForm = new JFrame("Personal Area");
     frameBoardForm.setContentPane(board);
     frameBoardForm.pack();
         frameBoardForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        this.controller = c;
 
         this.comboBoxBoards.addItem("My boards");
         this.comboBoxBoards.addItem("University");
