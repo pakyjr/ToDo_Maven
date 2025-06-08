@@ -1,5 +1,7 @@
 package utils;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import models.*;
 import models.board.Board;
@@ -21,10 +23,10 @@ public class DueDateChecker {
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                Date today = new Date();
+                LocalDate today = LocalDate.now();
                 for (Board board : boards) {
                     for (ToDo todo : board.getTodoList()) {
-                        Date dueDate = todo.getDueDate();
+                        LocalDate dueDate = todo.getDueDate();
                         if (dueDate != null && isSameDay(today, dueDate)) {
                             System.out.println("ToDo due today: " + todo.getTitle());
                             todo.setColor("red");
@@ -36,9 +38,10 @@ public class DueDateChecker {
         }, midnight.getTime(), oneDay);
     }
 
-    private static boolean isSameDay(Date d1, Date d2) {
+    private static boolean isSameDay(LocalDate d1, LocalDate d2) {
         Calendar c1 = Calendar.getInstance(), c2 = Calendar.getInstance();
-        c1.setTime(d1); c2.setTime(d2);
+        Date date1 = Date.from(d1.atStartOfDay(ZoneId.systemDefault()).toInstant());
+        Date date2 = Date.from(d2.atStartOfDay(ZoneId.systemDefault()).toInstant());
         return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR) &&
                 c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR);
     }

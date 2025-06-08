@@ -63,7 +63,7 @@ public class ToDoForm {
         buttonSave.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                controller.addToDo(currentBoard, nameField.getText(), descriptionField.getText(), dueDateField.getText(), urlField.getText());
+                String id = controller.addToDo(currentBoard, nameField.getText(), descriptionField.getText(), dueDateField.getText(), urlField.getText());
                 //creaiamo un nuovo oggetto toDo da salvare nel database
                 frame.setVisible(true);
                 frameToDoForm.setVisible(false);

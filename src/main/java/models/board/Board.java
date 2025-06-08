@@ -47,7 +47,7 @@ public class Board {
         todo.setPosition(listSize);
     }
 
-    public List<ToDo> getTodoList() {
+    public ArrayList<ToDo> getTodoList() {
         return new ArrayList<>(todoList);
     }
 

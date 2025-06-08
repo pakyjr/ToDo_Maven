@@ -150,4 +150,8 @@ public class ToDo {
     public void removeUser(User user) {
         users.remove(user);
     }
+
+    public UUID getId() {
+        return this.id;
+    }
 }

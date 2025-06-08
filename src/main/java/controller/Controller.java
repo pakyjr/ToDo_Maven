@@ -18,7 +18,7 @@ public class Controller {
         this.user = new User(username, password);
     }
 
-    public void addToDo(String boardName, String toDoName, String description, String date, String url){
+    public String addToDo(String boardName, String toDoName, String description, String date, String url){
         if(boardName.equals("Free Time")){
             boardName = "FREE_TIME";
         }
@@ -29,6 +29,9 @@ public class Controller {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         LocalDate localDate = LocalDate.parse(date, formatter);
         toDo.setDueDate(localDate);
+        return toDo.getId().toString();
     }
+
+    public void addActivity(String boardName, String activityName){}
     //todo qua dobbiamo salvare nel db
 }
