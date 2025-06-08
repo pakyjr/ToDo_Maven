@@ -40,7 +40,7 @@ public class UserForm {
                 System.out.println("Password (for demonstration purposes, handle securely in production): " + password);
                 frame.setVisible(false);
 
-                BoardForm boardForm = new BoardForm(frame);
+                BoardForm boardForm = new BoardForm(frame, controller);
                 boardForm.frameBoardForm.setVisible(true);
             }
         });

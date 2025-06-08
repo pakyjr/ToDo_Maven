@@ -1,5 +1,7 @@
 package gui;
 
+import controller.Controller;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -7,22 +9,26 @@ import java.awt.event.*;
 public class ToDoForm {
     private JPanel todoPanel;
     private JTextField nameField;
-    private JTextField DescriptionField;
+    private JTextField descriptionField;
     private JTextField dueDateField;
     private JTextField urlField;
     private JButton shareButton;
     private JButton changeShareButton;
     private JComboBox members;
-    private JTextField statusField;
     private JButton buttonSave;
     private JPanel panelActivity;
     private JLabel image;
     public JFrame frameToDoForm, frame;
 
-    public ToDoForm(JFrame parent){
-        frame = parent;
+    private String currentBoard;
+    private Controller controller;
 
-        frameToDoForm=new JFrame("ToDo Creation");
+    public ToDoForm(JFrame parent, Controller c, String cu){
+        this.frame = parent;
+        this.controller = c;
+        this.currentBoard = cu;
+
+        frameToDoForm = new JFrame("ToDo Creation");
         frameToDoForm.setContentPane(todoPanel);
         frameToDoForm.pack();
 
@@ -57,6 +63,7 @@ public class ToDoForm {
         buttonSave.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                controller.addToDo(currentBoard, nameField.getText(), descriptionField.getText(), dueDateField.getText(), urlField.getText());
                 //creaiamo un nuovo oggetto toDo da salvare nel database
                 frame.setVisible(true);
                 frameToDoForm.setVisible(false);

@@ -30,7 +30,6 @@ public class BoardForm {
 
         this.controller = c;
 
-        this.comboBoxBoards.addItem("My boards");
         this.comboBoxBoards.addItem("University");
         this.comboBoxBoards.addItem("Work");
         this.comboBoxBoards.addItem("Free Time");
@@ -39,8 +38,8 @@ public class BoardForm {
         addToDoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
-                ToDoForm toDoForm = new ToDoForm(frameBoardForm);
+                String currentBoard = comboBoxBoards.getSelectedItem().toString();
+                ToDoForm toDoForm = new ToDoForm(frameBoardForm, controller, currentBoard);
                 toDoForm.frameToDoForm.setVisible(true);
             }
         });
