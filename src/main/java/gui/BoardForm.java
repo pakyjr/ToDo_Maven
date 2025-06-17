@@ -75,7 +75,7 @@ public class BoardForm {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 String title = ((String) toDoList.getSelectedValue());
-
+                /*
                 Book b = controller.getBookByTitle(title);
                 if(b != null) {
                     bookName.setText(b.getTitle());
@@ -90,8 +90,14 @@ public class BoardForm {
                     setVisibilityContactInfo(false);
                     frameBoardForm.setSize(300, 300);
                     frameBoardForm.repaint();
+
+
                 }
+                
+                 */
             }
+
+
         });
 
     }
