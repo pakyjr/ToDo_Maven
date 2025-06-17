@@ -7,6 +7,7 @@ import models.board.BoardName;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -23,8 +24,14 @@ public class BoardForm {
     public JList toDoList;
     public JPanel toDoInfo;
     private JButton buttonModify;
+    private JLabel labelDescription;
+    private JLabel descriptionText;
+    private JLabel dueDateText;
+    private JLabel urlText;
+    private JLabel statusText;
     public JFrame frameBoardForm;
 
+    public static DefaultListModel<String> listModel;
     private Controller controller;
 
 
@@ -36,9 +43,13 @@ public class BoardForm {
 
         this.controller = c;
 
-        this.comboBoxBoards.addItem("University");
-        this.comboBoxBoards.addItem("Work");
-        this.comboBoxBoards.addItem("Free Time");
+        this.comboBoxBoards.addItem("UNIVERSITY");
+        this.comboBoxBoards.addItem("WORK");
+        this.comboBoxBoards.addItem("FREE TIME");
+
+        listModel = new DefaultListModel<String>();
+        listModel.addAll(controller.toDoStringList(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())));
+        toDoList.setModel(listModel);
 
         ArrayList<ToDo> toDoList = controller.user.getBoard(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())).getTodoList();
         JList<ToDo> lista = new JList<>(toDoList.toArray(new ToDo[0]));
@@ -58,5 +69,39 @@ public class BoardForm {
                 toDoForm.frameToDoForm.setVisible(true);
             }
         });
+
+
+        toDoList.addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                String title = ((String) toDoList.getSelectedValue());
+
+                Book b = controller.getBookByTitle(title);
+                if(b != null) {
+                    bookName.setText(b.getTitle());
+                    bookAuthor.setText(b.getAuthor());
+                    bookGenre.setText(b.getGenre());
+                    bookYear.setText(b.getYear()+"");
+                    setVisibilityContactInfo(true);
+                    contactGuiFrame.setSize(500, 300);
+                    contactGuiFrame.repaint();
+                }
+                else {
+                    setVisibilityContactInfo(false);
+                    frameBoardForm.setSize(300, 300);
+                    frameBoardForm.repaint();
+                }
+            }
+        });
+
+    }
+
+    private void setVisibilityContactInfo(boolean status)
+    {
+        toDoInfo.setVisible(status);
+        for (Component c : toDoInfo.getComponents()) {
+            c.setVisible(status);
+        }
+        toDoInfo.repaint();
     }
 }
