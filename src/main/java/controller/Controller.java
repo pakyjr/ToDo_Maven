@@ -46,10 +46,13 @@ public class Controller {
     public ToDo getToDoByTitle(String title, BoardName board){
         for(int i = 0; i < user.getBoard(board).getTodoList().size(); i++){
             ToDo toDo = null;
-            if(user.getBoard(board).getTodoList().get(i).getTitle().equals(title))
-                toDo = new ToDo(user.getBoard(board).getTodoList().get(i).getTitle(), )
+            if(user.getBoard(board).getTodoList().get(i).getTitle().equals(title)) {
+                toDo = new ToDo(user.getBoard(board).getTodoList().get(i));
+                return toDo;
 
+            }
         }
+        return null;
     }
 
     public void addActivity(String boardName, String activityName){}

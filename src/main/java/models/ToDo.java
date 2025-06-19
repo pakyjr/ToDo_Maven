@@ -24,6 +24,21 @@ public class ToDo {
         this.activityList = new HashMap<>();
     }
 
+    public ToDo(ToDo toDo){
+        this.id = toDo.getId();
+        this.title = toDo.getTitle();
+        this.description = toDo.getDescription();
+        this.url = toDo.getUrl();
+        this.dueDate = toDo.getDueDate();
+        this.activityList = toDo.getActivityList();
+        this.done = toDo.getDone();
+        this.color = toDo.getColor();
+        this.image = toDo.getImage();
+    }
+
+    public boolean getDone(){
+        return done;
+    }
     public int getPosition() {
         return position;
     }

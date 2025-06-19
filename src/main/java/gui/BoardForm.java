@@ -88,7 +88,7 @@ public class BoardForm {
                 TitleText.setText(b.getTitle());//metodo set capire nome
                 DescriptionText.setText(b.getDescription());
                 DueDateText.setText(b.getDueDate());
-                UrlText.setUrl(b.getUrl());
+                UrlText.setText(b.getUrl());
                 BoardForm.repaint();
             }
             else{
@@ -103,8 +103,7 @@ public class BoardForm {
 
     private void setVisibilityinfoToDo(boolean status)
     {
-        infoToDo.setVisible(status);
-        for (Component c )
+
     }
 
 }
