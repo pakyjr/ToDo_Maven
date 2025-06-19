@@ -14,6 +14,14 @@ import java.util.ArrayList;
 
 public class BoardForm {
     private JPanel board;
+    private JLabel DescriptionLabel;
+    private JLabel DescriptionText;
+    private JLabel DueDateLabel;
+    private JLabel DueDateText;
+    private JLabel UrlLabel;
+    private JLabel UrlText;
+    private JLabel TitleLabel;
+    private JLabel TitleText;
     private JComboBox comboBoxBoards;
     private JButton shareBoardButton;
     private JButton addToDoButton;
@@ -22,30 +30,28 @@ public class BoardForm {
     private JButton dueDateButton;
     public JScrollPane ScrollPanel;
     public JList toDoList;
-    public JPanel toDoInfo;
+    public JPanel infoToDo;
     private JButton buttonModify;
-    private JLabel labelDescription;
-    private JLabel descriptionText;
-    private JLabel dueDateText;
-    private JLabel urlText;
-    private JLabel statusText;
-    public JFrame frameBoardForm;
+
 
     public static DefaultListModel<String> listModel;
     private Controller controller;
+    public static JFrame BoardForm;
 
 
     public BoardForm(JFrame frame, Controller c){
-        frameBoardForm = new JFrame("Personal Area");
-        frameBoardForm.setContentPane(board);
-        frameBoardForm.pack();
-        frameBoardForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
+        setVisibilityinfoToDo(false);
+        BoardForm = new JFrame("Personal Area");
+        BoardForm.setContentPane(new BoardForm().board);
+        BoardForm.pack();
+        BoardForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        BoardForm.setVisible(true);
         this.controller = c;
 
         this.comboBoxBoards.addItem("UNIVERSITY");
         this.comboBoxBoards.addItem("WORK");
         this.comboBoxBoards.addItem("FREE TIME");
+
 
         listModel = new DefaultListModel<String>();
         listModel.addAll(controller.toDoStringList(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())));
@@ -65,49 +71,40 @@ public class BoardForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String currentBoard = comboBoxBoards.getSelectedItem().toString();
-                ToDoForm toDoForm = new ToDoForm(frameBoardForm, controller, currentBoard);
+                ToDoForm newFrame = new ToDoForm(frameBoardForm, controller);
                 toDoForm.frameToDoForm.setVisible(true);
             }
         });
 
 
-        toDoList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                String title = ((String) toDoList.getSelectedValue());
-                /*
-                Book b = controller.getBookByTitle(title);
-                if(b != null) {
-                    bookName.setText(b.getTitle());
-                    bookAuthor.setText(b.getAuthor());
-                    bookGenre.setText(b.getGenre());
-                    bookYear.setText(b.getYear()+"");
-                    setVisibilityContactInfo(true);
-                    contactGuiFrame.setSize(500, 300);
-                    contactGuiFrame.repaint();
-                }
-                else {
-                    setVisibilityContactInfo(false);
-                    frameBoardForm.setSize(300, 300);
-                    frameBoardForm.repaint();
 
+        toDoList.addListSelectionListener(new ListSelectionListener(){
 
-                }
-                
-                 */
+        public void valueChanged(ListSelectionEvent e){
+            String title = ((String) toDoList.getSelectedValue());
+
+            ToDo b = controller.getToDoByTitle(title);
+            if(b != null){
+                TitleText.setText(b.getTitle());//metodo set capire nome
+                DescriptionText.setText(b.getDescription());
+                DueDateText.setText(b.getDueDate());
+                UrlText.setUrl(b.getUrl());
+                BoardForm.repaint();
             }
-
+            else{
+                setVisibilityinfoToDo(false);
+                BoardForm.repaint();
+            }
+        }
 
         });
 
     }
 
-    private void setVisibilityContactInfo(boolean status)
+    private void setVisibilityinfoToDo(boolean status)
     {
-        toDoInfo.setVisible(status);
-        for (Component c : toDoInfo.getComponents()) {
-            c.setVisible(status);
-        }
-        toDoInfo.repaint();
+        infoToDo.setVisible(status);
+        for (Component c )
     }
+
 }
