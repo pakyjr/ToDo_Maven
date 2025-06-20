@@ -6,13 +6,21 @@ import java.util.*;
 
 public class User {
     private final String username;
-    private final String hashedPassword;
+    private final String password;
     private final Map<String, Board> boardList;
 
-    public User(String username, String plainPassword) {
+    public User(String username, String password) {
         this.username = username;
-        this.hashedPassword = hashPassword(plainPassword);
+        this.password = password;
         this.boardList = new HashMap<>();
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public Optional<Board> addBoard(BoardName boardName, String username) {
@@ -37,13 +45,7 @@ public class User {
         System.out.printf("Board %s deleted%n", boardNameStr);
     }
 
-    private String hashPassword(String password) {
-        return Integer.toHexString(password.hashCode());
-    }
 
-    public String getUsername() {
-        return username;
-    }
 
     public Map<String, Board> getBoardList() {
         return Collections.unmodifiableMap(boardList);
