@@ -33,14 +33,7 @@ public class ToDoForm {
         frameToDoForm.setContentPane(todoPanel);
         frameToDoForm.pack();
 
-        frameToDoForm.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent windowEvent) {
-                frame.setVisible(true);
-                frameToDoForm.setVisible(false);
-                frameToDoForm.dispose();
-            }
-        });
+
 
 
         buttonSave.addActionListener(new ActionListener() {

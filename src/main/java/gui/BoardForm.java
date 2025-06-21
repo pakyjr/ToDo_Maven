@@ -49,7 +49,7 @@ public class BoardForm {
         this.comboBoxBoards.addItem("FREE TIME");
 
         listModel = new DefaultListModel<String>();
-        listModel.addAll(controller.toDoStringList(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())));
+        listModel.addAll(controller.getToDoListString(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())));
         jList.setModel(listModel);
 
         ArrayList<ToDo> toDoList = controller.user.getBoard(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())).getTodoList();

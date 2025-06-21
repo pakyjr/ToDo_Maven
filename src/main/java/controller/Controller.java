@@ -34,16 +34,6 @@ public class Controller {
         return toDo.getId().toString();
     }
 
-    public ArrayList<String> toDoStringList(BoardName board){
-
-            ArrayList<String> list = new ArrayList<>();
-            for(int i = 0; i < user.getBoard(board).getTodoList().size(); i++){
-                list.add(user.getBoard(board).getTodoList().get(i).getTitle());
-            }
-            return list;
-
-    }
-
     public ToDo getToDoByTitle(String title, BoardName board){
         ToDo toDo = null;
         for(int i = 0; i < user.getBoard(board).getTodoList().size(); i++){
