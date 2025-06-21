@@ -41,6 +41,7 @@ public class BoardForm {
         frameBoardForm.pack();
         frameBoardForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        setVisibilityContactInfo(false);
         this.controller = c;
 
         this.comboBoxBoards.addItem("UNIVERSITY");

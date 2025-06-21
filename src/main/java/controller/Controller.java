@@ -55,6 +55,13 @@ public class Controller {
         return toDo;
     }
 
+    public ArrayList<String> getToDoListString(BoardName board){
+        ArrayList<String> toResult = new ArrayList<>();
+        for(int i = 0; i < user.getBoard(board).getTodoList().size(); i++)
+            toResult.add(user.getBoard(board).getTodoList().get(i).getTitle());
+        return toResult;
+    }
+
     public void addActivity(String boardName, String activityName){}
     //todo qua dobbiamo salvare nel db
 }
