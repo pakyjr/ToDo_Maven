@@ -41,7 +41,7 @@ public class BoardForm {
         frameBoardForm.pack();
         frameBoardForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        setVisibilityContactInfo(false);
+        setVisibilityToDoInfo(false);
         this.controller = c;
 
         this.comboBoxBoards.addItem("UNIVERSITY");
@@ -52,11 +52,8 @@ public class BoardForm {
         listModel.addAll(controller.getToDoListString(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())));
         jList.setModel(listModel);
 
-        ArrayList<ToDo> toDoList = controller.user.getBoard(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())).getTodoList();
-        JList<ToDo> jList = new JList<>(toDoList.toArray(new ToDo[0]));
-        jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
         buttonModify.setEnabled(false);
+        deleteToDoButton.setEnabled(false);
 
         jList.addListSelectionListener(e -> {
             buttonModify.setEnabled(!jList.isSelectionEmpty());
@@ -75,27 +72,28 @@ public class BoardForm {
         jList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                String title = ((String) jList.getSelectedValue().getTitle());
+                String title = ((String) jList.getSelectedValue());
 
-                ToDo toDo = controller.getToDoByTitle(title, BoardName.valueOf(comboBoxBoards.getSelectedItem().toString()));
-                if(toDo != null) {
-                    labelText.setText(toDo.getTitle());
-                    labelDescription.setText(toDo.getDescription());
-                    labelUrl.setText(toDo.getUrl());
-                    labelDueDate.setText(toDo.getDueDate().toString());
-                    labelOwner.setText(toDo.getOwner());
-                    setVisibilityContactInfo(true);
+                ToDo todo = controller.getToDoByTitle(title, BoardName.valueOf(comboBoxBoards.getSelectedItem().toString()));
+                if(todo != null) {
+                    labelText.setText(todo.getTitle());
+                    labelDescription.setText(todo.getDescription());
+                    labelUrl.setText(todo.getUrl());
+                    labelDueDate.setText(todo.getDueDate().toString());
+                    labelOwner.setText(todo.getOwner());
+
+                    setVisibilityToDoInfo(true);
                     frameBoardForm.setSize(500, 300);
                     frameBoardForm.repaint();
                 }
                 else {
-                    setVisibilityContactInfo(false);
+                    setVisibilityToDoInfo(false);
                     frameBoardForm.setSize(300, 300);
                     frameBoardForm.repaint();
 
 
                 }
-                
+
 
             }
 
@@ -104,8 +102,7 @@ public class BoardForm {
 
     }
 
-    private void setVisibilityContactInfo(boolean status)
-    {
+    private void setVisibilityToDoInfo(boolean status) {
         toDoInfo.setVisible(status);
         for (Component c : toDoInfo.getComponents()) {
             c.setVisible(status);

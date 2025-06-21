@@ -35,14 +35,15 @@ public class Controller {
     }
 
     public ToDo getToDoByTitle(String title, BoardName board){
-        ToDo toDo = null;
         for(int i = 0; i < user.getBoard(board).getTodoList().size(); i++){
 
-            if(user.getBoard(board).getTodoList().get(i).getTitle().equals(title))
-                toDo = new ToDo(user.getBoard(board).getTodoList().get(i));
+            if(user.getBoard(board).getTodoList().get(i).getTitle().equals(title)){
+                ToDo toDo = new ToDo(user.getBoard(board).getTodoList().get(i));
+                return toDo;
+            }
 
         }
-        return toDo;
+       return null;
     }
 
     public ArrayList<String> getToDoListString(BoardName board){
