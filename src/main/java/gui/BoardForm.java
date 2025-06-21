@@ -21,14 +21,14 @@ public class BoardForm {
     private JButton deleteToDoButton;
     private JButton dueDateButton;
     public JScrollPane ScrollPanel;
-    public JList toDoList;
     public JPanel toDoInfo;
     private JButton buttonModify;
+    private JList jList;
+    private JLabel labelText;
     private JLabel labelDescription;
-    private JLabel descriptionText;
-    private JLabel dueDateText;
-    private JLabel urlText;
-    private JLabel statusText;
+    private JLabel labelUrl;
+    private JLabel labelDueDate;
+    private JLabel labelOwner;
     public JFrame frameBoardForm;
 
     public static DefaultListModel<String> listModel;
@@ -49,16 +49,16 @@ public class BoardForm {
 
         listModel = new DefaultListModel<String>();
         listModel.addAll(controller.toDoStringList(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())));
-        toDoList.setModel(listModel);
+        jList.setModel(listModel);
 
         ArrayList<ToDo> toDoList = controller.user.getBoard(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())).getTodoList();
-        JList<ToDo> lista = new JList<>(toDoList.toArray(new ToDo[0]));
-        lista.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        JList<ToDo> jList = new JList<>(toDoList.toArray(new ToDo[0]));
+        jList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         buttonModify.setEnabled(false);
 
-        lista.addListSelectionListener(e -> {
-            buttonModify.setEnabled(!lista.isSelectionEmpty());
+        jList.addListSelectionListener(e -> {
+            buttonModify.setEnabled(!jList.isSelectionEmpty());
         });
 
         addToDoButton.addActionListener(new ActionListener() {
@@ -71,20 +71,21 @@ public class BoardForm {
         });
 
 
-        toDoList.addListSelectionListener(new ListSelectionListener() {
+        jList.addListSelectionListener(new ListSelectionListener() {
             @Override
             public void valueChanged(ListSelectionEvent e) {
-                String title = ((String) toDoList.getSelectedValue());
-                /*
-                Book b = controller.getBookByTitle(title);
-                if(b != null) {
-                    bookName.setText(b.getTitle());
-                    bookAuthor.setText(b.getAuthor());
-                    bookGenre.setText(b.getGenre());
-                    bookYear.setText(b.getYear()+"");
+                String title = ((String) jList.getSelectedValue().getTitle());
+
+                ToDo toDo = controller.getToDoByTitle(title, BoardName.valueOf(comboBoxBoards.getSelectedItem().toString()));
+                if(toDo != null) {
+                    labelText.setText(toDo.getTitle());
+                    labelDescription.setText(toDo.getDescription());
+                    labelUrl.setText(toDo.getUrl());
+                    labelDueDate.setText(toDo.getDueDate().toString());
+                    labelOwner.setText(toDo.getOwner());
                     setVisibilityContactInfo(true);
-                    contactGuiFrame.setSize(500, 300);
-                    contactGuiFrame.repaint();
+                    frameBoardForm.setSize(500, 300);
+                    frameBoardForm.repaint();
                 }
                 else {
                     setVisibilityContactInfo(false);
@@ -94,7 +95,7 @@ public class BoardForm {
 
                 }
                 
-                 */
+
             }
 
 

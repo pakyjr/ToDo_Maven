@@ -7,6 +7,7 @@ import models.board.BoardName;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Optional;
 
 public class Controller {
     public User user;
@@ -44,12 +45,14 @@ public class Controller {
     }
 
     public ToDo getToDoByTitle(String title, BoardName board){
+        ToDo toDo = null;
         for(int i = 0; i < user.getBoard(board).getTodoList().size(); i++){
-            ToDo toDo = null;
+
             if(user.getBoard(board).getTodoList().get(i).getTitle().equals(title))
-                toDo = new ToDo(user.getBoard(board).getTodoList().get(i).getTitle(), )
+                toDo = new ToDo(user.getBoard(board).getTodoList().get(i));
 
         }
+        return toDo;
     }
 
     public void addActivity(String boardName, String activityName){}
