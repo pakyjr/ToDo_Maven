@@ -5,6 +5,8 @@ import models.ToDo;
 import models.board.BoardName;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -29,6 +31,8 @@ public class BoardForm {
     private JLabel labelUrl;
     private JLabel labelDueDate;
     private JLabel labelOwner;
+    private JTextField textFieldSearch;
+    private JLabel labelSearch;
     public JFrame frameBoardForm;
 
     public static DefaultListModel<String> listModel;
@@ -110,6 +114,20 @@ public class BoardForm {
                 listModel.addAll(todos);
             }
         });
+
+        textFieldSearch.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                filterToDoList();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                filterToDoList();
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                filterToDoList();
+            }
+        });
     }
 
     private void setVisibilityToDoInfo(boolean status) {
@@ -118,6 +136,20 @@ public class BoardForm {
             c.setVisible(status);
         }
         toDoInfo.repaint();
+    }
+
+    private void filterToDoList() {
+        String searchText = textFieldSearch.getText().toLowerCase();
+        String selectedBoard = comboBoxBoards.getSelectedItem().toString();
+
+        ArrayList<String> allTodos = controller.getToDoListString(BoardName.valueOf(selectedBoard));
+        listModel.clear();
+
+        for (String todoTitle : allTodos) {
+            if (todoTitle.toLowerCase().contains(searchText)) {
+                listModel.addElement(todoTitle);
+            }
+        }
     }
 
 }
