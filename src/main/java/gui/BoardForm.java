@@ -146,6 +146,9 @@ public class BoardForm {
             }
         });
 
+        dueDateButton.addActionListener(e -> {
+            showTodosToday();
+        });
     }
 
     private void setVisibilityToDoInfo(boolean status) {
@@ -192,6 +195,24 @@ public class BoardForm {
         } catch (DateTimeParseException e) {
 
         }
+    }
+
+    private void showTodosToday() {
+        LocalDate today = LocalDate.now();
+
+        String selected = comboBoxBoards.getSelectedItem().toString();
+        BoardName board = BoardName.valueOf(selected);
+
+        ArrayList<ToDo> todos = controller.user.getBoard(board).getTodoList();
+
+        listModel.clear();
+        for (ToDo t : todos) {
+            if (t.getDueDate().equals(today)) {
+                listModel.addElement(t.getTitle());
+            }
+        }
+        setVisibilityToDoInfo(false);
+        
     }
 
 }

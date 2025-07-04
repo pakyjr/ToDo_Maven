@@ -52,7 +52,7 @@
               <background color="-14184705"/>
               <font name="Elephant" size="14"/>
               <foreground color="-1"/>
-              <text value="Due Date"/>
+              <text value="Today Date"/>
             </properties>
           </component>
           <component id="fe384" class="javax.swing.JButton" binding="addToDoButton" default-binding="true">
