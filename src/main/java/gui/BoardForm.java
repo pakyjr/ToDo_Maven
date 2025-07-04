@@ -46,17 +46,16 @@ public class BoardForm {
 
         this.comboBoxBoards.addItem("UNIVERSITY");
         this.comboBoxBoards.addItem("WORK");
-        this.comboBoxBoards.addItem("FREE TIME");
+        this.comboBoxBoards.addItem("FREE_TIME");
 
         listModel = new DefaultListModel<String>();
-        listModel.addAll(controller.getToDoListString(BoardName.valueOf(comboBoxBoards.getSelectedItem().toString())));
         jList.setModel(listModel);
 
         buttonModify.setEnabled(false);
         deleteToDoButton.setEnabled(false);
-
         jList.addListSelectionListener(e -> {
             buttonModify.setEnabled(!jList.isSelectionEmpty());
+            deleteToDoButton.setEnabled(!jList.isSelectionEmpty());
         });
 
         addToDoButton.addActionListener(new ActionListener() {
@@ -100,6 +99,17 @@ public class BoardForm {
 
         });
 
+
+        comboBoxBoards.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selectedBoard = comboBoxBoards.getSelectedItem().toString();
+                ArrayList<String> todos = controller.getToDoListString(BoardName.valueOf(selectedBoard));
+
+                listModel.clear();
+                listModel.addAll(todos);
+            }
+        });
     }
 
     private void setVisibilityToDoInfo(boolean status) {
@@ -109,4 +119,5 @@ public class BoardForm {
         }
         toDoInfo.repaint();
     }
+
 }
