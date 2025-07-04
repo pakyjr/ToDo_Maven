@@ -53,6 +53,7 @@ public class Controller {
         return toResult;
     }
 
+
     public void addActivity(String boardName, String activityName){}
     //todo qua dobbiamo salvare nel db
 }

@@ -12,6 +12,9 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 
 public class BoardForm {
@@ -31,8 +34,10 @@ public class BoardForm {
     private JLabel labelUrl;
     private JLabel labelDueDate;
     private JLabel labelOwner;
-    private JTextField textFieldSearch;
+    private JTextField textFieldSearchTitle;
     private JLabel labelSearch;
+    private JTextField textFieldSearchDate;
+    private JLabel labelSearchDate;
     public JFrame frameBoardForm;
 
     public static DefaultListModel<String> listModel;
@@ -115,7 +120,7 @@ public class BoardForm {
             }
         });
 
-        textFieldSearch.getDocument().addDocumentListener(new DocumentListener() {
+        textFieldSearchTitle.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 filterToDoList();
             }
@@ -128,6 +133,19 @@ public class BoardForm {
                 filterToDoList();
             }
         });
+
+        textFieldSearchDate.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) {
+                filterByDate();
+            }
+            public void removeUpdate(DocumentEvent e) {
+                filterByDate();
+            }
+            public void changedUpdate(DocumentEvent e) {
+                filterByDate();
+            }
+        });
+
     }
 
     private void setVisibilityToDoInfo(boolean status) {
@@ -139,7 +157,7 @@ public class BoardForm {
     }
 
     private void filterToDoList() {
-        String searchText = textFieldSearch.getText().toLowerCase();
+        String searchText = textFieldSearchTitle.getText().toLowerCase();
         String selectedBoard = comboBoxBoards.getSelectedItem().toString();
 
         ArrayList<String> allTodos = controller.getToDoListString(BoardName.valueOf(selectedBoard));
@@ -149,6 +167,30 @@ public class BoardForm {
             if (todoTitle.toLowerCase().contains(searchText)) {
                 listModel.addElement(todoTitle);
             }
+        }
+    }
+
+    private void filterByDate() {
+        String dateText = textFieldSearchDate.getText().trim();
+        if (dateText.isEmpty()) {
+            filterToDoList();
+            return;
+        }
+
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            LocalDate searchDate = LocalDate.parse(dateText, formatter);
+            String selectedBoard = comboBoxBoards.getSelectedItem().toString();
+            ArrayList<ToDo> todos = controller.user.getBoard(BoardName.valueOf(selectedBoard)).getTodoList();
+
+            listModel.clear();
+            for (ToDo todo : todos) {
+                if (todo.getDueDate().equals(searchDate)) {
+                    listModel.addElement(todo.getTitle());
+                }
+            }
+        } catch (DateTimeParseException e) {
+
         }
     }
 
