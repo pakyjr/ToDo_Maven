@@ -168,6 +168,7 @@ public class BoardForm {
                 setVisibilityToDoInfo(false);
             }
         });
+
         orderToDoByTitleButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -183,6 +184,16 @@ public class BoardForm {
 
                 setVisibilityToDoInfo(false);
             }
+        });
+
+        buttonModify.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String currentBoard = comboBoxBoards.getSelectedItem().toString();
+                ModifyToDoForm toDoForm = new ModifyToDoForm(frameBoardForm, controller, currentBoard);
+                toDoForm.frameModifyToDoForm.setVisible(true);
+            }
+
         });
     }
 
