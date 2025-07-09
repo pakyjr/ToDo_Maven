@@ -16,13 +16,14 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
 
 public class BoardForm {
     private JPanel board;
     private JComboBox comboBoxBoards;
     private JButton shareBoardButton;
     private JButton addToDoButton;
-    private JButton orderToDoButton;
+    private JButton orderToDoByTitleButton;
     private JButton deleteToDoButton;
     private JButton dueDateButton;
     public JScrollPane ScrollPanel;
@@ -38,6 +39,7 @@ public class BoardForm {
     private JLabel labelSearch;
     private JTextField textFieldSearchDate;
     private JLabel labelSearchDate;
+    private JButton buttonOrderByDate;
     public JFrame frameBoardForm;
 
     public static DefaultListModel<String> listModel;
@@ -148,6 +150,39 @@ public class BoardForm {
 
         dueDateButton.addActionListener(e -> {
             showTodosToday();
+        });
+
+        buttonOrderByDate.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selectedBoard = comboBoxBoards.getSelectedItem().toString();
+                ArrayList<ToDo> todos = controller.user.getBoard(BoardName.valueOf(selectedBoard)).getTodoList();
+
+                todos.sort(Comparator.comparing(ToDo::getDueDate));
+
+                listModel.clear();
+                for (ToDo todo : todos) {
+                    listModel.addElement(todo.getTitle());
+                }
+
+                setVisibilityToDoInfo(false);
+            }
+        });
+        orderToDoByTitleButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selectedBoard = comboBoxBoards.getSelectedItem().toString();
+                ArrayList<ToDo> todos = controller.user.getBoard(BoardName.valueOf(selectedBoard)).getTodoList();
+
+                todos.sort(Comparator.comparing(todo -> todo.getTitle().toLowerCase()));
+
+                listModel.clear();
+                for (ToDo todo : todos) {
+                    listModel.addElement(todo.getTitle());
+                }
+
+                setVisibilityToDoInfo(false);
+            }
         });
     }
 
