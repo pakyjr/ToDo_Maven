@@ -6,6 +6,9 @@ import models.board.BoardName;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 public class ToDoForm {
     private JPanel todoPanel;
@@ -33,13 +36,28 @@ public class ToDoForm {
         frameToDoForm.setContentPane(todoPanel);
         frameToDoForm.pack();
 
-
-
-
         buttonSave.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                controller.addToDo(currentBoard, nameField.getText(), descriptionField.getText(), dueDateField.getText(), urlField.getText());
+                String title = nameField.getText();
+                String description = descriptionField.getText();
+                String dueDateString = dueDateField.getText();
+                String url = urlField.getText();
+
+                if (title.isEmpty() || description.isEmpty() || dueDateString.isEmpty()) {
+                    JOptionPane.showMessageDialog(frameToDoForm, "Please fill in all required fields.", "Missing Data", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                LocalDate dueDate;
+                try {
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+                    dueDate = LocalDate.parse(dueDateString, formatter);
+                } catch (DateTimeParseException ex) {
+                    JOptionPane.showMessageDialog(frameToDoForm, "Due Date must be in format dd/MM/yyyy.", "Invalid Date", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                controller.addToDo(currentBoard, title, description, dueDateString, url);
                 JOptionPane.showMessageDialog(frameToDoForm, "Book added successfully.");
 
                 BoardForm.listModel.clear();
