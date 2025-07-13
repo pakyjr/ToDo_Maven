@@ -21,11 +21,12 @@ public class ToDoForm {
     private JButton changeShareButton;
     private JComboBox members;
     private JButton buttonSave;
-    private JPanel panelActivity;
     private JLabel image;
     private JComboBox <String> colorChange;
     private JPanel campo1;
     private JPanel campo2;
+    private JTextField statusField;
+    private JPanel panelActivity;
     public JFrame frameToDoForm, frame;
 
     private String currentBoard;
@@ -143,8 +144,54 @@ public class ToDoForm {
                 }
             }
         });
-    }
+        panelActivity.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                String label = JOptionPane.showInputDialog(panelActivity, "Inserert the Activity name:");
+                if (label != null && !label.trim().isEmpty()) {
+                    JCheckBox checkBox = new JCheckBox(label);
 
+                    checkBox.addItemListener(new ItemListener() {
+                        @Override
+                        public void itemStateChanged(ItemEvent e) {
+                            checkCompletionStatus();
+                        }
+                    });
+                    GridLayout b = new GridLayout();
+                    b.setColumns(1);
+                    b.setRows(100);
+                    panelActivity.setLayout(b);
+                    panelActivity.add(checkBox);
+                    panelActivity.revalidate();
+                    panelActivity.repaint();
+                }
+                checkCompletionStatus();
+            }
+        });
+    }
+    private void checkCompletionStatus() {
+        boolean allChecked = true;
+        int checkBoxCount = 0;
+
+        for (Component comp : panelActivity.getComponents()) {
+            if (comp instanceof JCheckBox) {
+                checkBoxCount++;
+                JCheckBox cb = (JCheckBox) comp;
+                if (!cb.isSelected()) {
+                    allChecked = false;
+                    break;
+                }
+            }
+        }
+
+
+        if (checkBoxCount > 0 && allChecked) {
+            statusField.setText("Completo");
+        } else {
+            statusField.setText(""); // Clear the status if not all are complete
+        }
+    }
     private void loadImage(String imageName) {
         try {
 
@@ -158,7 +205,7 @@ public class ToDoForm {
                 icon = new ImageIcon(scaledImg);
 
                 image.setIcon(icon);
-                image.setText(""); // Rimuovi qualsiasi testo preesistente sulla label
+                image.setText("");
             } else {
                 System.err.println("Errore: Immagine '" + imageName + "' non trovata nel percorso /images/");
                 image.setText("Immagine non trovata!");
