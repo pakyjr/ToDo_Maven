@@ -12,6 +12,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map; // Import Map for activities
 
 public class ToDoForm {
@@ -24,7 +25,7 @@ public class ToDoForm {
     private JButton changeShareButton;
     private JComboBox members;
     private JButton buttonSave;
-    private JLabel image;
+    private JLabel image; // This JLabel displays the image
     private JComboBox <String> colorChange;
     private JPanel campo1;
     private JPanel campo2;
@@ -34,11 +35,12 @@ public class ToDoForm {
 
     private String currentBoard;
     private Controller controller;
-    private ToDo currentToDo;
+    private ToDo currentToDo; // Holds the ToDo object being created or edited
 
     private String[] imageNames = {"lupo.png", "lettura.png", "immagine3.jpg", "immagine4.jpg", "immagine5.jpg"};
     private int currentImageIndex = 0;
 
+    String finalStatus = "In Progress";
 
     public ToDoForm(JFrame parent, Controller c, String cu, ToDo toDoToEdit){
         this.frame = parent;
@@ -60,6 +62,7 @@ public class ToDoForm {
         });
 
 
+        // Populate color combo box
         this.colorChange.addItem("Blu");
         this.colorChange.addItem("Rosso");
         this.colorChange.addItem("Giallo");
@@ -67,9 +70,9 @@ public class ToDoForm {
         this.colorChange.addItem("Arancione");
         this.colorChange.addItem("Viola");
 
-        todoPanel.setBackground(new Color(160, 235, 219));
-        campo1.setBackground(new Color(115, 207, 214));
-        campo2.setBackground(new Color(115, 207, 214));
+        setPanelColors("Blu");
+
+        panelActivity.setLayout(new BoxLayout(panelActivity, BoxLayout.Y_AXIS));
 
         loadImage(imageNames[currentImageIndex]);
 
@@ -81,7 +84,6 @@ public class ToDoForm {
             }
         });
 
-
         if (currentToDo != null) {
             nameField.setText(currentToDo.getTitle());
             descriptionField.setText(currentToDo.getDescription());
@@ -92,35 +94,35 @@ public class ToDoForm {
             urlField.setText(currentToDo.getUrl());
             statusField.setText(currentToDo.getStatus());
 
+            String storedImage = currentToDo.getImage();
+            if (storedImage != null && !storedImage.isEmpty()) {
+                for (int i = 0; i < imageNames.length; i++) {
+                    if (imageNames[i].equals(storedImage)) {
+                        currentImageIndex = i;
+                        loadImage(imageNames[currentImageIndex]);
+                        break;
+                    }
+                }
+            } else {
+
+                currentImageIndex = 0;
+                loadImage(imageNames[currentImageIndex]);
+            }
+
 
             String storedColor = currentToDo.getColor();
-            for (int i = 0; i < colorChange.getItemCount(); i++) {
-                if (colorChange.getItemAt(i).equals(storedColor)) {
-                    colorChange.setSelectedIndex(i);
-
-                    setPanelColors(storedColor);
-                    break;
+            if (storedColor != null && !storedColor.isEmpty()) {
+                for (int i = 0; i < colorChange.getItemCount(); i++) {
+                    if (colorChange.getItemAt(i).equals(storedColor)) {
+                        colorChange.setSelectedIndex(i);
+                        setPanelColors(storedColor);
+                        break;
+                    }
                 }
             }
 
 
-            if (currentToDo.getActivityList() != null) {
-                // Ensure panelActivity has a suitable layout for dynamic components
-                GridLayout b = new GridLayout();
-                b.setColumns(1);
-                b.setRows(0);
-                panelActivity.setLayout(b);
 
-                for (Map.Entry<String, Boolean> entry : currentToDo.getActivityList().entrySet()) {
-                    JCheckBox checkBox = new JCheckBox(entry.getKey());
-                    checkBox.setSelected(entry.getValue());
-                    checkBox.addItemListener(e -> checkCompletionStatus());
-                    panelActivity.add(checkBox);
-                }
-                panelActivity.revalidate();
-                panelActivity.repaint();
-                checkCompletionStatus();
-            }
         }
 
 
@@ -133,7 +135,7 @@ public class ToDoForm {
                 String url = urlField.getText().trim();
 
                 if (title.isEmpty() || description.isEmpty() || dueDateString.isEmpty()) {
-                    JOptionPane.showMessageDialog(frameToDoForm, "Please fill in all required fields.", "Missing Data", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(frameToDoForm, "Please fill in all required fields (Title, Description, Due Date).", "Missing Data", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -142,12 +144,12 @@ public class ToDoForm {
                     DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                     dueDate = LocalDate.parse(dueDateString, formatter);
                 } catch (DateTimeParseException ex) {
-                    JOptionPane.showMessageDialog(frameToDoForm, "Due Date must be in format dd/MM/yyyy.", "Invalid Date", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(frameToDoForm, "Due Date must be in format dd/MM/yyyy (e.g., 31/12/2025).", "Invalid Date", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
 
-                Map<String, Boolean> activitiesMap = new java.util.HashMap<>();
+                Map<String, Boolean> activitiesMap = new HashMap<>();
                 for (Component comp : panelActivity.getComponents()) {
                     if (comp instanceof JCheckBox) {
                         JCheckBox cb = (JCheckBox) comp;
@@ -156,38 +158,41 @@ public class ToDoForm {
                 }
 
 
-                String finalStatus;
+                String finalStatus = "In Progress";
                 if (activitiesMap.isEmpty()) {
-                    finalStatus = "Non avviato";
+                    finalStatus = "In Progress";
                 } else {
                     boolean allChecked = activitiesMap.values().stream().allMatch(Boolean::booleanValue);
                     if (allChecked) {
                         finalStatus = "Completo";
-                    } else {
-                        finalStatus = "In Progresso";
                     }
                 }
 
-
                 String selectedColor = (String) colorChange.getSelectedItem();
+                String selectedImageName = imageNames[currentImageIndex]; // Get the currently selected image file name
 
 
                 if (currentToDo == null) {
 
                     controller.addToDo(currentBoard, title, description, dueDateString, url);
 
-                    ToDo newToDo = controller.getToDoByTitle(title, BoardName.valueOf(currentBoard));
-                    if (newToDo != null) {
-                        newToDo.setActivityList(activitiesMap);
-                        newToDo.setStatus(finalStatus);
-                        newToDo.setColor(selectedColor);
+                    ToDo newlyCreatedToDo = controller.getToDoByTitle(title, BoardName.valueOf(currentBoard));
+
+                    if (newlyCreatedToDo != null) {
+
+                        newlyCreatedToDo.setActivityList(activitiesMap);
+                        newlyCreatedToDo.setStatus(finalStatus);
+                        newlyCreatedToDo.setColor(selectedColor);
+                        newlyCreatedToDo.setImage(selectedImageName);
+                        JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
+                    } else {
+                        JOptionPane.showMessageDialog(frameToDoForm, "Failed to retrieve new ToDo for full setup. Data might be incomplete.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
-                    JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
                 } else {
 
-                    String oldTitle = currentToDo.getTitle();
-                    controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url);
+                    String oldTitle = currentToDo.getTitle(); // Keep track of old title for update in controller
 
+                    controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url);
                     currentToDo.setTitle(title);
                     currentToDo.setDescription(description);
                     currentToDo.setDueDate(dueDate);
@@ -195,6 +200,7 @@ public class ToDoForm {
                     currentToDo.setActivityList(activitiesMap);
                     currentToDo.setStatus(finalStatus);
                     currentToDo.setColor(selectedColor);
+                    currentToDo.setImage(selectedImageName);
                     JOptionPane.showMessageDialog(frameToDoForm, "ToDo updated successfully.");
                 }
 
@@ -212,6 +218,7 @@ public class ToDoForm {
             }
         });
 
+
         colorChange.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -219,6 +226,8 @@ public class ToDoForm {
                 setPanelColors(colorSelected);
             }
         });
+
+
         panelActivity.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -227,13 +236,6 @@ public class ToDoForm {
                 if (label != null && !label.trim().isEmpty()) {
                     JCheckBox checkBox = new JCheckBox(label);
 
-
-                    if (!(panelActivity.getLayout() instanceof GridLayout)) {
-                        GridLayout b = new GridLayout();
-                        b.setColumns(1);
-                        b.setRows(0);
-                        panelActivity.setLayout(b);
-                    }
 
                     checkBox.addItemListener(new ItemListener() {
                         @Override
@@ -245,9 +247,8 @@ public class ToDoForm {
                     panelActivity.revalidate();
                     panelActivity.repaint();
 
-
                     if (currentToDo != null) {
-                        currentToDo.addActivity(label); // This will add to internal map as uncompleted
+                        currentToDo.addActivity(label);
                     }
                 }
                 checkCompletionStatus();
@@ -293,7 +294,9 @@ public class ToDoForm {
         }
     }
 
+
     private void checkCompletionStatus() {
+
         boolean allChecked = true;
         int checkBoxCount = 0;
 
@@ -311,16 +314,14 @@ public class ToDoForm {
         if (checkBoxCount > 0 && allChecked) {
             statusField.setText("Completo");
         } else if (checkBoxCount > 0 && !allChecked) {
-            statusField.setText("In Progresso");
-        } else {
-            statusField.setText("Non avviato");
+            statusField.setText("In Progress");
         }
-
 
         if (currentToDo != null) {
             currentToDo.setStatus(statusField.getText());
         }
     }
+
 
     private void loadImage(String imageName) {
         try {
@@ -329,18 +330,23 @@ public class ToDoForm {
             if (imageUrl != null) {
                 ImageIcon icon = new ImageIcon(imageUrl);
                 Image img = icon.getImage();
-                Image scaledImg = img.getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+
+                Image scaledImg = img.getScaledInstance(image.getWidth() > 0 ? image.getWidth() : 150,
+                        image.getHeight() > 0 ? image.getHeight() : 150,
+                        Image.SCALE_SMOOTH);
                 icon = new ImageIcon(scaledImg);
                 image.setIcon(icon);
                 image.setText("");
             } else {
                 System.err.println("Error: Image '" + imageName + "' not found in /images/");
                 image.setText("Image not found!");
+                image.setIcon(null); 
             }
         } catch (Exception ex) {
             System.err.println("Error loading image '" + imageName + "': " + ex.getMessage());
             ex.printStackTrace();
             image.setText("Loading error!");
+            image.setIcon(null);
         }
     }
 }
