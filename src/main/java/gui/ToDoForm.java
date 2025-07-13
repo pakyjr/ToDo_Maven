@@ -88,7 +88,7 @@ public class ToDoForm {
                     return;
                 }
                 controller.addToDo(currentBoard, title, description, dueDateString, url);
-                JOptionPane.showMessageDialog(frameToDoForm, "Book added successfully.");
+                JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
 
                 if (BoardForm.listModel != null) {
                     BoardForm.listModel.clear();
