@@ -151,7 +151,7 @@
         <children>
           <component id="f2b82" class="javax.swing.JButton" binding="shareButton" default-binding="true">
             <constraints>
-              <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="1" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="1" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <background color="-1114125"/>
@@ -160,15 +160,51 @@
               <text value="Share "/>
             </properties>
           </component>
+          <component id="39532" class="javax.swing.JButton" binding="deleteButton">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <background color="-1114125"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-16777216"/>
+              <text value="Delete Activity"/>
+            </properties>
+          </component>
           <component id="3ea8c" class="javax.swing.JButton" binding="changeShareButton" default-binding="true">
             <constraints>
-              <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <background color="-1114125"/>
               <font name="Elephant" size="14" style="0"/>
               <foreground color="-16777216"/>
               <text value="Change Share"/>
+            </properties>
+          </component>
+          <component id="37721" class="javax.swing.JComboBox" binding="colorChange">
+            <constraints>
+              <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <background color="-1114125"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-16777216"/>
+              <model>
+                <item value="Color"/>
+              </model>
+            </properties>
+          </component>
+          <component id="1bce0" class="javax.swing.JButton" binding="buttonSave">
+            <constraints>
+              <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="1" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <background color="-1114125"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-16777216"/>
+              <horizontalTextPosition value="0"/>
+              <text value="Save"/>
             </properties>
           </component>
           <component id="88e64" class="javax.swing.JComboBox" binding="members">
@@ -181,36 +217,6 @@
               <foreground color="-16777216"/>
               <model>
                 <item value="Members"/>
-              </model>
-            </properties>
-          </component>
-          <component id="1bce0" class="javax.swing.JButton" binding="buttonSave">
-            <constraints>
-              <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="1" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <background color="-1114125"/>
-              <font name="Elephant" size="14" style="0"/>
-              <foreground color="-16777216"/>
-              <horizontalTextPosition value="0"/>
-              <text value="Save"/>
-            </properties>
-          </component>
-          <vspacer id="11f76">
-            <constraints>
-              <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-            </constraints>
-          </vspacer>
-          <component id="37721" class="javax.swing.JComboBox" binding="colorChange">
-            <constraints>
-              <grid row="5" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <background color="-1114125"/>
-              <font name="Elephant" size="14" style="0"/>
-              <foreground color="-16777216"/>
-              <model>
-                <item value="Color"/>
               </model>
             </properties>
           </component>

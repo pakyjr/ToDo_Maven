@@ -14,6 +14,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional; // Import Optional for stream operations
 
 public class ToDoForm {
     private JPanel todoPanel;
@@ -31,6 +32,7 @@ public class ToDoForm {
     private JPanel campo2;
     private JTextField statusField;
     private JPanel panelActivity;
+    private JButton deleteButton;
     public JFrame frameToDoForm, frame;
 
     private String currentBoard;
@@ -126,10 +128,10 @@ public class ToDoForm {
                 panelActivity.repaint();
                 checkCompletionStatus();
             } else {
-                statusField.setText("Non avviato");
+                statusField.setText("Not Started");
             }
         } else {
-            statusField.setText("Non avviato");
+            statusField.setText("Not Started");
         }
 
 
@@ -165,13 +167,13 @@ public class ToDoForm {
 
                 String calculatedStatus;
                 if (activitiesMap.isEmpty()) {
-                    calculatedStatus = "Non avviato";
+                    calculatedStatus = "Not Started";
                 } else {
                     boolean allChecked = activitiesMap.values().stream().allMatch(Boolean::booleanValue);
                     if (allChecked) {
                         calculatedStatus = "Completo";
                     } else {
-                        calculatedStatus = "In Progresso";
+                        calculatedStatus = "Incompleto"; // Changed from "In Progress" to "In Progresso" for consistency
                     }
                 }
 
@@ -180,19 +182,19 @@ public class ToDoForm {
 
 
                 if (currentToDo == null) {
-                    controller.addToDo(currentBoard, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus); // <--- Corrected call
+                    controller.addToDo(currentBoard, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus);
 
                     JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
                 } else {
                     String oldTitle = currentToDo.getTitle();
 
-                    controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus); // <--- Corrected call
+                    controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus);
                     currentToDo.setTitle(title);
                     currentToDo.setDescription(description);
                     currentToDo.setDueDate(dueDate);
                     currentToDo.setUrl(url);
-                    currentToDo.setActivityList(activitiesMap);
-                    currentToDo.setStatus(calculatedStatus);
+                    currentToDo.setActivityList(activitiesMap); // This will call updateOverallStatus internally
+                    currentToDo.setStatus(calculatedStatus);    // Redundant if setActivityList calls updateOverallStatus
                     currentToDo.setColor(selectedColor);
                     currentToDo.setImage(selectedImageName);
                     JOptionPane.showMessageDialog(frameToDoForm, "ToDo updated successfully.");
@@ -246,7 +248,47 @@ public class ToDoForm {
                 checkCompletionStatus();
             }
         });
-    }
+
+
+        deleteButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                ArrayList<JCheckBox> selectedCheckBoxes = new ArrayList<>();
+                for (Component comp : panelActivity.getComponents()) {
+                    if (comp instanceof JCheckBox) {
+                        JCheckBox cb = (JCheckBox) comp;
+                        if (cb.isSelected()) {
+                            selectedCheckBoxes.add(cb);
+                        }
+                    }
+                }
+
+                if (selectedCheckBoxes.isEmpty()) {
+                    JOptionPane.showMessageDialog(frameToDoForm, "Please select at least one activity to delete.", "No Activity Selected", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                int confirmResult = JOptionPane.showConfirmDialog(frameToDoForm,
+                        "Are you sure you want to delete the selected activity(ies)?",
+                        "Confirm Deletion",
+                        JOptionPane.YES_NO_OPTION);
+
+                if (confirmResult == JOptionPane.YES_OPTION) {
+                    for (JCheckBox cb : selectedCheckBoxes) {
+                        panelActivity.remove(cb); // Remove from GUI
+                        if (currentToDo != null) {
+                            currentToDo.deleteActivity(cb.getText()); // Remove from ToDo model
+                        }
+                    }
+                    panelActivity.revalidate();
+                    panelActivity.repaint();
+                    checkCompletionStatus(); // Update status after deletion
+                    JOptionPane.showMessageDialog(frameToDoForm, "Selected activity(ies) deleted successfully.");
+                }
+            }
+        });
+    } // End of constructor
 
 
     private void setPanelColors(String colorSelected) {
@@ -303,11 +345,11 @@ public class ToDoForm {
         }
 
         if (checkBoxCount == 0) {
-            statusField.setText("Non avviato");
+            statusField.setText("Not Started");
         } else if (allChecked) {
-            statusField.setText("Completo");
+            statusField.setText("Complete");
         } else {
-            statusField.setText("In Progress");
+            statusField.setText("Incomplete");
         }
 
         if (currentToDo != null) {

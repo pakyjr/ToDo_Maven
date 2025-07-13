@@ -1,19 +1,70 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="gui.BoardForm">
-  <grid id="27dc6" binding="board" layout-manager="GridLayoutManager" row-count="4" column-count="10" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="27dc6" binding="board" layout-manager="GridLayoutManager" row-count="4" column-count="11" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="10" left="10" bottom="10" right="10"/>
     <constraints>
-      <xy x="20" y="20" width="704" height="496"/>
+      <xy x="20" y="20" width="875" height="496"/>
     </constraints>
     <properties>
       <background color="-6231077"/>
     </properties>
     <border type="none"/>
     <children>
+      <component id="52c7b" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="2" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <font name="Brush Script MT" size="36" style="1"/>
+          <foreground color="-16212568"/>
+          <horizontalAlignment value="0"/>
+          <horizontalTextPosition value="0"/>
+          <text value="Galatea Workspace"/>
+        </properties>
+      </component>
+      <scrollpane id="998a8" binding="ScrollPanel">
+        <constraints>
+          <grid row="2" column="1" row-span="2" col-span="10" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="7254f" class="javax.swing.JList" binding="jList">
+            <constraints/>
+            <properties/>
+          </component>
+        </children>
+      </scrollpane>
+      <component id="215a9" class="javax.swing.JTextField" binding="textFieldSearchTitle">
+        <constraints>
+          <grid row="1" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="e95f0" class="javax.swing.JTextField" binding="textFieldSearchDate">
+        <constraints>
+          <grid row="1" column="6" row-span="1" col-span="5" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+            <preferred-size width="150" height="-1"/>
+          </grid>
+        </constraints>
+        <properties/>
+      </component>
+      <component id="5086d" class="javax.swing.JLabel" binding="labelSearchDate">
+        <constraints>
+          <grid row="1" column="5" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <font name="Elephant" size="14" style="0"/>
+          <foreground color="-16212568"/>
+          <text value="Search by Date"/>
+        </properties>
+      </component>
       <grid id="636b1" layout-manager="GridLayoutManager" row-count="11" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="10" left="10" bottom="10" right="10"/>
         <constraints>
-          <grid row="2" column="1" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <background color="-9187370"/>
@@ -40,19 +91,19 @@
             <properties>
               <background color="-14184705"/>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-1"/>
+              <foreground color="-1114125"/>
               <text value="Share Board"/>
             </properties>
           </component>
           <component id="1c2a1" class="javax.swing.JButton" binding="dueDateButton" default-binding="true">
             <constraints>
-              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <background color="-14184705"/>
-              <font name="Elephant" size="14"/>
-              <foreground color="-1"/>
-              <text value="Today Date"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-1114125"/>
+              <text value="Today DueDate"/>
             </properties>
           </component>
           <component id="fe384" class="javax.swing.JButton" binding="addToDoButton" default-binding="true">
@@ -62,30 +113,19 @@
             <properties>
               <background color="-14184705"/>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-1"/>
+              <foreground color="-1114125"/>
               <text value="Add ToDo"/>
             </properties>
           </component>
           <component id="da564" class="javax.swing.JButton" binding="orderToDoByTitleButton" default-binding="true">
             <constraints>
-              <grid row="6" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <background color="-14184705"/>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-1"/>
+              <foreground color="-1114125"/>
               <text value="Order ToDo by Title"/>
-            </properties>
-          </component>
-          <component id="16bd9" class="javax.swing.JButton" binding="deleteToDoButton" default-binding="true">
-            <constraints>
-              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-            </constraints>
-            <properties>
-              <background color="-14184705"/>
-              <font name="Elephant" size="14" style="0"/>
-              <foreground color="-1"/>
-              <text value="Delete ToDo"/>
             </properties>
           </component>
           <vspacer id="22882">
@@ -100,110 +140,59 @@
           </vspacer>
           <component id="165e8" class="javax.swing.JButton" binding="MoveUp">
             <constraints>
-              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <background color="-14184705"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-1114125"/>
               <text value="MoveUp"/>
             </properties>
           </component>
           <component id="d13f1" class="javax.swing.JButton" binding="buttonOrderByDate">
             <constraints>
-              <grid row="7" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <background color="-14184705"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-1114125"/>
               <text value="Order ToDo By Date"/>
             </properties>
           </component>
           <component id="c5a0b" class="javax.swing.JButton" binding="MoveDown">
             <constraints>
-              <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+              <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
+              <background color="-14184705"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-1114125"/>
               <text value="MoveDown"/>
+            </properties>
+          </component>
+          <component id="16bd9" class="javax.swing.JButton" binding="deleteToDoButton" default-binding="true">
+            <constraints>
+              <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties>
+              <background color="-14184705"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-1114125"/>
+              <text value="Delete ToDo"/>
             </properties>
           </component>
         </children>
       </grid>
-      <component id="52c7b" class="javax.swing.JLabel">
-        <constraints>
-          <grid row="0" column="1" row-span="1" col-span="3" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <font name="Brush Script MT" size="36" style="1"/>
-          <foreground color="-16212568"/>
-          <horizontalAlignment value="0"/>
-          <horizontalTextPosition value="0"/>
-          <text value="Galatea Workspace"/>
-        </properties>
-      </component>
-      <scrollpane id="998a8" binding="ScrollPanel">
-        <constraints>
-          <grid row="2" column="3" row-span="2" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-        <border type="none"/>
-        <children>
-          <component id="7254f" class="javax.swing.JList" binding="jList">
-            <constraints/>
-            <properties/>
-          </component>
-        </children>
-      </scrollpane>
-      <hspacer id="e4560">
-        <constraints>
-          <grid row="3" column="5" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </hspacer>
-      <hspacer id="6aba3">
-        <constraints>
-          <grid row="3" column="6" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </hspacer>
-      <hspacer id="ed794">
-        <constraints>
-          <grid row="3" column="7" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </hspacer>
-      <hspacer id="5ddd6">
-        <constraints>
-          <grid row="3" column="8" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </hspacer>
-      <hspacer id="2dd5c">
-        <constraints>
-          <grid row="3" column="9" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-      </hspacer>
-      <component id="215a9" class="javax.swing.JTextField" binding="textFieldSearchTitle">
-        <constraints>
-          <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-            <preferred-size width="150" height="-1"/>
-          </grid>
-        </constraints>
-        <properties/>
-      </component>
       <component id="9c1b9" class="javax.swing.JLabel" binding="labelSearch">
         <constraints>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
+          <background color="-1114125"/>
+          <font name="Elephant" size="14" style="0"/>
+          <foreground color="-16212568"/>
           <text value="Search by Title"/>
-        </properties>
-      </component>
-      <component id="e95f0" class="javax.swing.JTextField" binding="textFieldSearchDate">
-        <constraints>
-          <grid row="1" column="5" row-span="1" col-span="5" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-            <preferred-size width="150" height="-1"/>
-          </grid>
-        </constraints>
-        <properties/>
-      </component>
-      <component id="5086d" class="javax.swing.JLabel" binding="labelSearchDate">
-        <constraints>
-          <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties>
-          <text value="Search by Date"/>
         </properties>
       </component>
     </children>

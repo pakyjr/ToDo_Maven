@@ -7,7 +7,6 @@ import models.board.BoardName;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -25,7 +24,7 @@ public class BoardForm {
     private JButton shareBoardButton;
     private JButton addToDoButton;
     private JButton orderToDoByTitleButton;
-    private JButton deleteToDoButton; // This is the button we're focusing on
+    private JButton deleteToDoButton;
     private JButton dueDateButton;
     public JScrollPane ScrollPanel;
     private JButton MoveUp;
@@ -62,19 +61,17 @@ public class BoardForm {
         MoveDown.setEnabled(false);
         deleteToDoButton.setEnabled(false); // Initially disabled
 
-        // Populate the list with the default board's ToDos on startup
-        // Assuming "UNIVERSITY" is the default selected board
         String initialBoard = comboBoxBoards.getSelectedItem().toString();
         listModel.addAll(controller.getToDoListString(BoardName.valueOf(initialBoard)));
 
 
         jList.addListSelectionListener(e -> {
-            // Only update button states if the selection is not adjusting (i.e., final state)
+
             if (!e.getValueIsAdjusting()) {
                 boolean isSelected = !jList.isSelectionEmpty();
                 MoveUp.setEnabled(isSelected && jList.getSelectedIndex() > 0);
                 MoveDown.setEnabled(isSelected && jList.getSelectedIndex() < listModel.getSize() - 1);
-                deleteToDoButton.setEnabled(isSelected); // Enable/disable delete button based on selection
+                deleteToDoButton.setEnabled(isSelected);
             }
         });
 
@@ -122,8 +119,8 @@ public class BoardForm {
                 listModel.clear();
                 listModel.addAll(todos);
 
-                jList.clearSelection(); // Clear selection when board changes
-                // Re-evaluate button states after clearing and repopulating the list
+                jList.clearSelection();
+
                 MoveUp.setEnabled(false);
                 MoveDown.setEnabled(false);
                 deleteToDoButton.setEnabled(false);
@@ -168,10 +165,9 @@ public class BoardForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String selectedBoard = comboBoxBoards.getSelectedItem().toString();
-                // Get the actual ToDo objects from the controller to sort them
+
                 ArrayList<ToDo> todos = controller.user.getBoard(BoardName.valueOf(selectedBoard)).getTodoList();
 
-                // Sort by due date, handling nulls if necessary (nulls last)
                 todos.sort(Comparator.comparing(ToDo::getDueDate, Comparator.nullsLast(LocalDate::compareTo)));
 
                 listModel.clear();
@@ -187,10 +183,9 @@ public class BoardForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String selectedBoard = comboBoxBoards.getSelectedItem().toString();
-                // Get the actual ToDo objects from the controller to sort them
+
                 ArrayList<ToDo> todos = controller.user.getBoard(BoardName.valueOf(selectedBoard)).getTodoList();
 
-                // Sort by title (case-insensitive)
                 todos.sort(Comparator.comparing(todo -> todo.getTitle().toLowerCase()));
 
                 listModel.clear();
@@ -210,11 +205,9 @@ public class BoardForm {
                     String boardName = comboBoxBoards.getSelectedItem().toString();
                     BoardName currentBoard = BoardName.valueOf(boardName);
 
-                    // Move in the ListModel
                     String elementToMove = listModel.remove(selectedIndex);
                     listModel.add(selectedIndex - 1, elementToMove);
 
-                    // Update the underlying data in the controller
                     ArrayList<ToDo> todos = controller.user.getBoard(currentBoard).getTodoList();
                     // Find the ToDo object by title, assuming titles are unique within a board for simplicity
                     ToDo todoToMove = null;
@@ -231,8 +224,8 @@ public class BoardForm {
                         Collections.swap(todos, actualIndex, actualIndex - 1);
                     }
 
-                    jList.setSelectedIndex(selectedIndex - 1); // Select the moved item
-                    jList.ensureIndexIsVisible(selectedIndex - 1); // Make sure it's visible
+                    jList.setSelectedIndex(selectedIndex - 1);
+                    jList.ensureIndexIsVisible(selectedIndex - 1);
                 }
             }
         });
@@ -246,13 +239,11 @@ public class BoardForm {
                     String boardName = comboBoxBoards.getSelectedItem().toString();
                     BoardName currentBoard = BoardName.valueOf(boardName);
 
-                    // Move in the ListModel
                     String elementToMove = listModel.remove(selectedIndex);
                     listModel.add(selectedIndex + 1, elementToMove);
 
-                    // Update the underlying data in the controller
                     ArrayList<ToDo> todos = controller.user.getBoard(currentBoard).getTodoList();
-                    // Find the ToDo object by title
+
                     ToDo todoToMove = null;
                     int actualIndex = -1;
                     for (int i = 0; i < todos.size(); i++) {
@@ -267,13 +258,12 @@ public class BoardForm {
                         Collections.swap(todos, actualIndex, actualIndex + 1);
                     }
 
-                    jList.setSelectedIndex(selectedIndex + 1); // Select the moved item
-                    jList.ensureIndexIsVisible(selectedIndex + 1); // Make sure it's visible
+                    jList.setSelectedIndex(selectedIndex + 1);
+                    jList.ensureIndexIsVisible(selectedIndex + 1);
                 }
             }
         });
 
-        // --- Delete Button Action Listener ---
         deleteToDoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -289,13 +279,10 @@ public class BoardForm {
                             JOptionPane.YES_NO_OPTION);
 
                     if (confirmResult == JOptionPane.YES_OPTION) {
-                        // Call the controller to delete the ToDo from the backend data
                         controller.deleteToDo(boardNameEnum, selectedToDoTitle); // You'll need to implement this in Controller
 
-                        // Remove the item from the JList's model
                         listModel.remove(selectedIndex);
 
-                        // Clear selection and disable buttons if no items remain or no selection
                         jList.clearSelection();
                         MoveUp.setEnabled(false);
                         MoveDown.setEnabled(false);
@@ -323,7 +310,6 @@ public class BoardForm {
             }
         }
         jList.clearSelection();
-        // Update button states after filtering
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
         deleteToDoButton.setEnabled(false);
@@ -334,13 +320,11 @@ public class BoardForm {
         String selectedBoard = comboBoxBoards.getSelectedItem().toString();
         BoardName boardNameEnum = BoardName.valueOf(selectedBoard);
 
-        // If date field is empty, show all ToDos for the current board
         if (dateText.isEmpty()) {
             ArrayList<String> allTodos = controller.getToDoListString(boardNameEnum);
             listModel.clear();
             listModel.addAll(allTodos);
             jList.clearSelection();
-            // Update button states after filtering
             MoveUp.setEnabled(false);
             MoveDown.setEnabled(false);
             deleteToDoButton.setEnabled(false);
@@ -356,22 +340,18 @@ public class BoardForm {
 
             listModel.clear();
             for (ToDo todo : todos) {
-                // Ensure todo.getDueDate() is not null before calling equals()
                 if (todo.getDueDate() != null && todo.getDueDate().equals(searchDate)) {
                     listModel.addElement(todo.getTitle());
                 }
             }
             jList.clearSelection();
-            // Update button states after filtering
             MoveUp.setEnabled(false);
             MoveDown.setEnabled(false);
             deleteToDoButton.setEnabled(false);
         } catch (DateTimeParseException e) {
             JOptionPane.showMessageDialog(frameBoardForm, "Invalid date format. Please use dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
-            // If date format is invalid, clear the list to avoid showing old data
             listModel.clear();
             jList.clearSelection();
-            // Disable buttons as there's no valid list
             MoveUp.setEnabled(false);
             MoveDown.setEnabled(false);
             deleteToDoButton.setEnabled(false);
@@ -388,13 +368,11 @@ public class BoardForm {
 
         listModel.clear();
         for (ToDo t : todos) {
-            // Ensure t.getDueDate() is not null before calling equals()
             if (t.getDueDate() != null && t.getDueDate().equals(today)) {
                 listModel.addElement(t.getTitle());
             }
         }
         jList.clearSelection();
-        // Update button states after filtering
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
         deleteToDoButton.setEnabled(false);

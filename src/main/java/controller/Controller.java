@@ -17,7 +17,6 @@ public class Controller {
         this.user = new User(username, password);
     }
 
-    // Now correctly accepts color, image, activities, and status
     public String addToDo(String boardName, String toDoName, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status){
         String formattedBoardName = boardName.toUpperCase();
         if(formattedBoardName.equals("FREE TIME")){
@@ -32,7 +31,7 @@ public class Controller {
         toDo.setColor(color);
         toDo.setImage(image);
 
-        // Set activities and status directly. ToDo's setActivityList will handle updateOverallStatus.
+
         toDo.setActivityList(activities);
         toDo.setStatus(status);
 
@@ -43,7 +42,6 @@ public class Controller {
         return toDo.getId().toString();
     }
 
-    // Now correctly accepts all fields for update
     public void updateToDo(String boardName, String oldToDoTitle, String newToDoTitle, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status) {
         String formattedBoardName = boardName.toUpperCase();
         if(formattedBoardName.equals("FREE TIME")){
@@ -64,7 +62,7 @@ public class Controller {
             toDoToUpdate.setColor(color);
             toDoToUpdate.setImage(image);
 
-            // Set activities and status. ToDo's setActivityList will handle updateOverallStatus.
+
             toDoToUpdate.setActivityList(activities);
             toDoToUpdate.setStatus(status);
 
@@ -86,7 +84,7 @@ public class Controller {
 
         for(ToDo toDo : board.getTodoList()){
             if(toDo.getTitle().equals(title)){
-                return new ToDo(toDo); // Return a copy
+                return new ToDo(toDo);
             }
         }
         return null; // ToDo not found
@@ -103,7 +101,6 @@ public class Controller {
         return resultTitles;
     }
 
-    // New method to delete a ToDo
     public void deleteToDo(BoardName boardName, String toDoTitle) {
         Board board = user.getBoard(boardName);
         if (board == null) {
@@ -111,8 +108,6 @@ public class Controller {
             return;
         }
 
-        // Find the ToDo by title and remove it from the board's todoList
-        // The removeIf method is efficient for this.
         boolean removed = board.getTodoList().removeIf(toDo -> toDo.getTitle().equals(toDoTitle));
 
         if (removed) {
@@ -123,8 +118,4 @@ public class Controller {
     }
 
 
-    // This method is redundant and can be safely removed.
-    // public void addActivity(String boardName, String activityName){
-    //     System.out.println("Controller.addActivity called. This method is likely redundant with new GUI logic and can be removed.");
-    // }
 }

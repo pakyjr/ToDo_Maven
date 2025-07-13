@@ -23,7 +23,7 @@ public class ToDo {
         this.title = title;
         this.users = new HashSet<>();
         this.activityList = new LinkedHashMap<>();
-        this.status = "Non avviato";
+        this.status = "Not Started";
         this.dueDate = null;
         this.url = "";
         this.image = "";
@@ -200,25 +200,25 @@ public class ToDo {
 
         if (this.done) {
             activityList.replaceAll((k, v) -> true);
-            this.status = "Completo";
+            this.status = "Complete";
         } else {
             activityList.replaceAll((k, v) -> false);
-            this.status = "In Progresso";
+            this.status = "Incomplete";
         }
 
     }
 
     private void updateOverallStatus() {
         if (activityList.isEmpty()) {
-            this.status = "Non avviato";
+            this.status = "Not Started";
             this.done = false;
         } else {
             boolean allCompleted = activityList.values().stream().allMatch(Boolean::booleanValue);
             if (allCompleted) {
-                this.status = "Completo";
+                this.status = "Complete";
                 this.done = true;
             } else {
-                this.status = "In Progress";
+                this.status = "Incomplete";
                 this.done = false;
             }
         }
