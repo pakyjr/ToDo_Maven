@@ -6,6 +6,7 @@ import models.board.BoardName;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -30,6 +31,9 @@ public class ToDoForm {
     private String currentBoard;
     private Controller controller;
 
+    private String[] imageNames = {"lupo.png", "lettura.png", "immagine3.jpg", "immagine4.jpg", "immagine5.jpg"};
+    private int currentImageIndex = 0; // Indice dell'immagine attualmente visualizzata
+
     public ToDoForm(JFrame parent, Controller c, String cu){
         this.frame = parent;
         this.controller = c;
@@ -46,21 +50,24 @@ public class ToDoForm {
         this.colorChange.addItem("Arancione");
         this.colorChange.addItem("Viola");
 
-        // Set initial colors when the form is created
         todoPanel.setBackground(new Color(160, 235, 219));
         campo1.setBackground(new Color(115, 207, 214));
         campo2.setBackground(new Color(115, 207, 214));
+
+        loadImage(imageNames[currentImageIndex]);
+
+        image.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                currentImageIndex = (currentImageIndex + 1) % imageNames.length;
+                loadImage(imageNames[currentImageIndex]);
+            }
+        });
 
 
         buttonSave.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // The colors set here would be overwritten by the colorChange listener's default "Blu" case
-                // if the user doesn't change the selection. It's better to manage initial colors once.
-                // todoPanel.setBackground(new Color(160, 235, 219));
-                // campo1.setBackground(new Color(115, 207, 214));
-                // campo2.setBackground(new Color(115, 207, 214));
-
                 String title = nameField.getText();
                 String description = descriptionField.getText();
                 String dueDateString = dueDateField.getText();
@@ -83,13 +90,11 @@ public class ToDoForm {
                 controller.addToDo(currentBoard, title, description, dueDateString, url);
                 JOptionPane.showMessageDialog(frameToDoForm, "Book added successfully.");
 
-                // Assuming BoardForm.listModel is accessible and correctly manages the JList data
                 if (BoardForm.listModel != null) {
                     BoardForm.listModel.clear();
                     BoardForm.listModel.addAll(controller.getToDoListString(BoardName.valueOf(cu)));
                 } else {
                     System.err.println("BoardForm.listModel is null. Cannot update the list.");
-                    // Optionally, show an error to the user or log it more robustly
                 }
 
                 frame.setVisible(true);
@@ -101,8 +106,8 @@ public class ToDoForm {
         colorChange.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String colorSelected = (String) colorChange.getSelectedItem(); // Cast to String
-                if (colorSelected != null) { // Check for null in case no item is selected
+                String colorSelected = (String) colorChange.getSelectedItem();
+                if (colorSelected != null) {
                     switch (colorSelected) {
                         case "Blu":
                             todoPanel.setBackground(new Color(160, 235, 219));
@@ -138,5 +143,30 @@ public class ToDoForm {
                 }
             }
         });
+    }
+
+    private void loadImage(String imageName) {
+        try {
+
+            URL imageUrl = getClass().getResource("/images/" + imageName);
+
+            if (imageUrl != null) {
+                ImageIcon icon = new ImageIcon(imageUrl);
+
+                Image img = icon.getImage();
+                Image scaledImg = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                icon = new ImageIcon(scaledImg);
+
+                image.setIcon(icon);
+                image.setText(""); // Rimuovi qualsiasi testo preesistente sulla label
+            } else {
+                System.err.println("Errore: Immagine '" + imageName + "' non trovata nel percorso /images/");
+                image.setText("Immagine non trovata!");
+            }
+        } catch (Exception ex) {
+            System.err.println("Errore durante il caricamento dell'immagine '" + imageName + "': " + ex.getMessage());
+            ex.printStackTrace();
+            image.setText("Errore caricamento!");
+        }
     }
 }
