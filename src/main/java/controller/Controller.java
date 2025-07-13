@@ -7,28 +7,34 @@ import models.board.BoardName;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
 
 public class Controller {
     public User user;
 
-
     public void register(String username, String password){
         this.user = new User(username, password);
     }
 
-    public String addToDo(String boardName, String toDoName, String description, String date, String url){
-
+    // Now correctly accepts color, image, activities, and status
+    public String addToDo(String boardName, String toDoName, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status){ // <--- Added activities and status
         String formattedBoardName = boardName.toUpperCase();
         if(formattedBoardName.equals("FREE TIME")){
             formattedBoardName = "FREE_TIME";
         }
 
         Board board = user.getBoard(BoardName.valueOf(formattedBoardName));
-        ToDo toDo = board.addTodo(toDoName);
+        ToDo toDo = board.addTodo(toDoName); // ToDo is created here with default values
 
         toDo.setDescription(description);
         toDo.setUrl(url);
+        toDo.setColor(color);
+        toDo.setImage(image);
+
+        // Set activities and status directly. ToDo's setActivityList will handle updateOverallStatus.
+        toDo.setActivityList(activities); // <--- Set activities
+        toDo.setStatus(status);           // <--- Set status (will also set 'done' based on it)
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         LocalDate localDate = LocalDate.parse(date, formatter);
@@ -37,7 +43,8 @@ public class Controller {
         return toDo.getId().toString();
     }
 
-    public void updateToDo(String boardName, String oldToDoTitle, String newToDoTitle, String description, String date, String url) {
+    // Now correctly accepts all fields for update
+    public void updateToDo(String boardName, String oldToDoTitle, String newToDoTitle, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status) {
         String formattedBoardName = boardName.toUpperCase();
         if(formattedBoardName.equals("FREE TIME")){
             formattedBoardName = "FREE_TIME";
@@ -54,6 +61,12 @@ public class Controller {
             toDoToUpdate.setTitle(newToDoTitle);
             toDoToUpdate.setDescription(description);
             toDoToUpdate.setUrl(url);
+            toDoToUpdate.setColor(color);
+            toDoToUpdate.setImage(image);
+
+            // Set activities and status. ToDo's setActivityList will handle updateOverallStatus.
+            toDoToUpdate.setActivityList(activities); // <--- Set activities
+            toDoToUpdate.setStatus(status);           // <--- Set status (will also set 'done' based on it)
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             LocalDate localDate = LocalDate.parse(date, formatter);
@@ -73,7 +86,7 @@ public class Controller {
 
         for(ToDo toDo : board.getTodoList()){
             if(toDo.getTitle().equals(title)){
-                return new ToDo(toDo);
+                return new ToDo(toDo); // Return a copy
             }
         }
         return null; // ToDo not found
@@ -90,11 +103,8 @@ public class Controller {
         return resultTitles;
     }
 
-    public void addActivity(String boardName, String activityName){
-
-        System.out.println("Controller.addActivity called. This method might be redundant with new GUI logic.");
-
-    }
-
-
+    // This method is redundant and can be safely removed.
+    // public void addActivity(String boardName, String activityName){
+    //     System.out.println("Controller.addActivity called. This method is likely redundant with new GUI logic and can be removed.");
+    // }
 }

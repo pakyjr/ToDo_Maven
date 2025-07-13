@@ -2,14 +2,13 @@ package models;
 
 import java.time.LocalDate;
 import java.util.*;
-        import java.util.stream.Collectors;
 
 public class ToDo {
     private UUID id;
     private int position;
     private LocalDate dueDate;
     private String url;
-    private String image; // Stores the name of the image file (e.g., "lupo.png")
+    private String image;
     private String title;
     private String description;
     private String owner;
@@ -24,14 +23,13 @@ public class ToDo {
         this.title = title;
         this.users = new HashSet<>();
         this.activityList = new LinkedHashMap<>();
-        this.status = "In Progress";
+        this.status = "Non avviato";
         this.dueDate = null;
         this.url = "";
         this.image = "";
         this.description = "";
         this.owner = "";
     }
-
 
     public ToDo(ToDo toDo){
         this.id = toDo.getId();
@@ -48,7 +46,6 @@ public class ToDo {
         this.done = toDo.getDone();
         this.status = toDo.getStatus();
     }
-
 
     public UUID getId() {
         return this.id;
@@ -130,7 +127,6 @@ public class ToDo {
         return new LinkedHashMap<>(activityList);
     }
 
-
     public void setActivityList(Map<String, Boolean> activityList) {
 
         this.activityList = new LinkedHashMap<>(activityList);
@@ -138,7 +134,6 @@ public class ToDo {
     }
 
     public Set<User> getUsers() {
-
         return new HashSet<>(users);
     }
 
@@ -152,7 +147,6 @@ public class ToDo {
         users.remove(user);
     }
 
-
     public String getStatus() {
         return status;
     }
@@ -161,7 +155,6 @@ public class ToDo {
         this.status = status;
         if ("Completo".equals(status)) {
             this.done = true;
-
         } else {
             this.done = false;
         }
@@ -169,16 +162,16 @@ public class ToDo {
 
     public void addActivity(String title) {
         if (title != null && !title.trim().isEmpty()) {
-            this.activityList.put(title, false); // New activities are incomplete by default
+            this.activityList.put(title, false);
             System.out.printf("Added activity: %s%n", title);
-            updateOverallStatus(); // Update overall status when activity is added
+            updateOverallStatus();
         }
     }
 
     public void deleteActivity(String title) {
-        if (activityList.remove(title) != null) { // remove returns the value associated with key, or null if not found
+        if (activityList.remove(title) != null) {
             System.out.printf("Deleted activity: %s%n", title);
-            updateOverallStatus(); // Update overall status when activity is deleted
+            updateOverallStatus();
         } else {
             System.out.println("Activity not found: " + title);
         }
@@ -187,7 +180,7 @@ public class ToDo {
     public void setActivityStatus(String title, boolean completed) {
         if (activityList.containsKey(title)) {
             this.activityList.put(title, completed);
-            updateOverallStatus(); // Update the textual status and the 'done' boolean
+            updateOverallStatus();
         } else {
             System.out.println("Invalid activity: " + title);
         }
@@ -202,27 +195,31 @@ public class ToDo {
     }
 
     public void toggle() {
+
         this.done = !done;
 
-        if (this.done && !activityList.isEmpty()) {
+        if (this.done) {
             activityList.replaceAll((k, v) -> true);
-        } else if (!this.done && !activityList.isEmpty()) {
-
+            this.status = "Completo";
+        } else {
             activityList.replaceAll((k, v) -> false);
+            this.status = "In Progresso";
         }
-        updateOverallStatus(); // Ensure textual status is updated after toggle
-    }
 
+    }
 
     private void updateOverallStatus() {
         if (activityList.isEmpty()) {
-            this.status = "In Progress";
+            this.status = "Non avviato";
             this.done = false;
         } else {
             boolean allCompleted = activityList.values().stream().allMatch(Boolean::booleanValue);
             if (allCompleted) {
                 this.status = "Completo";
                 this.done = true;
+            } else {
+                this.status = "In Progress";
+                this.done = false;
             }
         }
     }

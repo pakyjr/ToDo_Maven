@@ -255,9 +255,6 @@ public class BoardForm {
         });
     }
 
-    // Removed setVisibilityToDoInfo as toDoInfo panel is no longer used
-    // private void setVisibilityToDoInfo(boolean status) { ... }
-
     private void filterToDoList() {
         String searchText = textFieldSearchTitle.getText().toLowerCase();
         String selectedBoard = comboBoxBoards.getSelectedItem().toString();
