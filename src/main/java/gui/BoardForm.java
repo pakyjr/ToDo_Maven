@@ -3,10 +3,10 @@ package gui;
 import controller.Controller;
 import models.ToDo;
 import models.board.BoardName;
-
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -47,7 +47,6 @@ public class BoardForm {
         frameBoardForm.pack();
         frameBoardForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-
         this.controller = c;
 
         this.comboBoxBoards.addItem("UNIVERSITY");
@@ -56,6 +55,8 @@ public class BoardForm {
 
         listModel = new DefaultListModel<String>();
         jList.setModel(listModel);
+
+        jList.setCellRenderer(new ToDoListCellRenderer(controller, (String) comboBoxBoards.getSelectedItem()));
 
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
@@ -66,7 +67,6 @@ public class BoardForm {
 
 
         jList.addListSelectionListener(e -> {
-
             if (!e.getValueIsAdjusting()) {
                 boolean isSelected = !jList.isSelectionEmpty();
                 MoveUp.setEnabled(isSelected && jList.getSelectedIndex() > 0);
@@ -121,9 +121,8 @@ public class BoardForm {
 
                 jList.clearSelection();
 
-                MoveUp.setEnabled(false);
-                MoveDown.setEnabled(false);
-                deleteToDoButton.setEnabled(false);
+                ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(selectedBoard);
+                jList.repaint();
             }
         });
 
@@ -279,7 +278,7 @@ public class BoardForm {
                             JOptionPane.YES_NO_OPTION);
 
                     if (confirmResult == JOptionPane.YES_OPTION) {
-                        controller.deleteToDo(boardNameEnum, selectedToDoTitle); // You'll need to implement this in Controller
+                        controller.deleteToDo(boardNameEnum, selectedToDoTitle);
 
                         listModel.remove(selectedIndex);
 
@@ -376,5 +375,53 @@ public class BoardForm {
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
         deleteToDoButton.setEnabled(false);
+    }
+
+    private class ToDoListCellRenderer extends DefaultListCellRenderer {
+        private Controller controller;
+        private String currentBoardName;
+
+        public ToDoListCellRenderer(Controller controller, String initialBoardName) {
+            this.controller = controller;
+            this.currentBoardName = initialBoardName;
+        }
+
+        public void setCurrentBoard(String boardName) {
+            this.currentBoardName = boardName;
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JLabel renderer = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+            if (value instanceof String) {
+                String toDoTitle = (String) value;
+                BoardName boardNameEnum = BoardName.valueOf(currentBoardName);
+
+                ToDo toDo = controller.getToDoByTitle(toDoTitle, boardNameEnum);
+
+                if (toDo != null && toDo.getDueDate() != null) {
+                    LocalDate today = LocalDate.now();
+
+                    if (toDo.getDueDate().isBefore(today) && !"Completo".equals(toDo.getStatus())) {
+                        renderer.setForeground(Color.RED); // Set text color to red
+                    } else {
+
+                        renderer.setForeground(list.getForeground());
+                    }
+                } else {
+                    renderer.setForeground(list.getForeground());
+                }
+            }
+
+            if (isSelected) {
+                renderer.setBackground(list.getSelectionBackground());
+                renderer.setForeground(list.getSelectionForeground());
+            } else {
+
+                renderer.setBackground(list.getBackground());
+            }
+            return renderer;
+        }
     }
 }
