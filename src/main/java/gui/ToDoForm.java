@@ -1,6 +1,7 @@
 package gui;
 
 import controller.Controller;
+import models.ToDo; // Import ToDo model
 import models.board.BoardName;
 
 import javax.swing.*;
@@ -10,6 +11,8 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
+import java.util.Map; // Import Map for activities
 
 public class ToDoForm {
     private JPanel todoPanel;
@@ -31,18 +34,31 @@ public class ToDoForm {
 
     private String currentBoard;
     private Controller controller;
+    private ToDo currentToDo;
 
     private String[] imageNames = {"lupo.png", "lettura.png", "immagine3.jpg", "immagine4.jpg", "immagine5.jpg"};
     private int currentImageIndex = 0;
 
-    public ToDoForm(JFrame parent, Controller c, String cu){
+
+    public ToDoForm(JFrame parent, Controller c, String cu, ToDo toDoToEdit){
         this.frame = parent;
         this.controller = c;
         this.currentBoard = cu;
+        this.currentToDo = toDoToEdit;
 
-        frameToDoForm = new JFrame("ToDo Creation");
+        frameToDoForm = new JFrame(toDoToEdit == null ? "ToDo Creation" : "Edit ToDo");
         frameToDoForm.setContentPane(todoPanel);
         frameToDoForm.pack();
+
+
+        frameToDoForm.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                frame.setVisible(true);
+                frameToDoForm.dispose();
+            }
+        });
+
 
         this.colorChange.addItem("Blu");
         this.colorChange.addItem("Rosso");
@@ -66,14 +82,55 @@ public class ToDoForm {
         });
 
 
+        if (currentToDo != null) {
+            nameField.setText(currentToDo.getTitle());
+            descriptionField.setText(currentToDo.getDescription());
+
+            if (currentToDo.getDueDate() != null) {
+                dueDateField.setText(currentToDo.getDueDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+            }
+            urlField.setText(currentToDo.getUrl());
+            statusField.setText(currentToDo.getStatus());
+
+
+            String storedColor = currentToDo.getColor();
+            for (int i = 0; i < colorChange.getItemCount(); i++) {
+                if (colorChange.getItemAt(i).equals(storedColor)) {
+                    colorChange.setSelectedIndex(i);
+
+                    setPanelColors(storedColor);
+                    break;
+                }
+            }
+
+
+            if (currentToDo.getActivityList() != null) {
+                // Ensure panelActivity has a suitable layout for dynamic components
+                GridLayout b = new GridLayout();
+                b.setColumns(1);
+                b.setRows(0);
+                panelActivity.setLayout(b);
+
+                for (Map.Entry<String, Boolean> entry : currentToDo.getActivityList().entrySet()) {
+                    JCheckBox checkBox = new JCheckBox(entry.getKey());
+                    checkBox.setSelected(entry.getValue());
+                    checkBox.addItemListener(e -> checkCompletionStatus());
+                    panelActivity.add(checkBox);
+                }
+                panelActivity.revalidate();
+                panelActivity.repaint();
+                checkCompletionStatus();
+            }
+        }
+
+
         buttonSave.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String title = nameField.getText();
-                String description = descriptionField.getText();
-                String dueDateString = dueDateField.getText();
-                String url = urlField.getText();
-
+                String title = nameField.getText().trim();
+                String description = descriptionField.getText().trim();
+                String dueDateString = dueDateField.getText().trim();
+                String url = urlField.getText().trim();
 
                 if (title.isEmpty() || description.isEmpty() || dueDateString.isEmpty()) {
                     JOptionPane.showMessageDialog(frameToDoForm, "Please fill in all required fields.", "Missing Data", JOptionPane.ERROR_MESSAGE);
@@ -88,12 +145,63 @@ public class ToDoForm {
                     JOptionPane.showMessageDialog(frameToDoForm, "Due Date must be in format dd/MM/yyyy.", "Invalid Date", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
-                controller.addToDo(currentBoard, title, description, dueDateString, url);
-                JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
+
+
+                Map<String, Boolean> activitiesMap = new java.util.HashMap<>();
+                for (Component comp : panelActivity.getComponents()) {
+                    if (comp instanceof JCheckBox) {
+                        JCheckBox cb = (JCheckBox) comp;
+                        activitiesMap.put(cb.getText(), cb.isSelected());
+                    }
+                }
+
+
+                String finalStatus;
+                if (activitiesMap.isEmpty()) {
+                    finalStatus = "Non avviato";
+                } else {
+                    boolean allChecked = activitiesMap.values().stream().allMatch(Boolean::booleanValue);
+                    if (allChecked) {
+                        finalStatus = "Completo";
+                    } else {
+                        finalStatus = "In Progresso";
+                    }
+                }
+
+
+                String selectedColor = (String) colorChange.getSelectedItem();
+
+
+                if (currentToDo == null) {
+
+                    controller.addToDo(currentBoard, title, description, dueDateString, url);
+
+                    ToDo newToDo = controller.getToDoByTitle(title, BoardName.valueOf(currentBoard));
+                    if (newToDo != null) {
+                        newToDo.setActivityList(activitiesMap);
+                        newToDo.setStatus(finalStatus);
+                        newToDo.setColor(selectedColor);
+                    }
+                    JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
+                } else {
+
+                    String oldTitle = currentToDo.getTitle();
+                    controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url);
+
+                    currentToDo.setTitle(title);
+                    currentToDo.setDescription(description);
+                    currentToDo.setDueDate(dueDate);
+                    currentToDo.setUrl(url);
+                    currentToDo.setActivityList(activitiesMap);
+                    currentToDo.setStatus(finalStatus);
+                    currentToDo.setColor(selectedColor);
+                    JOptionPane.showMessageDialog(frameToDoForm, "ToDo updated successfully.");
+                }
+
 
                 if (BoardForm.listModel != null) {
                     BoardForm.listModel.clear();
-                    BoardForm.listModel.addAll(controller.getToDoListString(BoardName.valueOf(cu)));
+                    BoardForm.listModel.addAll(controller.getToDoListString(BoardName.valueOf(currentBoard)));
                 } else {
                     System.err.println("BoardForm.listModel is null. Cannot update the list.");
                 }
@@ -108,49 +216,24 @@ public class ToDoForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String colorSelected = (String) colorChange.getSelectedItem();
-                if (colorSelected != null) {
-                    switch (colorSelected) {
-                        case "Blu":
-                            todoPanel.setBackground(new Color(160, 235, 219));
-                            campo1.setBackground(new Color(115, 207, 214));
-                            campo2.setBackground(new Color(115, 207, 214));
-                            break;
-                        case "Giallo":
-                            todoPanel.setBackground(new Color(248, 255, 98));
-                            campo1.setBackground(new Color(252, 214, 9));
-                            campo2.setBackground(new Color(252, 214, 9));
-                            break;
-                        case "Rosso":
-                            todoPanel.setBackground(new Color(255, 87, 84));
-                            campo1.setBackground(new Color(214, 6, 11));
-                            campo2.setBackground(new Color(214, 6, 11));
-                            break;
-                        case "Verde":
-                            todoPanel.setBackground(new Color(87,255,116));
-                            campo1.setBackground(new Color(0,201,20));
-                            campo2.setBackground(new Color(0,201,20));
-                            break;
-                        case "Arancione":
-                            todoPanel.setBackground(new Color(255,176,76));
-                            campo1.setBackground(new Color(255,140,0));
-                            campo2.setBackground(new Color(255,140,0));
-                            break;
-                        case "Viola":
-                            todoPanel.setBackground(new Color(217,165,255));
-                            campo1.setBackground(new Color(175,64,255));
-                            campo2.setBackground(new Color(175,64,255));
-                            break;
-                    }
-                }
+                setPanelColors(colorSelected);
             }
         });
         panelActivity.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                String label = JOptionPane.showInputDialog(panelActivity, "Inserert the Activity name:");
+                String label = JOptionPane.showInputDialog(panelActivity, "Insert the Activity name:");
                 if (label != null && !label.trim().isEmpty()) {
                     JCheckBox checkBox = new JCheckBox(label);
+
+
+                    if (!(panelActivity.getLayout() instanceof GridLayout)) {
+                        GridLayout b = new GridLayout();
+                        b.setColumns(1);
+                        b.setRows(0);
+                        panelActivity.setLayout(b);
+                    }
 
                     checkBox.addItemListener(new ItemListener() {
                         @Override
@@ -158,18 +241,58 @@ public class ToDoForm {
                             checkCompletionStatus();
                         }
                     });
-                    GridLayout b = new GridLayout();
-                    b.setColumns(1);
-                    b.setRows(100);
-                    panelActivity.setLayout(b);
                     panelActivity.add(checkBox);
                     panelActivity.revalidate();
                     panelActivity.repaint();
+
+
+                    if (currentToDo != null) {
+                        currentToDo.addActivity(label); // This will add to internal map as uncompleted
+                    }
                 }
                 checkCompletionStatus();
             }
         });
     }
+
+
+    private void setPanelColors(String colorSelected) {
+        if (colorSelected == null) return;
+
+        switch (colorSelected) {
+            case "Blu":
+                todoPanel.setBackground(new Color(160, 235, 219));
+                campo1.setBackground(new Color(115, 207, 214));
+                campo2.setBackground(new Color(115, 207, 214));
+                break;
+            case "Giallo":
+                todoPanel.setBackground(new Color(248, 255, 98));
+                campo1.setBackground(new Color(252, 214, 9));
+                campo2.setBackground(new Color(252, 214, 9));
+                break;
+            case "Rosso":
+                todoPanel.setBackground(new Color(255, 87, 84));
+                campo1.setBackground(new Color(214, 6, 11));
+                campo2.setBackground(new Color(214, 6, 11));
+                break;
+            case "Verde":
+                todoPanel.setBackground(new Color(87,255,116));
+                campo1.setBackground(new Color(0,201,20));
+                campo2.setBackground(new Color(0,201,20));
+                break;
+            case "Arancione":
+                todoPanel.setBackground(new Color(255,176,76));
+                campo1.setBackground(new Color(255,140,0));
+                campo2.setBackground(new Color(255,140,0));
+                break;
+            case "Viola":
+                todoPanel.setBackground(new Color(217,165,255));
+                campo1.setBackground(new Color(175,64,255));
+                campo2.setBackground(new Color(175,64,255));
+                break;
+        }
+    }
+
     private void checkCompletionStatus() {
         boolean allChecked = true;
         int checkBoxCount = 0;
@@ -185,35 +308,39 @@ public class ToDoForm {
             }
         }
 
-
         if (checkBoxCount > 0 && allChecked) {
             statusField.setText("Completo");
+        } else if (checkBoxCount > 0 && !allChecked) {
+            statusField.setText("In Progresso");
         } else {
-            statusField.setText(""); // Clear the status if not all are complete
+            statusField.setText("Non avviato");
+        }
+
+
+        if (currentToDo != null) {
+            currentToDo.setStatus(statusField.getText());
         }
     }
+
     private void loadImage(String imageName) {
         try {
-
             URL imageUrl = getClass().getResource("/images/" + imageName);
 
             if (imageUrl != null) {
                 ImageIcon icon = new ImageIcon(imageUrl);
-
                 Image img = icon.getImage();
-                Image scaledImg = img.getScaledInstance(100, 100, Image.SCALE_SMOOTH);
+                Image scaledImg = img.getScaledInstance(150, 150, Image.SCALE_SMOOTH);
                 icon = new ImageIcon(scaledImg);
-
                 image.setIcon(icon);
                 image.setText("");
             } else {
-                System.err.println("Errore: Immagine '" + imageName + "' non trovata nel percorso /images/");
-                image.setText("Immagine non trovata!");
+                System.err.println("Error: Image '" + imageName + "' not found in /images/");
+                image.setText("Image not found!");
             }
         } catch (Exception ex) {
-            System.err.println("Errore durante il caricamento dell'immagine '" + imageName + "': " + ex.getMessage());
+            System.err.println("Error loading image '" + imageName + "': " + ex.getMessage());
             ex.printStackTrace();
-            image.setText("Errore caricamento!");
+            image.setText("Loading error!");
         }
     }
 }

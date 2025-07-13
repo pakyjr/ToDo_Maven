@@ -7,16 +7,17 @@ import models.board.BoardName;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Collections;
 
 public class BoardForm {
     private JPanel board;
@@ -27,19 +28,14 @@ public class BoardForm {
     private JButton deleteToDoButton;
     private JButton dueDateButton;
     public JScrollPane ScrollPanel;
-    public JPanel toDoInfo;
-    private JButton buttonModify;
+    private JButton MoveUp;
     private JList jList;
-    private JLabel labelText;
-    private JLabel labelDescription;
-    private JLabel labelUrl;
-    private JLabel labelDueDate;
-    private JLabel labelOwner;
     private JTextField textFieldSearchTitle;
     private JLabel labelSearch;
     private JTextField textFieldSearchDate;
     private JLabel labelSearchDate;
     private JButton buttonOrderByDate;
+    private JButton MoveDown;
     public JFrame frameBoardForm;
 
     public static DefaultListModel<String> listModel;
@@ -52,7 +48,7 @@ public class BoardForm {
         frameBoardForm.pack();
         frameBoardForm.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        setVisibilityToDoInfo(false);
+
         this.controller = c;
 
         this.comboBoxBoards.addItem("UNIVERSITY");
@@ -62,52 +58,50 @@ public class BoardForm {
         listModel = new DefaultListModel<String>();
         jList.setModel(listModel);
 
-        buttonModify.setEnabled(false);
+        MoveUp.setEnabled(false);
+        MoveDown.setEnabled(false);
         deleteToDoButton.setEnabled(false);
+
+
         jList.addListSelectionListener(e -> {
-            buttonModify.setEnabled(!jList.isSelectionEmpty());
-            deleteToDoButton.setEnabled(!jList.isSelectionEmpty());
+            boolean isSelected = !jList.isSelectionEmpty();
+            MoveUp.setEnabled(isSelected && jList.getSelectedIndex() > 0);
+            MoveDown.setEnabled(isSelected && jList.getSelectedIndex() < listModel.getSize() - 1);
+            deleteToDoButton.setEnabled(isSelected);
         });
+
 
         addToDoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String currentBoard = comboBoxBoards.getSelectedItem().toString();
-                ToDoForm toDoForm = new ToDoForm(frameBoardForm, controller, currentBoard);
+
+                ToDoForm toDoForm = new ToDoForm(frameBoardForm, controller, currentBoard, null);
+                frameBoardForm.setVisible(false);
                 toDoForm.frameToDoForm.setVisible(true);
             }
         });
 
 
-        jList.addListSelectionListener(new ListSelectionListener() {
+        jList.addMouseListener(new MouseAdapter() {
             @Override
-            public void valueChanged(ListSelectionEvent e) {
-                String title = ((String) jList.getSelectedValue());
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int index = jList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        String selectedToDoTitle = (String) listModel.getElementAt(index);
+                        ToDo selectedToDo = controller.getToDoByTitle(selectedToDoTitle, BoardName.valueOf(comboBoxBoards.getSelectedItem().toString()));
 
-                ToDo todo = controller.getToDoByTitle(title, BoardName.valueOf(comboBoxBoards.getSelectedItem().toString()));
-                if(todo != null) {
-                    labelText.setText(todo.getTitle());
-                    labelDescription.setText(todo.getDescription());
-                    labelUrl.setText(todo.getUrl());
-                    labelDueDate.setText(todo.getDueDate().toString());
-                    labelOwner.setText(todo.getOwner());
+                        if (selectedToDo != null) {
 
-                    setVisibilityToDoInfo(true);
-                    frameBoardForm.setSize(500, 300);
-                    frameBoardForm.repaint();
+                            ToDoForm toDoForm = new ToDoForm(frameBoardForm, controller, comboBoxBoards.getSelectedItem().toString(), selectedToDo);
+                            frameBoardForm.setVisible(false);
+                            toDoForm.frameToDoForm.setVisible(true);
+                            jList.clearSelection();
+                        }
+                    }
                 }
-                else {
-                    setVisibilityToDoInfo(false);
-                    frameBoardForm.setSize(300, 300);
-                    frameBoardForm.repaint();
-
-
-                }
-
-
             }
-
-
         });
 
 
@@ -119,8 +113,11 @@ public class BoardForm {
 
                 listModel.clear();
                 listModel.addAll(todos);
+
+                jList.clearSelection();
             }
         });
+
 
         textFieldSearchTitle.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
@@ -136,6 +133,7 @@ public class BoardForm {
             }
         });
 
+
         textFieldSearchDate.getDocument().addDocumentListener(new DocumentListener() {
             public void insertUpdate(DocumentEvent e) {
                 filterByDate();
@@ -148,9 +146,11 @@ public class BoardForm {
             }
         });
 
+
         dueDateButton.addActionListener(e -> {
             showTodosToday();
         });
+
 
         buttonOrderByDate.addActionListener(new ActionListener() {
             @Override
@@ -164,10 +164,10 @@ public class BoardForm {
                 for (ToDo todo : todos) {
                     listModel.addElement(todo.getTitle());
                 }
-
-                setVisibilityToDoInfo(false);
+                jList.clearSelection();
             }
         });
+
 
         orderToDoByTitleButton.addActionListener(new ActionListener() {
             @Override
@@ -181,29 +181,82 @@ public class BoardForm {
                 for (ToDo todo : todos) {
                     listModel.addElement(todo.getTitle());
                 }
-
-                setVisibilityToDoInfo(false);
+                jList.clearSelection();
             }
         });
 
-        buttonModify.addActionListener(new ActionListener() {
+        MoveUp.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String currentBoard = comboBoxBoards.getSelectedItem().toString();
-                ModifyToDoForm toDoForm = new ModifyToDoForm(frameBoardForm, controller, currentBoard);
-                toDoForm.frameModifyToDoForm.setVisible(true);
-            }
+                int selectedIndex = jList.getSelectedIndex();
+                if (selectedIndex > 0) {
+                    String selectedTitle = listModel.getElementAt(selectedIndex);
+                    String boardName = comboBoxBoards.getSelectedItem().toString();
+                    BoardName currentBoard = BoardName.valueOf(boardName);
 
+
+                    String elementToMove = listModel.remove(selectedIndex);
+                    listModel.add(selectedIndex - 1, elementToMove);
+
+
+                    ArrayList<ToDo> todos = controller.user.getBoard(currentBoard).getTodoList();
+                    ToDo todoToMove = null;
+                    int actualIndex = -1;
+                    for (int i = 0; i < todos.size(); i++) {
+                        if (todos.get(i).getTitle().equals(selectedTitle)) {
+                            todoToMove = todos.get(i);
+                            actualIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (todoToMove != null && actualIndex != -1 && actualIndex > 0) {
+                        Collections.swap(todos, actualIndex, actualIndex - 1);
+                    }
+
+                    jList.setSelectedIndex(selectedIndex - 1);
+                    jList.ensureIndexIsVisible(selectedIndex - 1);
+                }
+            }
+        });
+
+        MoveDown.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = jList.getSelectedIndex();
+                if (selectedIndex < listModel.getSize() - 1 && selectedIndex != -1) {
+                    String selectedTitle = listModel.getElementAt(selectedIndex);
+                    String boardName = comboBoxBoards.getSelectedItem().toString();
+                    BoardName currentBoard = BoardName.valueOf(boardName);
+
+                    String elementToMove = listModel.remove(selectedIndex);
+                    listModel.add(selectedIndex + 1, elementToMove);
+
+
+                    ArrayList<ToDo> todos = controller.user.getBoard(currentBoard).getTodoList();
+                    ToDo todoToMove = null;
+                    int actualIndex = -1;
+                    for (int i = 0; i < todos.size(); i++) {
+                        if (todos.get(i).getTitle().equals(selectedTitle)) {
+                            todoToMove = todos.get(i);
+                            actualIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (todoToMove != null && actualIndex != -1 && actualIndex < todos.size() - 1) {
+                        Collections.swap(todos, actualIndex, actualIndex + 1);
+                    }
+
+                    jList.setSelectedIndex(selectedIndex + 1);
+                    jList.ensureIndexIsVisible(selectedIndex + 1);
+                }
+            }
         });
     }
 
-    private void setVisibilityToDoInfo(boolean status) {
-        toDoInfo.setVisible(status);
-        for (Component c : toDoInfo.getComponents()) {
-            c.setVisible(status);
-        }
-        toDoInfo.repaint();
-    }
+    // Removed setVisibilityToDoInfo as toDoInfo panel is no longer used
+    // private void setVisibilityToDoInfo(boolean status) { ... }
 
     private void filterToDoList() {
         String searchText = textFieldSearchTitle.getText().toLowerCase();
@@ -217,12 +270,17 @@ public class BoardForm {
                 listModel.addElement(todoTitle);
             }
         }
+        jList.clearSelection();
     }
 
     private void filterByDate() {
         String dateText = textFieldSearchDate.getText().trim();
         if (dateText.isEmpty()) {
-            filterToDoList();
+            String selectedBoard = comboBoxBoards.getSelectedItem().toString();
+            ArrayList<String> allTodos = controller.getToDoListString(BoardName.valueOf(selectedBoard));
+            listModel.clear();
+            listModel.addAll(allTodos);
+            jList.clearSelection();
             return;
         }
 
@@ -238,8 +296,9 @@ public class BoardForm {
                     listModel.addElement(todo.getTitle());
                 }
             }
+            jList.clearSelection();
         } catch (DateTimeParseException e) {
-
+            JOptionPane.showMessageDialog(frameBoardForm, "Invalid date format. Please use dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -257,8 +316,6 @@ public class BoardForm {
                 listModel.addElement(t.getTitle());
             }
         }
-        setVisibilityToDoInfo(false);
-        
+        jList.clearSelection();
     }
-
 }
