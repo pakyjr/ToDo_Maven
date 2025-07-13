@@ -42,6 +42,7 @@ public class ToDo {
     public boolean getDone(){
         return this.done;
     }
+
     public int getPosition() {
         return position;
     }

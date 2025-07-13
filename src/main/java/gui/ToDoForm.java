@@ -32,7 +32,7 @@ public class ToDoForm {
     private Controller controller;
 
     private String[] imageNames = {"lupo.png", "lettura.png", "immagine3.jpg", "immagine4.jpg", "immagine5.jpg"};
-    private int currentImageIndex = 0; // Indice dell'immagine attualmente visualizzata
+    private int currentImageIndex = 0;
 
     public ToDoForm(JFrame parent, Controller c, String cu){
         this.frame = parent;
