@@ -51,7 +51,7 @@ public class BoardForm {
 
         this.comboBoxBoards.addItem("UNIVERSITY");
         this.comboBoxBoards.addItem("WORK");
-        this.comboBoxBoards.addItem("FREE_TIME");
+        this.comboBoxBoards.addItem("FREE TIME");
 
         listModel = new DefaultListModel<String>();
         jList.setModel(listModel);

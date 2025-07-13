@@ -7,6 +7,7 @@ import models.board.BoardName;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.net.URI;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -14,7 +15,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional; // Import Optional for stream operations
 
 public class ToDoForm {
     private JPanel todoPanel;
@@ -33,6 +33,7 @@ public class ToDoForm {
     private JTextField statusField;
     private JPanel panelActivity;
     private JButton deleteButton;
+    private JButton openURL;
     public JFrame frameToDoForm, frame;
 
     private String currentBoard;
@@ -134,6 +135,40 @@ public class ToDoForm {
             statusField.setText("Not Started");
         }
 
+        // --- Add ActionListener for the openURL button ---
+        openURL.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String urlText = urlField.getText().trim();
+                if (urlText.isEmpty()) {
+                    JOptionPane.showMessageDialog(frameToDoForm, "URL field is empty. Please enter a link.", "No URL Provided", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                // Attempt to make the URL valid by prepending http:// if no scheme is present
+                if (!urlText.startsWith("http://") && !urlText.startsWith("https://")) {
+                    urlText = "http://" + urlText;
+                }
+
+                try {
+
+                    if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
+                        Desktop.getDesktop().browse(new URI(urlText));
+                    } else {
+                        JOptionPane.showMessageDialog(frameToDoForm, "Your system does not support opening web links automatically.", "Feature Not Supported", JOptionPane.WARNING_MESSAGE);
+                    }
+                } catch (Exception ex) {
+
+                    JOptionPane.showMessageDialog(frameToDoForm,
+                            "Failed to open URL: " + ex.getMessage() +
+                                    "\nPlease ensure the link is a valid web address (e.g., www.google.com or https://example.com).",
+                            "Error Opening URL", JOptionPane.ERROR_MESSAGE);
+                    System.err.println("Error attempting to open URL: " + urlText + " - " + ex.getMessage());
+                    ex.printStackTrace();
+                }
+            }
+        });
+
 
         buttonSave.addActionListener(new ActionListener() {
             @Override
@@ -141,7 +176,7 @@ public class ToDoForm {
                 String title = nameField.getText().trim();
                 String description = descriptionField.getText().trim();
                 String dueDateString = dueDateField.getText().trim();
-                String url = urlField.getText().trim();
+                String url = urlField.getText().trim(); // Get the current URL from the field
 
                 if (title.isEmpty() || description.isEmpty() || dueDateString.isEmpty()) {
                     JOptionPane.showMessageDialog(frameToDoForm, "Please fill in all required fields (Title, Description, Due Date).", "Missing Data", JOptionPane.ERROR_MESSAGE);
@@ -171,9 +206,9 @@ public class ToDoForm {
                 } else {
                     boolean allChecked = activitiesMap.values().stream().allMatch(Boolean::booleanValue);
                     if (allChecked) {
-                        calculatedStatus = "Completo";
+                        calculatedStatus = "Complete";
                     } else {
-                        calculatedStatus = "Incompleto"; // Changed from "In Progress" to "In Progresso" for consistency
+                        calculatedStatus = "Incomplete";
                     }
                 }
 
@@ -182,6 +217,7 @@ public class ToDoForm {
 
 
                 if (currentToDo == null) {
+
                     controller.addToDo(currentBoard, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus);
 
                     JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
@@ -189,12 +225,13 @@ public class ToDoForm {
                     String oldTitle = currentToDo.getTitle();
 
                     controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus);
+
                     currentToDo.setTitle(title);
                     currentToDo.setDescription(description);
                     currentToDo.setDueDate(dueDate);
-                    currentToDo.setUrl(url);
-                    currentToDo.setActivityList(activitiesMap); // This will call updateOverallStatus internally
-                    currentToDo.setStatus(calculatedStatus);    // Redundant if setActivityList calls updateOverallStatus
+                    currentToDo.setUrl(url); // Update the URL in the in-memory object
+                    currentToDo.setActivityList(activitiesMap);
+                    currentToDo.setStatus(calculatedStatus);
                     currentToDo.setColor(selectedColor);
                     currentToDo.setImage(selectedImageName);
                     JOptionPane.showMessageDialog(frameToDoForm, "ToDo updated successfully.");
@@ -202,7 +239,14 @@ public class ToDoForm {
 
                 if (BoardForm.listModel != null) {
                     BoardForm.listModel.clear();
-                    BoardForm.listModel.addAll(controller.getToDoListString(BoardName.valueOf(currentBoard)));
+
+                    BoardName boardEnum;
+                    try {
+                        boardEnum = getBoardNameFromString(currentBoard);
+                        BoardForm.listModel.addAll(controller.getToDoListString(boardEnum));
+                    } catch (IllegalArgumentException ex) {
+                        System.err.println("Error: Invalid board name when updating list model: " + currentBoard);
+                    }
                 } else {
                     System.err.println("BoardForm.listModel is null. Cannot update the list.");
                 }
@@ -242,7 +286,7 @@ public class ToDoForm {
                     panelActivity.repaint();
 
                     if (currentToDo != null) {
-                        currentToDo.addActivity(label);
+                        currentToDo.addActivity(label); // Update in-memory ToDo
                     }
                 }
                 checkCompletionStatus();
@@ -262,6 +306,7 @@ public class ToDoForm {
                             selectedCheckBoxes.add(cb);
                         }
                     }
+
                 }
 
                 if (selectedCheckBoxes.isEmpty()) {
@@ -278,7 +323,8 @@ public class ToDoForm {
                     for (JCheckBox cb : selectedCheckBoxes) {
                         panelActivity.remove(cb); // Remove from GUI
                         if (currentToDo != null) {
-                            currentToDo.deleteActivity(cb.getText()); // Remove from ToDo model
+                            currentToDo.deleteActivity(cb.getText());
+
                         }
                     }
                     panelActivity.revalidate();
@@ -288,7 +334,7 @@ public class ToDoForm {
                 }
             }
         });
-    } // End of constructor
+    }
 
 
     private void setPanelColors(String colorSelected) {
@@ -383,5 +429,13 @@ public class ToDoForm {
             image.setText("Loading error!");
             image.setIcon(null);
         }
+    }
+
+    private BoardName getBoardNameFromString(String boardName) {
+        String formattedBoardName = boardName.toUpperCase();
+        if (formattedBoardName.equals("FREE TIME")) {
+            formattedBoardName = "FREE_TIME";
+        }
+        return BoardName.valueOf(formattedBoardName);
     }
 }
