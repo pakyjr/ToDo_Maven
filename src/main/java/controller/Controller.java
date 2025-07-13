@@ -18,7 +18,7 @@ public class Controller {
     }
 
     // Now correctly accepts color, image, activities, and status
-    public String addToDo(String boardName, String toDoName, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status){ // <--- Added activities and status
+    public String addToDo(String boardName, String toDoName, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status){
         String formattedBoardName = boardName.toUpperCase();
         if(formattedBoardName.equals("FREE TIME")){
             formattedBoardName = "FREE_TIME";
@@ -33,8 +33,8 @@ public class Controller {
         toDo.setImage(image);
 
         // Set activities and status directly. ToDo's setActivityList will handle updateOverallStatus.
-        toDo.setActivityList(activities); // <--- Set activities
-        toDo.setStatus(status);           // <--- Set status (will also set 'done' based on it)
+        toDo.setActivityList(activities);
+        toDo.setStatus(status);
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
         LocalDate localDate = LocalDate.parse(date, formatter);
@@ -65,8 +65,8 @@ public class Controller {
             toDoToUpdate.setImage(image);
 
             // Set activities and status. ToDo's setActivityList will handle updateOverallStatus.
-            toDoToUpdate.setActivityList(activities); // <--- Set activities
-            toDoToUpdate.setStatus(status);           // <--- Set status (will also set 'done' based on it)
+            toDoToUpdate.setActivityList(activities);
+            toDoToUpdate.setStatus(status);
 
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             LocalDate localDate = LocalDate.parse(date, formatter);
@@ -102,6 +102,26 @@ public class Controller {
         }
         return resultTitles;
     }
+
+    // New method to delete a ToDo
+    public void deleteToDo(BoardName boardName, String toDoTitle) {
+        Board board = user.getBoard(boardName);
+        if (board == null) {
+            System.err.println("Board " + boardName + " not found for user.");
+            return;
+        }
+
+        // Find the ToDo by title and remove it from the board's todoList
+        // The removeIf method is efficient for this.
+        boolean removed = board.getTodoList().removeIf(toDo -> toDo.getTitle().equals(toDoTitle));
+
+        if (removed) {
+            System.out.println("ToDo '" + toDoTitle + "' deleted from board " + boardName);
+        } else {
+            System.err.println("ToDo '" + toDoTitle + "' not found on board " + boardName + " for deletion.");
+        }
+    }
+
 
     // This method is redundant and can be safely removed.
     // public void addActivity(String boardName, String activityName){
