@@ -34,6 +34,11 @@ public class BoardForm {
     private JButton buttonOrderByDate;
     private JButton MoveDown;
     private JButton changeBoard;
+    private JComboBox<String> colorChange;
+    private JPanel campo1;
+    private JLabel campo2;
+    private JLabel campo3;
+    private JLabel campo4;
     public JFrame frameBoardForm;
 
     public static DefaultListModel<String> listModel;
@@ -48,10 +53,39 @@ public class BoardForm {
 
         this.controller = c;
 
-        // Populate the combo box with board names
+
+        this.comboBoxBoards.addItem("Boards");
         for (BoardName name : BoardName.values()) {
             this.comboBoxBoards.addItem(name.toString());
         }
+        this.comboBoxBoards.setSelectedItem("Boards");
+
+        this.colorChange.addItem("Blu");
+        this.colorChange.addItem("Rosso");
+        this.colorChange.addItem("Giallo");
+        this.colorChange.addItem("Verde");
+        this.colorChange.addItem("Arancione");
+        this.colorChange.addItem("Viola");
+
+        colorChange.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                return label;
+            }
+        });
+
+
+        setPanelColors((String) colorChange.getSelectedItem());
+
+        colorChange.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String colorSelected = (String) colorChange.getSelectedItem();
+                setPanelColors(colorSelected);
+            }
+        });
 
         comboBoxBoards.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -65,15 +99,16 @@ public class BoardForm {
         listModel = new DefaultListModel<String>();
         jList.setModel(listModel);
 
-        jList.setCellRenderer(new ToDoListCellRenderer(controller, (String) comboBoxBoards.getSelectedItem()));
+        jList.setCellRenderer(new ToDoListCellRenderer(controller, null));
 
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
-        deleteToDoButton.setEnabled(false); // Initially disabled
-        changeBoard.setEnabled(false); // Initially disabled
-
-        String initialBoard = comboBoxBoards.getSelectedItem().toString();
-        listModel.addAll(controller.getToDoListString(BoardName.valueOf(initialBoard)));
+        deleteToDoButton.setEnabled(false);
+        changeBoard.setEnabled(false);
+        addToDoButton.setEnabled(false);
+        orderToDoByTitleButton.setEnabled(false);
+        buttonOrderByDate.setEnabled(false);
+        dueDateButton.setEnabled(false);
 
 
         jList.addListSelectionListener(e -> {
@@ -90,9 +125,20 @@ public class BoardForm {
         addToDoButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String currentBoard = comboBoxBoards.getSelectedItem().toString();
+                String currentBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+                if ("Boards".equals(currentBoardDisplayName)) {
+                    JOptionPane.showMessageDialog(frameBoardForm, "Please select a valid board before adding a ToDo.", "No Board Selected", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
 
-                ToDoForm toDoForm = new ToDoForm(frameBoardForm, controller, currentBoard, null);
+
+                BoardName currentBoardEnum = getBoardNameFromDisplayName(currentBoardDisplayName);
+                if (currentBoardEnum == null) {
+                    JOptionPane.showMessageDialog(frameBoardForm, "Invalid board selection.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                ToDoForm toDoForm = new ToDoForm(frameBoardForm, controller, currentBoardDisplayName, null);
                 frameBoardForm.setVisible(false);
                 toDoForm.frameToDoForm.setVisible(true);
             }
@@ -106,11 +152,23 @@ public class BoardForm {
                     int index = jList.locationToIndex(e.getPoint());
                     if (index != -1) {
                         String selectedToDoTitle = (String) listModel.getElementAt(index);
-                        ToDo selectedToDo = controller.getToDoByTitle(selectedToDoTitle, BoardName.valueOf(comboBoxBoards.getSelectedItem().toString()));
+                        String currentBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+
+                        if ("Boards".equals(currentBoardDisplayName)) {
+                            JOptionPane.showMessageDialog(frameBoardForm, "Please select a valid board to view or edit ToDos.", "Invalid Board Selected", JOptionPane.WARNING_MESSAGE);
+                            return;
+                        }
+
+                        BoardName currentBoardEnum = getBoardNameFromDisplayName(currentBoardDisplayName);
+                        if (currentBoardEnum == null) {
+                            JOptionPane.showMessageDialog(frameBoardForm, "Invalid board selection.", "Error", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+
+                        ToDo selectedToDo = controller.getToDoByTitle(selectedToDoTitle, currentBoardEnum);
 
                         if (selectedToDo != null) {
-
-                            ToDoForm toDoForm = new ToDoForm(frameBoardForm, controller, comboBoxBoards.getSelectedItem().toString(), selectedToDo);
+                            ToDoForm toDoForm = new ToDoForm(frameBoardForm, controller, currentBoardDisplayName, selectedToDo);
                             frameBoardForm.setVisible(false);
                             toDoForm.frameToDoForm.setVisible(true);
                             jList.clearSelection();
@@ -124,19 +182,35 @@ public class BoardForm {
         comboBoxBoards.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String selectedBoard = comboBoxBoards.getSelectedItem().toString();
-                ArrayList<String> todos = controller.getToDoListString(BoardName.valueOf(selectedBoard));
-
+                String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
                 listModel.clear();
-                listModel.addAll(todos);
-
                 jList.clearSelection();
-                MoveUp.setEnabled(false); // Disable after board change
-                MoveDown.setEnabled(false); // Disable after board change
-                deleteToDoButton.setEnabled(false); // Disable after board change
-                changeBoard.setEnabled(false); // Disable after board change
 
-                ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(selectedBoard);
+                boolean boardSelected = !"Boards".equals(selectedBoardDisplayName);
+                addToDoButton.setEnabled(boardSelected);
+                orderToDoByTitleButton.setEnabled(boardSelected);
+                buttonOrderByDate.setEnabled(boardSelected);
+                dueDateButton.setEnabled(boardSelected);
+                MoveUp.setEnabled(false);
+                MoveDown.setEnabled(false);
+                deleteToDoButton.setEnabled(false);
+                changeBoard.setEnabled(false);
+
+                if (boardSelected) {
+                    BoardName boardNameEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
+                    if (boardNameEnum != null) {
+                        ArrayList<String> todos = controller.getToDoListString(boardNameEnum);
+                        listModel.addAll(todos);
+                        ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(selectedBoardDisplayName);
+                    } else {
+
+                        System.err.println("Error: Could not find BoardName enum for display name: " + selectedBoardDisplayName);
+                        ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(null);
+                    }
+                } else {
+
+                    ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(null);
+                }
                 jList.repaint();
             }
         });
@@ -178,9 +252,13 @@ public class BoardForm {
         buttonOrderByDate.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String selectedBoard = comboBoxBoards.getSelectedItem().toString();
+                String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+                if ("Boards".equals(selectedBoardDisplayName)) return;
 
-                ArrayList<ToDo> todos = controller.user.getBoard(BoardName.valueOf(selectedBoard)).getTodoList();
+                BoardName selectedBoardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
+                if (selectedBoardEnum == null) return;
+
+                ArrayList<ToDo> todos = controller.user.getBoard(selectedBoardEnum).getTodoList();
 
                 todos.sort(Comparator.comparing(ToDo::getDueDate, Comparator.nullsLast(LocalDate::compareTo)));
 
@@ -200,9 +278,13 @@ public class BoardForm {
         orderToDoByTitleButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                String selectedBoard = comboBoxBoards.getSelectedItem().toString();
+                String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+                if ("Boards".equals(selectedBoardDisplayName)) return;
 
-                ArrayList<ToDo> todos = controller.user.getBoard(BoardName.valueOf(selectedBoard)).getTodoList();
+                BoardName selectedBoardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
+                if (selectedBoardEnum == null) return;
+
+                ArrayList<ToDo> todos = controller.user.getBoard(selectedBoardEnum).getTodoList();
 
                 todos.sort(Comparator.comparing(todo -> todo.getTitle().toLowerCase()));
 
@@ -222,16 +304,17 @@ public class BoardForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int selectedIndex = jList.getSelectedIndex();
-                if (selectedIndex > 0) {
+                String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+                if (selectedIndex > 0 && !"Boards".equals(selectedBoardDisplayName)) {
                     String selectedTitle = listModel.getElementAt(selectedIndex);
-                    String boardName = comboBoxBoards.getSelectedItem().toString();
-                    BoardName currentBoard = BoardName.valueOf(boardName);
+
+                    BoardName currentBoard = getBoardNameFromDisplayName(selectedBoardDisplayName);
+                    if (currentBoard == null) return;
 
                     String elementToMove = listModel.remove(selectedIndex);
                     listModel.add(selectedIndex - 1, elementToMove);
 
                     ArrayList<ToDo> todos = controller.user.getBoard(currentBoard).getTodoList();
-                    // Find the ToDo object by title, assuming titles are unique within a board for simplicity
                     ToDo todoToMove = null;
                     int actualIndex = -1;
                     for (int i = 0; i < todos.size(); i++) {
@@ -256,10 +339,12 @@ public class BoardForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int selectedIndex = jList.getSelectedIndex();
-                if (selectedIndex < listModel.getSize() - 1 && selectedIndex != -1) {
+                String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+                if (selectedIndex < listModel.getSize() - 1 && selectedIndex != -1 && !"Boards".equals(selectedBoardDisplayName)) {
                     String selectedTitle = listModel.getElementAt(selectedIndex);
-                    String boardName = comboBoxBoards.getSelectedItem().toString();
-                    BoardName currentBoard = BoardName.valueOf(boardName);
+
+                    BoardName currentBoard = getBoardNameFromDisplayName(selectedBoardDisplayName);
+                    if (currentBoard == null) return;
 
                     String elementToMove = listModel.remove(selectedIndex);
                     listModel.add(selectedIndex + 1, elementToMove);
@@ -290,10 +375,12 @@ public class BoardForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int selectedIndex = jList.getSelectedIndex();
-                if (selectedIndex != -1) {
+                String currentBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+                if (selectedIndex != -1 && !"Boards".equals(currentBoardDisplayName)) {
                     String selectedToDoTitle = listModel.getElementAt(selectedIndex);
-                    String currentBoardName = comboBoxBoards.getSelectedItem().toString();
-                    BoardName boardNameEnum = BoardName.valueOf(currentBoardName);
+
+                    BoardName boardNameEnum = getBoardNameFromDisplayName(currentBoardDisplayName);
+                    if (boardNameEnum == null) return;
 
                     int confirmResult = JOptionPane.showConfirmDialog(frameBoardForm,
                             "Are you sure you want to delete '" + selectedToDoTitle + "'?",
@@ -314,7 +401,7 @@ public class BoardForm {
                         JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' deleted successfully.");
                     }
                 } else {
-                    JOptionPane.showMessageDialog(frameBoardForm, "Please select a ToDo to delete.", "No ToDo Selected", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(frameBoardForm, "Please select a ToDo to delete and ensure a board is selected.", "No ToDo Selected", JOptionPane.WARNING_MESSAGE);
                 }
             }
         });
@@ -323,27 +410,27 @@ public class BoardForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int selectedIndex = jList.getSelectedIndex();
-                if (selectedIndex != -1) {
+                String currentBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+                if (selectedIndex != -1 && !"Boards".equals(currentBoardDisplayName)) {
                     String selectedToDoTitle = listModel.getElementAt(selectedIndex);
-                    String currentBoardName = comboBoxBoards.getSelectedItem().toString();
-                    BoardName sourceBoard = BoardName.valueOf(currentBoardName);
 
-                    ArrayList<BoardName> availableBoards = new ArrayList<>();
+                    BoardName sourceBoard = getBoardNameFromDisplayName(currentBoardDisplayName);
+                    if (sourceBoard == null) return;
+
+                    ArrayList<String> availableBoardDisplayNames = new ArrayList<>();
                     for (BoardName name : BoardName.values()) {
                         if (!name.equals(sourceBoard)) {
-                            availableBoards.add(name);
+                            availableBoardDisplayNames.add(name.getDisplayName());
                         }
                     }
 
-                    if (availableBoards.isEmpty()) {
+                    if (availableBoardDisplayNames.isEmpty()) {
                         JOptionPane.showMessageDialog(frameBoardForm, "No other boards available to move this ToDo to.", "No Destination Boards", JOptionPane.INFORMATION_MESSAGE);
                         return;
                     }
 
-                    String[] boardOptions = new String[availableBoards.size()];
-                    for (int i = 0; i < availableBoards.size(); i++) {
-                        boardOptions[i] = availableBoards.get(i).toString();
-                    }
+                    String[] boardOptions = availableBoardDisplayNames.toArray(new String[0]);
+
 
                     String destinationBoardString = (String) JOptionPane.showInputDialog(
                             frameBoardForm,
@@ -355,7 +442,11 @@ public class BoardForm {
                             boardOptions[0]);
 
                     if (destinationBoardString != null) { // User made a selection
-                        BoardName destinationBoard = BoardName.valueOf(destinationBoardString);
+                        BoardName destinationBoard = getBoardNameFromDisplayName(destinationBoardString);
+                        if (destinationBoard == null) {
+                            JOptionPane.showMessageDialog(frameBoardForm, "Invalid destination board selected.", "Error", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
 
                         boolean moved = controller.moveToDo(selectedToDoTitle, sourceBoard, destinationBoard);
 
@@ -372,18 +463,82 @@ public class BoardForm {
                         }
                     }
                 } else {
-                    JOptionPane.showMessageDialog(frameBoardForm, "Please select a ToDo to move.", "No ToDo Selected", JOptionPane.WARNING_MESSAGE);
+                    JOptionPane.showMessageDialog(frameBoardForm, "Please select a ToDo to move and ensure a board is selected.", "No ToDo Selected", JOptionPane.WARNING_MESSAGE);
                 }
             }
         });
+    }
 
+    private void setPanelColors(String colorSelected) {
+        if (colorSelected == null) return;
+
+        switch (colorSelected) {
+            case "Blu":
+                board.setBackground(new Color(160, 235, 219));
+                campo1.setBackground(new Color(115, 207, 214));
+                campo2.setBackground(new Color(115, 207, 214));
+                campo3.setBackground(new Color(115, 207, 214));
+                campo4.setBackground(new Color(115, 207, 214));
+                break;
+            case "Giallo":
+                board.setBackground(new Color(248, 255, 98));
+                campo1.setBackground(new Color(252, 214, 9));
+                campo2.setBackground(new Color(252, 214, 9));
+                campo3.setBackground(new Color(252, 214, 9));
+                campo4.setBackground(new Color(252, 214, 9));
+                break;
+            case "Rosso":
+                board.setBackground(new Color(255, 87, 84));
+                campo1.setBackground(new Color(214, 6, 11));
+                campo2.setBackground(new Color(214, 6, 11));
+                campo3.setBackground(new Color(214, 6, 11));
+                campo4.setBackground(new Color(214, 6, 11));
+                break;
+            case "Verde":
+                board.setBackground(new Color(87,255,116));
+                campo1.setBackground(new Color(0,201,20));
+                campo2.setBackground(new Color(0,201,20));
+                campo3.setBackground(new Color(0,201,20));
+                campo4.setBackground(new Color(0,201,20));
+                break;
+            case "Arancione":
+                board.setBackground(new Color(255,176,76));
+                campo1.setBackground(new Color(255,140,0));
+                campo2.setBackground(new Color(255,140,0));
+                campo3.setBackground(new Color(255,140,0));
+                campo4.setBackground(new Color(255,140,0));
+                break;
+            case "Viola":
+                board.setBackground(new Color(217,165,255));
+                campo1.setBackground(new Color(175,64,255));
+                campo2.setBackground(new Color(175,64,255));
+                campo3.setBackground(new Color(175,64,255));
+                campo4.setBackground(new Color(175,64,255));
+                break;
+        }
+    }
+
+    private BoardName getBoardNameFromDisplayName(String displayName) {
+        for (BoardName name : BoardName.values()) {
+            if (name.getDisplayName().equals(displayName)) {
+                return name;
+            }
+        }
+        return null;
     }
 
     private void filterToDoList() {
-        String searchText = textFieldSearchTitle.getText().toLowerCase();
-        String selectedBoard = comboBoxBoards.getSelectedItem().toString();
+        String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+        if ("Boards".equals(selectedBoardDisplayName)) {
+            listModel.clear();
+            return;
+        }
 
-        ArrayList<String> allTodos = controller.getToDoListString(BoardName.valueOf(selectedBoard));
+        BoardName selectedBoardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
+        if (selectedBoardEnum == null) return;
+
+        String searchText = textFieldSearchTitle.getText().toLowerCase();
+        ArrayList<String> allTodos = controller.getToDoListString(selectedBoardEnum);
         listModel.clear();
 
         for (String todoTitle : allTodos) {
@@ -400,8 +555,14 @@ public class BoardForm {
 
     private void filterByDate() {
         String dateText = textFieldSearchDate.getText().trim();
-        String selectedBoard = comboBoxBoards.getSelectedItem().toString();
-        BoardName boardNameEnum = BoardName.valueOf(selectedBoard);
+        String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+        if ("Boards".equals(selectedBoardDisplayName)) {
+            listModel.clear();
+            return;
+        }
+        BoardName boardNameEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
+        if (boardNameEnum == null) return;
+
 
         if (dateText.isEmpty()) {
             ArrayList<String> allTodos = controller.getToDoListString(boardNameEnum);
@@ -416,7 +577,7 @@ public class BoardForm {
         }
 
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Corrected pattern for month
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             LocalDate searchDate = LocalDate.parse(dateText, formatter);
 
             ArrayList<ToDo> todos = controller.user.getBoard(boardNameEnum).getTodoList();
@@ -444,10 +605,12 @@ public class BoardForm {
     }
 
     private void showTodosToday() {
-        LocalDate today = LocalDate.now();
+        String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+        if ("Boards".equals(selectedBoardDisplayName)) return;
 
-        String selected = comboBoxBoards.getSelectedItem().toString();
-        BoardName boardEnum = BoardName.valueOf(selected);
+        LocalDate today = LocalDate.now();
+        BoardName boardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
+        if (boardEnum == null) return; // Should not happen with valid boards
 
         ArrayList<ToDo> todos = controller.user.getBoard(boardEnum).getTodoList();
 
@@ -466,34 +629,46 @@ public class BoardForm {
 
     private class ToDoListCellRenderer extends DefaultListCellRenderer {
         private Controller controller;
-        private String currentBoardName;
+        private String currentBoardDisplayName; // Now stores display name
 
-        public ToDoListCellRenderer(Controller controller, String initialBoardName) {
+        public ToDoListCellRenderer(Controller controller, String initialBoardDisplayName) {
             this.controller = controller;
-            this.currentBoardName = initialBoardName;
+            this.currentBoardDisplayName = initialBoardDisplayName;
         }
 
-        public void setCurrentBoard(String boardName) {
-            this.currentBoardName = boardName;
+        public void setCurrentBoard(String boardDisplayName) {
+            this.currentBoardDisplayName = boardDisplayName;
         }
 
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JLabel renderer = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
+            if (currentBoardDisplayName == null || "Boards".equals(currentBoardDisplayName)) {
+                renderer.setForeground(list.getForeground());
+                renderer.setBackground(list.getBackground());
+                return renderer;
+            }
+
             if (value instanceof String) {
                 String toDoTitle = (String) value;
-                BoardName boardNameEnum = BoardName.valueOf(currentBoardName);
+
+                BoardName boardNameEnum = getBoardNameFromDisplayName(currentBoardDisplayName);
+                if (boardNameEnum == null) {
+
+                    renderer.setForeground(list.getForeground());
+                    renderer.setBackground(list.getBackground());
+                    return renderer;
+                }
 
                 ToDo toDo = controller.getToDoByTitle(toDoTitle, boardNameEnum);
 
                 if (toDo != null && toDo.getDueDate() != null) {
                     LocalDate today = LocalDate.now();
 
-                    if (toDo.getDueDate().isBefore(today) && !"Completo".equals(toDo.getStatus())) {
+                    if (toDo.getDueDate().isBefore(today) && !"Completo".equals(toDo.getStatus()) && !"Complete".equals(toDo.getStatus())) {
                         renderer.setForeground(Color.RED);
                     } else {
-
                         renderer.setForeground(list.getForeground());
                     }
                 } else {
@@ -505,7 +680,6 @@ public class BoardForm {
                 renderer.setBackground(list.getSelectionBackground());
                 renderer.setForeground(list.getSelectionForeground());
             } else {
-
                 renderer.setBackground(list.getBackground());
             }
             return renderer;
