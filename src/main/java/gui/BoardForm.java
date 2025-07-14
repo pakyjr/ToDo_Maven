@@ -21,17 +21,17 @@ import java.util.Collections;
 public class BoardForm {
     private JPanel board;
     private JComboBox comboBoxBoards;
-    private JButton shareBoardButton;
-    private JButton addToDoButton;
-    private JButton orderToDoByTitleButton;
-    private JButton deleteToDoButton;
-    private JButton dueDateButton;
+    private JButton shareToDo;
+    private JButton addToDo;
+    private JButton orderToDoByTitle;
+    private JButton deleteToDo;
+    private JButton todayDueDate;
     public JScrollPane ScrollPanel;
     private JButton MoveUp;
     private JList jList;
     private JTextField textFieldSearchTitle;
     private JTextField textFieldSearchDate;
-    private JButton buttonOrderByDate;
+    private JButton OrderByDueDate;
     private JButton MoveDown;
     private JButton changeBoard;
     private JComboBox<String> colorChange;
@@ -39,6 +39,8 @@ public class BoardForm {
     private JLabel campo2;
     private JLabel campo3;
     private JLabel campo4;
+    private JComboBox memberdToDo;
+    private JButton changeSharing;
     public JFrame frameBoardForm;
 
     public static DefaultListModel<String> listModel;
@@ -60,12 +62,12 @@ public class BoardForm {
         }
         this.comboBoxBoards.setSelectedItem("Boards");
 
-        this.colorChange.addItem("Blu");
-        this.colorChange.addItem("Rosso");
-        this.colorChange.addItem("Giallo");
-        this.colorChange.addItem("Verde");
-        this.colorChange.addItem("Arancione");
-        this.colorChange.addItem("Viola");
+        this.colorChange.addItem("Blue");
+        this.colorChange.addItem("Red");
+        this.colorChange.addItem("Yellow");
+        this.colorChange.addItem("Green");
+        this.colorChange.addItem("Orange");
+        this.colorChange.addItem("Violet");
 
         colorChange.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -103,12 +105,12 @@ public class BoardForm {
 
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
-        deleteToDoButton.setEnabled(false);
+        deleteToDo.setEnabled(false);
         changeBoard.setEnabled(false);
-        addToDoButton.setEnabled(false);
-        orderToDoByTitleButton.setEnabled(false);
-        buttonOrderByDate.setEnabled(false);
-        dueDateButton.setEnabled(false);
+        addToDo.setEnabled(false);
+        orderToDoByTitle.setEnabled(false);
+        OrderByDueDate.setEnabled(false);
+        todayDueDate.setEnabled(false);
 
 
         jList.addListSelectionListener(e -> {
@@ -116,13 +118,13 @@ public class BoardForm {
                 boolean isSelected = !jList.isSelectionEmpty();
                 MoveUp.setEnabled(isSelected && jList.getSelectedIndex() > 0);
                 MoveDown.setEnabled(isSelected && jList.getSelectedIndex() < listModel.getSize() - 1);
-                deleteToDoButton.setEnabled(isSelected);
+                deleteToDo.setEnabled(isSelected);
                 changeBoard.setEnabled(isSelected);
             }
         });
 
 
-        addToDoButton.addActionListener(new ActionListener() {
+        addToDo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String currentBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
@@ -187,13 +189,13 @@ public class BoardForm {
                 jList.clearSelection();
 
                 boolean boardSelected = !"Boards".equals(selectedBoardDisplayName);
-                addToDoButton.setEnabled(boardSelected);
-                orderToDoByTitleButton.setEnabled(boardSelected);
-                buttonOrderByDate.setEnabled(boardSelected);
-                dueDateButton.setEnabled(boardSelected);
+                addToDo.setEnabled(boardSelected);
+                orderToDoByTitle.setEnabled(boardSelected);
+                OrderByDueDate.setEnabled(boardSelected);
+                todayDueDate.setEnabled(boardSelected);
                 MoveUp.setEnabled(false);
                 MoveDown.setEnabled(false);
-                deleteToDoButton.setEnabled(false);
+                deleteToDo.setEnabled(false);
                 changeBoard.setEnabled(false);
 
                 if (boardSelected) {
@@ -244,12 +246,12 @@ public class BoardForm {
         });
 
 
-        dueDateButton.addActionListener(e -> {
+        todayDueDate.addActionListener(e -> {
             showTodosToday();
         });
 
 
-        buttonOrderByDate.addActionListener(new ActionListener() {
+        OrderByDueDate.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
@@ -269,13 +271,13 @@ public class BoardForm {
                 jList.clearSelection();
                 MoveUp.setEnabled(false);
                 MoveDown.setEnabled(false);
-                deleteToDoButton.setEnabled(false);
+                deleteToDo.setEnabled(false);
                 changeBoard.setEnabled(false);
             }
         });
 
 
-        orderToDoByTitleButton.addActionListener(new ActionListener() {
+        orderToDoByTitle.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
@@ -295,7 +297,7 @@ public class BoardForm {
                 jList.clearSelection();
                 MoveUp.setEnabled(false);
                 MoveDown.setEnabled(false);
-                deleteToDoButton.setEnabled(false);
+                deleteToDo.setEnabled(false);
                 changeBoard.setEnabled(false);
             }
         });
@@ -371,7 +373,7 @@ public class BoardForm {
             }
         });
 
-        deleteToDoButton.addActionListener(new ActionListener() {
+        deleteToDo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 int selectedIndex = jList.getSelectedIndex();
@@ -395,7 +397,7 @@ public class BoardForm {
                         jList.clearSelection();
                         MoveUp.setEnabled(false);
                         MoveDown.setEnabled(false);
-                        deleteToDoButton.setEnabled(false);
+                        deleteToDo.setEnabled(false);
                         changeBoard.setEnabled(false);
 
                         JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' deleted successfully.");
@@ -455,7 +457,7 @@ public class BoardForm {
                             jList.clearSelection();
                             MoveUp.setEnabled(false);
                             MoveDown.setEnabled(false);
-                            deleteToDoButton.setEnabled(false);
+                            deleteToDo.setEnabled(false);
                             changeBoard.setEnabled(false);
                             JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' moved successfully to " + destinationBoardString + " board.");
                         } else {
@@ -473,47 +475,29 @@ public class BoardForm {
         if (colorSelected == null) return;
 
         switch (colorSelected) {
-            case "Blu":
+            case "Blue":
                 board.setBackground(new Color(160, 235, 219));
                 campo1.setBackground(new Color(115, 207, 214));
-                campo2.setBackground(new Color(115, 207, 214));
-                campo3.setBackground(new Color(115, 207, 214));
-                campo4.setBackground(new Color(115, 207, 214));
                 break;
-            case "Giallo":
+            case "Yellow":
                 board.setBackground(new Color(248, 255, 98));
                 campo1.setBackground(new Color(252, 214, 9));
-                campo2.setBackground(new Color(252, 214, 9));
-                campo3.setBackground(new Color(252, 214, 9));
-                campo4.setBackground(new Color(252, 214, 9));
                 break;
-            case "Rosso":
+            case "Red":
                 board.setBackground(new Color(255, 87, 84));
                 campo1.setBackground(new Color(214, 6, 11));
-                campo2.setBackground(new Color(214, 6, 11));
-                campo3.setBackground(new Color(214, 6, 11));
-                campo4.setBackground(new Color(214, 6, 11));
                 break;
-            case "Verde":
+            case "Green":
                 board.setBackground(new Color(87,255,116));
                 campo1.setBackground(new Color(0,201,20));
-                campo2.setBackground(new Color(0,201,20));
-                campo3.setBackground(new Color(0,201,20));
-                campo4.setBackground(new Color(0,201,20));
                 break;
-            case "Arancione":
+            case "Orange":
                 board.setBackground(new Color(255,176,76));
                 campo1.setBackground(new Color(255,140,0));
-                campo2.setBackground(new Color(255,140,0));
-                campo3.setBackground(new Color(255,140,0));
-                campo4.setBackground(new Color(255,140,0));
                 break;
-            case "Viola":
+            case "Violet":
                 board.setBackground(new Color(217,165,255));
                 campo1.setBackground(new Color(175,64,255));
-                campo2.setBackground(new Color(175,64,255));
-                campo3.setBackground(new Color(175,64,255));
-                campo4.setBackground(new Color(175,64,255));
                 break;
         }
     }
@@ -549,7 +533,7 @@ public class BoardForm {
         jList.clearSelection();
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
-        deleteToDoButton.setEnabled(false);
+        deleteToDo.setEnabled(false);
         changeBoard.setEnabled(false);
     }
 
@@ -571,7 +555,7 @@ public class BoardForm {
             jList.clearSelection();
             MoveUp.setEnabled(false);
             MoveDown.setEnabled(false);
-            deleteToDoButton.setEnabled(false);
+            deleteToDo.setEnabled(false);
             changeBoard.setEnabled(false);
             return;
         }
@@ -591,7 +575,7 @@ public class BoardForm {
             jList.clearSelection();
             MoveUp.setEnabled(false);
             MoveDown.setEnabled(false);
-            deleteToDoButton.setEnabled(false);
+            deleteToDo.setEnabled(false);
             changeBoard.setEnabled(false);
         } catch (DateTimeParseException e) {
             JOptionPane.showMessageDialog(frameBoardForm, "Invalid date format. Please use dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -599,7 +583,7 @@ public class BoardForm {
             jList.clearSelection();
             MoveUp.setEnabled(false);
             MoveDown.setEnabled(false);
-            deleteToDoButton.setEnabled(false);
+            deleteToDo.setEnabled(false);
             changeBoard.setEnabled(false);
         }
     }
@@ -623,7 +607,7 @@ public class BoardForm {
         jList.clearSelection();
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
-        deleteToDoButton.setEnabled(false);
+        deleteToDo.setEnabled(false);
         changeBoard.setEnabled(false);
     }
 

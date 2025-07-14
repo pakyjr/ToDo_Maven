@@ -22,9 +22,6 @@ public class ToDoForm {
     private JTextField descriptionField;
     private JTextField dueDateField;
     private JTextField urlField;
-    private JButton shareButton;
-    private JButton changeShareButton;
-    private JComboBox members;
     private JButton buttonSave;
     private JLabel image;
     private JComboBox <String> colorChange;
@@ -62,12 +59,12 @@ public class ToDoForm {
             }
         });
 
-        this.colorChange.addItem("Blu");
-        this.colorChange.addItem("Rosso");
-        this.colorChange.addItem("Giallo");
-        this.colorChange.addItem("Verde");
-        this.colorChange.addItem("Arancione");
-        this.colorChange.addItem("Viola");
+        this.colorChange.addItem("Blue");
+        this.colorChange.addItem("Red");
+        this.colorChange.addItem("Yellow");
+        this.colorChange.addItem("Green");
+        this.colorChange.addItem("Orange");
+        this.colorChange.addItem("Violet");
 
         colorChange.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -340,32 +337,32 @@ public class ToDoForm {
         if (colorSelected == null) return;
 
         switch (colorSelected) {
-            case "Blu":
+            case "Blue":
                 todoPanel.setBackground(new Color(160, 235, 219));
                 campo1.setBackground(new Color(115, 207, 214));
                 campo2.setBackground(new Color(115, 207, 214));
                 break;
-            case "Giallo":
+            case "Yellow":
                 todoPanel.setBackground(new Color(248, 255, 98));
                 campo1.setBackground(new Color(252, 214, 9));
                 campo2.setBackground(new Color(252, 214, 9));
                 break;
-            case "Rosso":
+            case "Red":
                 todoPanel.setBackground(new Color(255, 87, 84));
                 campo1.setBackground(new Color(214, 6, 11));
                 campo2.setBackground(new Color(214, 6, 11));
                 break;
-            case "Verde":
+            case "Green":
                 todoPanel.setBackground(new Color(87,255,116));
                 campo1.setBackground(new Color(0,201,20));
                 campo2.setBackground(new Color(0,201,20));
                 break;
-            case "Arancione":
+            case "Orange":
                 todoPanel.setBackground(new Color(255,176,76));
                 campo1.setBackground(new Color(255,140,0));
                 campo2.setBackground(new Color(255,140,0));
                 break;
-            case "Viola":
+            case "Violet":
                 todoPanel.setBackground(new Color(217,165,255));
                 campo1.setBackground(new Color(175,64,255));
                 campo2.setBackground(new Color(175,64,255));

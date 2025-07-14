@@ -13,7 +13,7 @@ public class ToDo {
     private String description;
     private String owner;
     private Set<User> users;
-    private String color = "Blu";
+    private String color = "Blue";
     private boolean done = false;
     private Map<String, Boolean> activityList;
     private String status;

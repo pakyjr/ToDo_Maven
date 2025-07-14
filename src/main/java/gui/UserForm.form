@@ -31,8 +31,10 @@
               </grid>
             </constraints>
             <properties>
-              <caretColor color="-16759297"/>
-              <foreground color="-16759297"/>
+              <background color="-1114125"/>
+              <caretColor color="-16777216"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-16777216"/>
               <text value=""/>
             </properties>
           </component>
@@ -42,8 +44,8 @@
             </constraints>
             <properties>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-16212568"/>
-              <text value="Password"/>
+              <foreground color="-16777216"/>
+              <text value="Password:"/>
             </properties>
           </component>
           <component id="904d" class="javax.swing.JPasswordField" binding="passwordField1" default-binding="true">
@@ -53,6 +55,8 @@
               </grid>
             </constraints>
             <properties>
+              <background color="-1114125"/>
+              <font name="Elephant" size="14" style="0"/>
               <foreground color="-16759297"/>
             </properties>
           </component>
@@ -64,11 +68,11 @@
               <background color="-14184705"/>
               <borderPainted value="false"/>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-1"/>
+              <foreground color="-16777216"/>
               <horizontalTextPosition value="0"/>
               <iconTextGap value="4"/>
               <margin top="0" left="0" bottom="0" right="0"/>
-              <text value="Login"/>
+              <text value="    Login    "/>
             </properties>
           </component>
           <component id="d0a84" class="javax.swing.JLabel">
@@ -77,8 +81,8 @@
             </constraints>
             <properties>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-16212568"/>
-              <text value="Username"/>
+              <foreground color="-16777216"/>
+              <text value="Username:"/>
             </properties>
           </component>
           <grid id="82ec8" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -100,7 +104,7 @@
               <borderPainted value="false"/>
               <contentAreaFilled value="false"/>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-16212568"/>
+              <foreground color="-16777216"/>
               <text value="Don't Have Account"/>
             </properties>
           </component>
@@ -113,7 +117,7 @@
         <properties>
           <background color="-9187370"/>
           <font name="Brush Script MT" size="48" style="0"/>
-          <foreground color="-16212568"/>
+          <foreground color="-16777216"/>
           <horizontalAlignment value="0"/>
           <horizontalTextPosition value="0"/>
           <text value="Welcome to"/>
@@ -126,7 +130,7 @@
         <properties>
           <background color="-9187370"/>
           <font name="Brush Script MT" size="48" style="0"/>
-          <foreground color="-16212568"/>
+          <foreground color="-16777216"/>
           <horizontalAlignment value="0"/>
           <horizontalTextPosition value="0"/>
           <text value="Galatea"/>

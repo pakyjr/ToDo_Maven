@@ -28,8 +28,8 @@
             </constraints>
             <properties>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-16212568"/>
-              <text value="Username"/>
+              <foreground color="-16777216"/>
+              <text value="Username:"/>
             </properties>
           </component>
           <component id="4f766" class="javax.swing.JTextField" binding="userField1">
@@ -38,7 +38,11 @@
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
-            <properties/>
+            <properties>
+              <background color="-1114125"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-16777216"/>
+            </properties>
           </component>
           <component id="e8bd3" class="javax.swing.JLabel">
             <constraints>
@@ -46,8 +50,8 @@
             </constraints>
             <properties>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-16212568"/>
-              <text value="Password"/>
+              <foreground color="-16777216"/>
+              <text value="Password:"/>
             </properties>
           </component>
           <component id="54d6c" class="javax.swing.JPasswordField" binding="passwordField1" default-binding="true">
@@ -56,7 +60,11 @@
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
-            <properties/>
+            <properties>
+              <background color="-1114125"/>
+              <font name="Elephant" size="14" style="0"/>
+              <foreground color="-16777216"/>
+            </properties>
           </component>
           <grid id="71245" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="10" left="10" bottom="10" right="10"/>
@@ -76,7 +84,7 @@
                   <background color="-14184705"/>
                   <borderPainted value="false"/>
                   <font name="Elephant" size="14" style="0"/>
-                  <foreground color="-131085"/>
+                  <foreground color="-16777216"/>
                   <horizontalAlignment value="0"/>
                   <horizontalTextPosition value="0"/>
                   <margin top="0" left="20" bottom="0" right="20"/>
@@ -104,7 +112,7 @@
             <properties>
               <background color="-9187370"/>
               <font name="Brush Script MT" size="36" style="1"/>
-              <foreground color="-16212568"/>
+              <foreground color="-16777216"/>
               <opaque value="false"/>
               <text value="Enter your details:"/>
             </properties>
