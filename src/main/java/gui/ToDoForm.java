@@ -34,6 +34,7 @@ public class ToDoForm {
     private JPanel panelActivity;
     private JButton deleteButton;
     private JButton openURL;
+    private JTextField ownerfield;
     public JFrame frameToDoForm, frame;
 
     private String currentBoard;
@@ -53,7 +54,6 @@ public class ToDoForm {
         frameToDoForm.setContentPane(todoPanel);
         frameToDoForm.pack();
 
-
         frameToDoForm.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
@@ -69,7 +69,6 @@ public class ToDoForm {
         this.colorChange.addItem("Arancione");
         this.colorChange.addItem("Viola");
 
-
         colorChange.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -79,8 +78,7 @@ public class ToDoForm {
             }
         });
 
-
-        setPanelColors("Blu");
+        setPanelColors((String) colorChange.getSelectedItem());
 
         panelActivity.setLayout(new BoxLayout(panelActivity, BoxLayout.Y_AXIS));
 
@@ -94,6 +92,10 @@ public class ToDoForm {
             }
         });
 
+        ownerfield.setEditable(false);
+
+        statusField.setEditable(false);
+
         if (currentToDo != null) {
             nameField.setText(currentToDo.getTitle());
             descriptionField.setText(currentToDo.getDescription());
@@ -102,7 +104,8 @@ public class ToDoForm {
                 dueDateField.setText(currentToDo.getDueDate().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
             }
             urlField.setText(currentToDo.getUrl());
-            statusField.setText(currentToDo.getStatus());
+
+            ownerfield.setText(currentToDo.getOwner());
 
             String storedImage = currentToDo.getImage();
             if (storedImage != null && !storedImage.isEmpty()) {
@@ -144,7 +147,9 @@ public class ToDoForm {
             }
         } else {
             statusField.setText("Not Started");
+            ownerfield.setText(controller.user.getUsername());
         }
+
 
         openURL.addActionListener(new ActionListener() {
             @Override
@@ -155,20 +160,17 @@ public class ToDoForm {
                     return;
                 }
 
-                // Attempt to make the URL valid by prepending http:// if no scheme is present
                 if (!urlText.startsWith("http://") && !urlText.startsWith("https://")) {
                     urlText = "http://" + urlText;
                 }
 
                 try {
-
                     if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                         Desktop.getDesktop().browse(new URI(urlText));
                     } else {
                         JOptionPane.showMessageDialog(frameToDoForm, "Your system does not support opening web links automatically.", "Feature Not Supported", JOptionPane.WARNING_MESSAGE);
                     }
                 } catch (Exception ex) {
-
                     JOptionPane.showMessageDialog(frameToDoForm,
                             "Failed to open URL: " + ex.getMessage() +
                                     "\nPlease ensure the link is a valid web address (e.g., www.google.com or https://example.com).",
@@ -179,14 +181,14 @@ public class ToDoForm {
             }
         });
 
-
         buttonSave.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String title = nameField.getText().trim();
                 String description = descriptionField.getText().trim();
                 String dueDateString = dueDateField.getText().trim();
-                String url = urlField.getText().trim(); // Get the current URL from the field
+                String url = urlField.getText().trim();
+                String owner = ownerfield.getText();
 
                 if (title.isEmpty() || description.isEmpty() || dueDateString.isEmpty()) {
                     JOptionPane.showMessageDialog(frameToDoForm, "Please fill in all required fields (Title, Description, Due Date).", "Missing Data", JOptionPane.ERROR_MESSAGE);
@@ -225,31 +227,26 @@ public class ToDoForm {
                 String selectedColor = (String) colorChange.getSelectedItem();
                 String selectedImageName = imageNames[currentImageIndex];
 
-
                 if (currentToDo == null) {
-
                     controller.addToDo(currentBoard, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus);
-
                     JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
                 } else {
                     String oldTitle = currentToDo.getTitle();
-
                     controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus);
 
                     currentToDo.setTitle(title);
                     currentToDo.setDescription(description);
                     currentToDo.setDueDate(dueDate);
-                    currentToDo.setUrl(url); // Update the URL in the in-memory object
-                    currentToDo.setActivityList(activitiesMap);
-                    currentToDo.setStatus(calculatedStatus);
+                    currentToDo.setUrl(url);
+                    currentToDo.setActivityList(activitiesMap); // This will internally call updateOverallStatus and set done/status
                     currentToDo.setColor(selectedColor);
                     currentToDo.setImage(selectedImageName);
+
                     JOptionPane.showMessageDialog(frameToDoForm, "ToDo updated successfully.");
                 }
 
                 if (BoardForm.listModel != null) {
                     BoardForm.listModel.clear();
-
                     BoardName boardEnum;
                     try {
                         boardEnum = getBoardNameFromString(currentBoard);
@@ -275,7 +272,6 @@ public class ToDoForm {
             }
         });
 
-
         panelActivity.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -283,7 +279,6 @@ public class ToDoForm {
                 String label = JOptionPane.showInputDialog(panelActivity, "Insert the Activity name:");
                 if (label != null && !label.trim().isEmpty()) {
                     JCheckBox checkBox = new JCheckBox(label);
-
                     checkBox.addItemListener(new ItemListener() {
                         @Override
                         public void itemStateChanged(ItemEvent e) {
@@ -295,18 +290,16 @@ public class ToDoForm {
                     panelActivity.repaint();
 
                     if (currentToDo != null) {
-                        currentToDo.addActivity(label); // Update in-memory ToDo
+                        currentToDo.addActivity(label);
                     }
                 }
                 checkCompletionStatus();
             }
         });
 
-
         deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
                 ArrayList<JCheckBox> selectedCheckBoxes = new ArrayList<>();
                 for (Component comp : panelActivity.getComponents()) {
                     if (comp instanceof JCheckBox) {
@@ -315,7 +308,6 @@ public class ToDoForm {
                             selectedCheckBoxes.add(cb);
                         }
                     }
-
                 }
 
                 if (selectedCheckBoxes.isEmpty()) {
@@ -330,21 +322,19 @@ public class ToDoForm {
 
                 if (confirmResult == JOptionPane.YES_OPTION) {
                     for (JCheckBox cb : selectedCheckBoxes) {
-                        panelActivity.remove(cb); // Remove from GUI
+                        panelActivity.remove(cb);
                         if (currentToDo != null) {
                             currentToDo.deleteActivity(cb.getText());
-
                         }
                     }
                     panelActivity.revalidate();
                     panelActivity.repaint();
-                    checkCompletionStatus(); // Update status after deletion
+                    checkCompletionStatus();
                     JOptionPane.showMessageDialog(frameToDoForm, "Selected activity(ies) deleted successfully.");
                 }
             }
         });
     }
-
 
     private void setPanelColors(String colorSelected) {
         if (colorSelected == null) return;
@@ -383,7 +373,6 @@ public class ToDoForm {
         }
     }
 
-
     private void checkCompletionStatus() {
         boolean allChecked = true;
         int checkBoxCount = 0;
@@ -411,7 +400,6 @@ public class ToDoForm {
             currentToDo.setStatus(statusField.getText());
         }
     }
-
 
     private void loadImage(String imageName) {
         try {
