@@ -69,6 +69,17 @@ public class ToDoForm {
         this.colorChange.addItem("Arancione");
         this.colorChange.addItem("Viola");
 
+
+        colorChange.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                return label;
+            }
+        });
+
+
         setPanelColors("Blu");
 
         panelActivity.setLayout(new BoxLayout(panelActivity, BoxLayout.Y_AXIS));

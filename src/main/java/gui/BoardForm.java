@@ -53,6 +53,15 @@ public class BoardForm {
         this.comboBoxBoards.addItem("WORK");
         this.comboBoxBoards.addItem("FREE TIME");
 
+        comboBoxBoards.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                return label;
+            }
+        });
+
         listModel = new DefaultListModel<String>();
         jList.setModel(listModel);
 
@@ -331,7 +340,7 @@ public class BoardForm {
         }
 
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/mm/yyyy");
             LocalDate searchDate = LocalDate.parse(dateText, formatter);
 
             // Get ToDo objects from the controller to check due dates
@@ -348,7 +357,7 @@ public class BoardForm {
             MoveDown.setEnabled(false);
             deleteToDoButton.setEnabled(false);
         } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(frameBoardForm, "Invalid date format. Please use dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frameBoardForm, "Invalid date format. Please use dd/mm/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
             listModel.clear();
             jList.clearSelection();
             MoveUp.setEnabled(false);
@@ -404,7 +413,7 @@ public class BoardForm {
                     LocalDate today = LocalDate.now();
 
                     if (toDo.getDueDate().isBefore(today) && !"Completo".equals(toDo.getStatus())) {
-                        renderer.setForeground(Color.RED); // Set text color to red
+                        renderer.setForeground(Color.RED);
                     } else {
 
                         renderer.setForeground(list.getForeground());
