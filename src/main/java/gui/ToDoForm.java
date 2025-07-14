@@ -146,7 +146,6 @@ public class ToDoForm {
             statusField.setText("Not Started");
         }
 
-        // --- Add ActionListener for the openURL button ---
         openURL.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -267,7 +266,6 @@ public class ToDoForm {
                 frameToDoForm.dispose();
             }
         });
-
 
         colorChange.addActionListener(new ActionListener() {
             @Override

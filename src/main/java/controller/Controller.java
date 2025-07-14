@@ -24,7 +24,16 @@ public class Controller {
         }
 
         Board board = user.getBoard(BoardName.valueOf(formattedBoardName));
+
+        if (board == null) {
+            System.err.println("Error: Board '" + formattedBoardName + "' not found for user.");
+            return null; // Or throw an exception
+        }
+
         ToDo toDo = board.addTodo(toDoName); // ToDo is created here with default values
+        if (toDo == null) {
+            return null;
+        }
 
         toDo.setDescription(description);
         toDo.setUrl(url);
@@ -49,6 +58,11 @@ public class Controller {
         }
 
         Board board = user.getBoard(BoardName.valueOf(formattedBoardName));
+        if (board == null) {
+            System.err.println("Error: Board '" + formattedBoardName + "' not found for user.");
+            return;
+        }
+
         Optional<ToDo> optionalToDo = board.getTodoList().stream()
                 .filter(t -> t.getTitle().equals(oldToDoTitle))
                 .findFirst();
@@ -108,14 +122,65 @@ public class Controller {
             return;
         }
 
-        boolean removed = board.getTodoList().removeIf(toDo -> toDo.getTitle().equals(toDoTitle));
+        // Find the ToDo object to remove
+        Optional<ToDo> toDoToRemoveOptional = board.getTodoList().stream()
+                .filter(toDo -> toDo.getTitle().equals(toDoTitle))
+                .findFirst();
 
-        if (removed) {
+        if (toDoToRemoveOptional.isPresent()) {
+            ToDo toDoToRemove = toDoToRemoveOptional.get();
+            board.removeToDo(toDoToRemove);
             System.out.println("ToDo '" + toDoTitle + "' deleted from board " + boardName);
         } else {
             System.err.println("ToDo '" + toDoTitle + "' not found on board " + boardName + " for deletion.");
         }
     }
 
+    /**
+     * Moves a ToDo item from a source board to a destination board.
+     * @param toDoTitle The title of the ToDo to move.
+     * @param sourceBoardName The name of the board the ToDo is currently on.
+     * @param destinationBoardName The name of the board to move the ToDo to.
+     * @return true if the ToDo was successfully moved, false otherwise.
+     */
+    public boolean moveToDo(String toDoTitle, BoardName sourceBoardName, BoardName destinationBoardName) {
+        Board sourceBoard = user.getBoard(sourceBoardName);
+        Board destinationBoard = user.getBoard(destinationBoardName);
 
+        if (sourceBoard == null) {
+            System.err.println("Error: Source Board '" + sourceBoardName + "' not found.");
+            return false;
+        }
+        if (destinationBoard == null) {
+            System.err.println("Error: Destination Board '" + destinationBoardName + "' not found.");
+            return false;
+        }
+        if (sourceBoardName.equals(destinationBoardName)) {
+            System.out.println("Cannot move ToDo to the same board.");
+            return false;
+        }
+
+        Optional<ToDo> optionalToDo = sourceBoard.getTodoList().stream()
+                .filter(t -> t.getTitle().equals(toDoTitle))
+                .findFirst();
+
+        if (optionalToDo.isPresent()) {
+            ToDo toDoToMove = optionalToDo.get();
+
+            if (destinationBoard.getTodoList().stream().anyMatch(t -> t.getTitle().equals(toDoTitle))) {
+                System.err.println("Error: A ToDo with title '" + toDoTitle + "' already exists in the destination board '" + destinationBoardName + "'.");
+                return false;
+            }
+
+            sourceBoard.removeToDo(toDoToMove);
+
+            destinationBoard.addExistingTodo(toDoToMove);
+
+            System.out.println("ToDo '" + toDoTitle + "' moved from " + sourceBoardName + " to " + destinationBoardName);
+            return true;
+        } else {
+            System.err.println("ToDo '" + toDoTitle + "' not found on board " + sourceBoardName + " for moving.");
+            return false;
+        }
+    }
 }

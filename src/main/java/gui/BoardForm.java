@@ -30,11 +30,10 @@ public class BoardForm {
     private JButton MoveUp;
     private JList jList;
     private JTextField textFieldSearchTitle;
-    private JLabel labelSearch;
     private JTextField textFieldSearchDate;
-    private JLabel labelSearchDate;
     private JButton buttonOrderByDate;
     private JButton MoveDown;
+    private JButton changeBoard;
     public JFrame frameBoardForm;
 
     public static DefaultListModel<String> listModel;
@@ -49,9 +48,10 @@ public class BoardForm {
 
         this.controller = c;
 
-        this.comboBoxBoards.addItem("UNIVERSITY");
-        this.comboBoxBoards.addItem("WORK");
-        this.comboBoxBoards.addItem("FREE TIME");
+        // Populate the combo box with board names
+        for (BoardName name : BoardName.values()) {
+            this.comboBoxBoards.addItem(name.toString());
+        }
 
         comboBoxBoards.setRenderer(new DefaultListCellRenderer() {
             @Override
@@ -70,6 +70,7 @@ public class BoardForm {
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
         deleteToDoButton.setEnabled(false); // Initially disabled
+        changeBoard.setEnabled(false); // Initially disabled
 
         String initialBoard = comboBoxBoards.getSelectedItem().toString();
         listModel.addAll(controller.getToDoListString(BoardName.valueOf(initialBoard)));
@@ -81,6 +82,7 @@ public class BoardForm {
                 MoveUp.setEnabled(isSelected && jList.getSelectedIndex() > 0);
                 MoveDown.setEnabled(isSelected && jList.getSelectedIndex() < listModel.getSize() - 1);
                 deleteToDoButton.setEnabled(isSelected);
+                changeBoard.setEnabled(isSelected);
             }
         });
 
@@ -129,6 +131,10 @@ public class BoardForm {
                 listModel.addAll(todos);
 
                 jList.clearSelection();
+                MoveUp.setEnabled(false); // Disable after board change
+                MoveDown.setEnabled(false); // Disable after board change
+                deleteToDoButton.setEnabled(false); // Disable after board change
+                changeBoard.setEnabled(false); // Disable after board change
 
                 ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(selectedBoard);
                 jList.repaint();
@@ -183,6 +189,10 @@ public class BoardForm {
                     listModel.addElement(todo.getTitle());
                 }
                 jList.clearSelection();
+                MoveUp.setEnabled(false);
+                MoveDown.setEnabled(false);
+                deleteToDoButton.setEnabled(false);
+                changeBoard.setEnabled(false);
             }
         });
 
@@ -201,6 +211,10 @@ public class BoardForm {
                     listModel.addElement(todo.getTitle());
                 }
                 jList.clearSelection();
+                MoveUp.setEnabled(false);
+                MoveDown.setEnabled(false);
+                deleteToDoButton.setEnabled(false);
+                changeBoard.setEnabled(false);
             }
         });
 
@@ -295,6 +309,7 @@ public class BoardForm {
                         MoveUp.setEnabled(false);
                         MoveDown.setEnabled(false);
                         deleteToDoButton.setEnabled(false);
+                        changeBoard.setEnabled(false);
 
                         JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' deleted successfully.");
                     }
@@ -303,6 +318,65 @@ public class BoardForm {
                 }
             }
         });
+
+        changeBoard.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = jList.getSelectedIndex();
+                if (selectedIndex != -1) {
+                    String selectedToDoTitle = listModel.getElementAt(selectedIndex);
+                    String currentBoardName = comboBoxBoards.getSelectedItem().toString();
+                    BoardName sourceBoard = BoardName.valueOf(currentBoardName);
+
+                    ArrayList<BoardName> availableBoards = new ArrayList<>();
+                    for (BoardName name : BoardName.values()) {
+                        if (!name.equals(sourceBoard)) {
+                            availableBoards.add(name);
+                        }
+                    }
+
+                    if (availableBoards.isEmpty()) {
+                        JOptionPane.showMessageDialog(frameBoardForm, "No other boards available to move this ToDo to.", "No Destination Boards", JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+
+                    String[] boardOptions = new String[availableBoards.size()];
+                    for (int i = 0; i < availableBoards.size(); i++) {
+                        boardOptions[i] = availableBoards.get(i).toString();
+                    }
+
+                    String destinationBoardString = (String) JOptionPane.showInputDialog(
+                            frameBoardForm,
+                            "Select the destination board for '" + selectedToDoTitle + "':",
+                            "Move ToDo",
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            boardOptions,
+                            boardOptions[0]);
+
+                    if (destinationBoardString != null) { // User made a selection
+                        BoardName destinationBoard = BoardName.valueOf(destinationBoardString);
+
+                        boolean moved = controller.moveToDo(selectedToDoTitle, sourceBoard, destinationBoard);
+
+                        if (moved) {
+                            listModel.remove(selectedIndex); // Remove from the current board's list
+                            jList.clearSelection();
+                            MoveUp.setEnabled(false);
+                            MoveDown.setEnabled(false);
+                            deleteToDoButton.setEnabled(false);
+                            changeBoard.setEnabled(false);
+                            JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' moved successfully to " + destinationBoardString + " board.");
+                        } else {
+                            JOptionPane.showMessageDialog(frameBoardForm, "Failed to move '" + selectedToDoTitle + "'.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(frameBoardForm, "Please select a ToDo to move.", "No ToDo Selected", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+
     }
 
     private void filterToDoList() {
@@ -321,6 +395,7 @@ public class BoardForm {
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
         deleteToDoButton.setEnabled(false);
+        changeBoard.setEnabled(false);
     }
 
     private void filterByDate() {
@@ -336,14 +411,14 @@ public class BoardForm {
             MoveUp.setEnabled(false);
             MoveDown.setEnabled(false);
             deleteToDoButton.setEnabled(false);
+            changeBoard.setEnabled(false);
             return;
         }
 
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/mm/yyyy");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy"); // Corrected pattern for month
             LocalDate searchDate = LocalDate.parse(dateText, formatter);
 
-            // Get ToDo objects from the controller to check due dates
             ArrayList<ToDo> todos = controller.user.getBoard(boardNameEnum).getTodoList();
 
             listModel.clear();
@@ -356,13 +431,15 @@ public class BoardForm {
             MoveUp.setEnabled(false);
             MoveDown.setEnabled(false);
             deleteToDoButton.setEnabled(false);
+            changeBoard.setEnabled(false);
         } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(frameBoardForm, "Invalid date format. Please use dd/mm/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frameBoardForm, "Invalid date format. Please use dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
             listModel.clear();
             jList.clearSelection();
             MoveUp.setEnabled(false);
             MoveDown.setEnabled(false);
             deleteToDoButton.setEnabled(false);
+            changeBoard.setEnabled(false);
         }
     }
 
@@ -384,6 +461,7 @@ public class BoardForm {
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
         deleteToDoButton.setEnabled(false);
+        changeBoard.setEnabled(false);
     }
 
     private class ToDoListCellRenderer extends DefaultListCellRenderer {

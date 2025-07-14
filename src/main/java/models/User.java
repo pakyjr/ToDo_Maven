@@ -75,7 +75,7 @@ public class User {
         }
 
         ToDo todo = sourceTodoList.get(position - 1);
-        sourceBoard.deleteTodo(todo);
+        sourceBoard.removeToDo(todo);
 
         targetBoard.addExistingTodo(todo);
     }

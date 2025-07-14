@@ -21,9 +21,9 @@ public class ToDo {
     public ToDo(String title) {
         this.id = UUID.randomUUID();
         this.title = title;
-        this.users = new HashSet<>();
-        this.activityList = new LinkedHashMap<>();
-        this.status = "Not Started";
+        this.users = new HashSet<>(); // Initialize the set for shared users
+        this.activityList = new LinkedHashMap<>(); // Maintains insertion order for activities
+        this.status = "Not Started"; // Default status
         this.dueDate = null;
         this.url = "";
         this.image = "";
@@ -31,8 +31,9 @@ public class ToDo {
         this.owner = "";
     }
 
+
     public ToDo(ToDo toDo){
-        this.id = toDo.getId();
+        this.id = toDo.getId(); // UUID is immutable, so direct copy is fine
         this.title = toDo.getTitle();
         this.activityList = new LinkedHashMap<>(toDo.getActivityList());
         this.description = toDo.getDescription();
@@ -119,7 +120,7 @@ public class ToDo {
         this.color = color;
     }
 
-    public boolean isDone() {
+    public boolean isDone() { // Standard getter name for boolean
         return done;
     }
 
@@ -128,9 +129,13 @@ public class ToDo {
     }
 
     public void setActivityList(Map<String, Boolean> activityList) {
-
-        this.activityList = new LinkedHashMap<>(activityList);
-        updateOverallStatus();
+        if (activityList != null) {
+            this.activityList = new LinkedHashMap<>(activityList);
+            updateOverallStatus();
+        } else {
+            this.activityList = new LinkedHashMap<>();
+            updateOverallStatus();
+        }
     }
 
     public Set<User> getUsers() {
@@ -147,24 +152,38 @@ public class ToDo {
         users.remove(user);
     }
 
+    public void clearUsers() {
+        this.users.clear();
+    }
+
     public String getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
-        this.status = status;
-        if ("Completo".equals(status)) {
-            this.done = true;
-        } else {
-            this.done = false;
+        if (status != null && !status.trim().isEmpty()) {
+            this.status = status;
+
+            this.done = "Completo".equalsIgnoreCase(status) || "Complete".equalsIgnoreCase(status);
+
+            if (this.done) {
+                activityList.replaceAll((k, v) -> true);
+            } else if ("Not Started".equalsIgnoreCase(status)) {
+                activityList.replaceAll((k, v) -> false);
+            }
+
         }
     }
 
     public void addActivity(String title) {
-        if (title != null && !title.trim().isEmpty()) {
+        if (title != null && !title.trim().isEmpty() && !activityList.containsKey(title)) { // Prevent duplicate activities
             this.activityList.put(title, false);
             System.out.printf("Added activity: %s%n", title);
             updateOverallStatus();
+        } else if (activityList.containsKey(title)) {
+            System.out.println("Activity '" + title + "' already exists.");
+        } else {
+            System.out.println("Activity title cannot be empty.");
         }
     }
 
@@ -195,19 +214,21 @@ public class ToDo {
     }
 
     public void toggle() {
-
         this.done = !done;
 
         if (this.done) {
             activityList.replaceAll((k, v) -> true);
-            this.status = "Complete";
+            this.status = "Complete"; // Use "Complete" for consistency
         } else {
             activityList.replaceAll((k, v) -> false);
-            this.status = "Incomplete";
+            this.status = "Incomplete"; // Use "Incomplete" when activities are reset to false
         }
-
     }
 
+    /**
+     * Updates the overall status ("Not Started", "Incomplete", "Complete")
+     * and the 'done' flag based on the state of its activities.
+     */
     private void updateOverallStatus() {
         if (activityList.isEmpty()) {
             this.status = "Not Started";
@@ -229,6 +250,7 @@ public class ToDo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ToDo toDo = (ToDo) o;
+        // Comparing by UUID is the most robust way to check for equality of ToDo objects
         return Objects.equals(id, toDo.id);
     }
 
