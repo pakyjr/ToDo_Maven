@@ -1,6 +1,7 @@
 package models.board;
 
 public enum BoardName {
+
     UNIVERSITY("University"),
     WORK("Work"),
     FREE_TIME("Free Time");
@@ -19,4 +20,14 @@ public enum BoardName {
     public String toString() {
         return displayName;
     }
+
+    public static BoardName fromDisplayName(String text) {
+        for (BoardName b : BoardName.values()) {
+            if (b.displayName.equalsIgnoreCase(text)) { // Case-insensitive comparison
+                return b;
+            }
+        }
+        throw new IllegalArgumentException("No enum constant with display name " + text + " found for BoardName");
+    }
+
 }

@@ -16,27 +16,54 @@ public class User {
         fillBoard(this.username);
     }
 
+    public User(String username, String hashedPassword, ArrayList<Board> existingBoards) {
+        this.username = username;
+        this.hashedPassword = hashedPassword;
+        this.boardList = existingBoards != null ? existingBoards : new ArrayList<>();
+    }
+
+
     public Board addBoard(BoardName boardName, String username) {
+
+        for (Board existingBoard : boardList) {
+            if (existingBoard.getName().equals(boardName)) {
+                System.out.println("Board with name " + boardName + " already exists for this user.");
+                return null;
+            }
+        }
         Board board = new Board(boardName, username);
         boardList.add(board);
-
         return board;
     }
 
     public void fillBoard(String user) {
-        addBoard(BoardName.WORK, user);
-        addBoard(BoardName.UNIVERSITY, user);
-        addBoard(BoardName.FREE_TIME, user);
+
+        if (getBoard(BoardName.WORK) == null) {
+            addBoard(BoardName.WORK, user);
+        }
+        if (getBoard(BoardName.UNIVERSITY) == null) {
+            addBoard(BoardName.UNIVERSITY, user);
+        }
+        if (getBoard(BoardName.FREE_TIME) == null) {
+            addBoard(BoardName.FREE_TIME, user);
+        }
     }
 
     public void deleteBoard(BoardName boardName) {
-        String boardNameStr = boardName.toString();
-        if (!boardList.contains(boardNameStr)) {
-            System.out.println("Board does not exist");
-            return;
+        Board boardToRemove = null;
+        for (Board board : boardList) {
+            if (board.getName().equals(boardName)) {
+                boardToRemove = board;
+                break;
+            }
         }
-        boardList.remove(boardNameStr);
-        System.out.printf("Board %s deleted%n", boardNameStr);
+
+        if (boardToRemove != null) {
+            boardList.remove(boardToRemove);
+            System.out.printf("Board %s deleted%n", boardName.toString());
+        } else {
+            System.out.println("Board does not exist");
+        }
     }
 
     private String hashPassword(String password) {
@@ -47,18 +74,22 @@ public class User {
         return username;
     }
 
+    public String getHashedPassword() { // Added for DAO
+        return hashedPassword;
+    }
+
     public ArrayList<Board> getBoardList() {
-        return this.boardList;
+        return new ArrayList<>(this.boardList);
     }
 
     public Board getBoard(BoardName boardName) {
-        String boardNameStr = boardName.toString().toLowerCase();
+        String boardNameStr = boardName.toString();
         for (Board board : boardList) {
-            if (board.getName().toString().toLowerCase().equals(boardNameStr)) {
+            if (board.getName().toString().equals(boardNameStr)) {
                 return board;
             }
         }
-        System.out.println("Board does not exist");
+
         return null;
     }
 
@@ -67,12 +98,13 @@ public class User {
         Board targetBoard = getBoard(targetBoardName);
 
         if (sourceBoard == null || targetBoard == null) {
+            System.out.println("Source or target board does not exist.");
             return;
         }
 
         List<ToDo> sourceTodoList = sourceBoard.getTodoList();
         if (position < 1 || position > sourceTodoList.size()) {
-            System.out.println("Invalid position");
+            System.out.println("Invalid position for ToDo in source board.");
             return;
         }
 
@@ -80,5 +112,6 @@ public class User {
         sourceBoard.removeToDo(todo);
 
         targetBoard.addExistingTodo(todo);
+        System.out.printf("ToDo '%s' moved from %s to %s.%n", todo.getTitle(), sourceBoardName, targetBoardName);
     }
 }

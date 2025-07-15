@@ -1,5 +1,8 @@
 package gui;
 import controller.*;
+import models.User; // Import User model
+import java.sql.SQLException; // Import SQLException
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -35,21 +38,30 @@ public class UserForm {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String username = usernameField1.getText();
-                String password = passwordField1.getPassword().toString();
+                String password = new String(passwordField1.getPassword());
 
-                System.out.println("Username: " + username);
-                System.out.println("Password (for demonstration purposes, handle securely in production): " + password);
-                frame.setVisible(false);
+                try {
+                    User loggedInUser = controller.login(username, password);
+                    if (loggedInUser != null) {
+                        System.out.println("Login successful for user: " + loggedInUser.getUsername());
+                        frame.setVisible(false);
 
-                BoardForm boardForm = new BoardForm(frame, controller);
-                boardForm.frameBoardForm.setVisible(true);
+                        BoardForm boardForm = new BoardForm(frame, controller);
+                        boardForm.frameBoardForm.setVisible(true);
+                    } else {
+                        JOptionPane.showMessageDialog(frame, "Invalid username or password.", "Login Error", JOptionPane.ERROR_MESSAGE);
+                        System.err.println("Login failed for user: " + username);
+                    }
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(frame, "Database error during login: " + ex.getMessage(), "Database Error", JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                }
             }
         });
 
         donTHaveAccountButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-
                 frame.setVisible(false);
 
                 RegisterForm registerinterface = new RegisterForm(frame, controller);
@@ -57,7 +69,4 @@ public class UserForm {
             }
         });
     }
-
-
-
 }

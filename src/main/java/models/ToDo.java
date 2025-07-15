@@ -21,9 +21,9 @@ public class ToDo {
     public ToDo(String title) {
         this.id = UUID.randomUUID();
         this.title = title;
-        this.users = new HashSet<>(); // Initialize the set for shared users
-        this.activityList = new LinkedHashMap<>(); // Maintains insertion order for activities
-        this.status = "Not Started"; // Default status
+        this.users = new HashSet<>();
+        this.activityList = new LinkedHashMap<>();
+        this.status = "Not Started";
         this.dueDate = null;
         this.url = "";
         this.image = "";
@@ -33,7 +33,7 @@ public class ToDo {
 
 
     public ToDo(ToDo toDo){
-        this.id = toDo.getId(); // UUID is immutable, so direct copy is fine
+        this.id = toDo.getId();
         this.title = toDo.getTitle();
         this.activityList = new LinkedHashMap<>(toDo.getActivityList());
         this.description = toDo.getDescription();
@@ -49,7 +49,15 @@ public class ToDo {
     }
 
     public UUID getId() {
-        return this.id;
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public void setDone(boolean done) {
+        this.done = done;
     }
 
     public boolean getDone(){
@@ -120,7 +128,7 @@ public class ToDo {
         this.color = color;
     }
 
-    public boolean isDone() { // Standard getter name for boolean
+    public boolean isDone() {
         return done;
     }
 
@@ -139,8 +147,9 @@ public class ToDo {
     }
 
     public Set<User> getUsers() {
-        return new HashSet<>(users);
+        return users;
     }
+
 
     public void addUser(User user) {
         if (user != null) {
@@ -218,17 +227,13 @@ public class ToDo {
 
         if (this.done) {
             activityList.replaceAll((k, v) -> true);
-            this.status = "Complete"; // Use "Complete" for consistency
+            this.status = "Complete";
         } else {
             activityList.replaceAll((k, v) -> false);
-            this.status = "Incomplete"; // Use "Incomplete" when activities are reset to false
+            this.status = "Incomplete";
         }
     }
 
-    /**
-     * Updates the overall status ("Not Started", "Incomplete", "Complete")
-     * and the 'done' flag based on the state of its activities.
-     */
     private void updateOverallStatus() {
         if (activityList.isEmpty()) {
             this.status = "Not Started";
@@ -250,7 +255,7 @@ public class ToDo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ToDo toDo = (ToDo) o;
-        // Comparing by UUID is the most robust way to check for equality of ToDo objects
+
         return Objects.equals(id, toDo.id);
     }
 

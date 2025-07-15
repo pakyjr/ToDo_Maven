@@ -5,6 +5,7 @@ import controller.Controller;
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.sql.SQLException; // Import SQLException
 
 public class RegisterForm {
     private JPanel register;
@@ -25,16 +26,8 @@ public class RegisterForm {
         frameRegisterForm.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent windowEvent) {
-                frame.setVisible(true);
-                frameRegisterForm.setVisible(false);
-                frameRegisterForm.dispose();
-            }
-        });
-
-        frameRegisterForm.addWindowListener(new WindowAdapter(){
-            @Override
-            public void windowClosing(WindowEvent e) {
-
+                frame.setVisible(true); // Show parent frame (UserForm) on close
+                frameRegisterForm.dispose(); // Dispose of this frame
             }
         });
 
@@ -44,20 +37,19 @@ public class RegisterForm {
     private void registraUtente() {
         String username = userField1.getText();
         String password = new String(passwordField1.getPassword());
-        if(username.equals("") || password.equals("")){
+        if(username.isEmpty() || password.isEmpty()){
             JOptionPane.showMessageDialog(frameRegisterForm, "You need to insert username and password.", "Error while creating the account", JOptionPane.ERROR_MESSAGE);
         }
         else{
             controller.register(username, password);
-            frameRegisterForm.setVisible(false);
+            if (controller.user != null) {
+                frameRegisterForm.setVisible(false);
 
-            BoardForm boardForm = new BoardForm(frameRegisterForm, controller);
-            boardForm.frameBoardForm.setVisible(true);
-
+                BoardForm boardForm = new BoardForm(frameRegisterForm, controller);
+                boardForm.frameBoardForm.setVisible(true);
+            } else {
+                JOptionPane.showMessageDialog(frameRegisterForm, "Registration failed. Username might already exist or a database error occurred.", "Registration Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
-
-
     }
-
 }
-

@@ -3,7 +3,6 @@ package gui;
 import controller.Controller;
 import models.ToDo;
 import models.board.BoardName;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -38,9 +37,9 @@ public class ToDoForm {
     private Controller controller;
     private ToDo currentToDo;
     private String[] imageNames = {"read.jpg", "art.jpg", "happybirthday.jpg", "happyhalloween.jpg", "happynewyear.jpg",
-                                   "santa.jpg", "music.jpg", "choco.jpg", "coffee.jpg", "sweet.jpg","film.jpg",
-                                    "filo.jpg","game.jpg", "graduated.jpg", "mountain.jpg", "pool.jpg", "sher.jpg",
-                                    "theatre.jpg", "sport.jpg", "study.jpg", "martial.jpg"};
+            "santa.jpg", "music.jpg", "choco.jpg", "coffee.jpg", "sweet.jpg","film.jpg",
+            "filo.jpg","game.jpg", "graduated.jpg", "mountain.jpg", "pool.jpg", "sher.jpg",
+            "theatre.jpg", "sport.jpg", "study.jpg", "martial.jpg"};
     private int currentImageIndex = 0;
 
 
@@ -238,25 +237,22 @@ public class ToDoForm {
                     currentToDo.setDescription(description);
                     currentToDo.setDueDate(dueDate);
                     currentToDo.setUrl(url);
-                    currentToDo.setActivityList(activitiesMap); // This will internally call updateOverallStatus and set done/status
+                    currentToDo.setActivityList(activitiesMap);
                     currentToDo.setColor(selectedColor);
                     currentToDo.setImage(selectedImageName);
 
                     JOptionPane.showMessageDialog(frameToDoForm, "ToDo updated successfully.");
                 }
 
+                // --- FIX START ---
                 if (BoardForm.listModel != null) {
                     BoardForm.listModel.clear();
-                    BoardName boardEnum;
-                    try {
-                        boardEnum = getBoardNameFromString(currentBoard);
-                        BoardForm.listModel.addAll(controller.getToDoListString(boardEnum));
-                    } catch (IllegalArgumentException ex) {
-                        System.err.println("Error: Invalid board name when updating list model: " + currentBoard);
-                    }
+                    // Pass currentBoard (which is already a String) directly to controller.getToDoListString
+                    BoardForm.listModel.addAll(controller.getToDoListString(currentBoard)); // Corrected line 253
                 } else {
                     System.err.println("BoardForm.listModel is null. Cannot update the list.");
                 }
+                // --- FIX END ---
 
                 frame.setVisible(true);
                 frameToDoForm.setVisible(false);
@@ -429,6 +425,7 @@ public class ToDoForm {
     }
 
     private BoardName getBoardNameFromString(String boardName) {
+
         String formattedBoardName = boardName.toUpperCase();
         if (formattedBoardName.equals("FREE TIME")) {
             formattedBoardName = "FREE_TIME";
