@@ -1,3 +1,5 @@
+
+
 package models;
 
 import java.time.LocalDate;
@@ -11,8 +13,8 @@ public class ToDo {
     private String image;
     private String title;
     private String description;
-    private String owner;
-    private Set<User> users;
+    private String owner; // Changed to String, representing the username of the creator
+    private Set<User> users; // This likely represents users the ToDo is shared *with*, or can view/edit
     private String color = "Blue";
     private boolean done = false;
     private Map<String, Boolean> activityList;
@@ -28,25 +30,38 @@ public class ToDo {
         this.url = "";
         this.image = "";
         this.description = "";
-        this.owner = "";
+        this.owner = ""; // Will be set by the Controller upon creation
     }
 
-
+    /**
+     * Copy constructor for creating a new ToDo instance, typically for sharing.
+     * It generates a new UUID for the new instance but copies all other properties,
+     * crucially including the 'owner' (creator) from the original ToDo.
+     * @param toDo The original ToDo object to copy.
+     */
     public ToDo(ToDo toDo){
-        this.id = toDo.getId();
+        this.id = UUID.randomUUID(); // Generate a NEW UUID for the copied ToDo instance
         this.title = toDo.getTitle();
         this.activityList = new LinkedHashMap<>(toDo.getActivityList());
         this.description = toDo.getDescription();
-        this.owner = toDo.getOwner();
+        this.owner = toDo.getOwner(); // Preserve the original owner's username
         this.url = toDo.getUrl();
         this.image = toDo.getImage();
         this.dueDate = toDo.getDueDate();
         this.position = toDo.getPosition();
-        this.users = new HashSet<>(toDo.getUsers());
+        // For shared ToDos, the 'users' set might need to be re-evaluated.
+        // If 'users' tracks who it's shared *with* from the creator's perspective,
+        // then a shared copy doesn't need to inherit this set directly, as it's a new instance.
+        // If 'users' tracks who has access, then this copy will implicitly be for one user (the recipient).
+        // For simplicity, let's assume 'users' on the original ToDo primarily indicates who it's been shared *to*.
+        // The copy itself is for a single user, so its own 'users' set might remain empty unless re-shared.
+        this.users = new HashSet<>(); // The copied ToDo starts with no explicit shared users (itself is the recipient)
         this.color = toDo.getColor();
         this.done = toDo.getDone();
         this.status = toDo.getStatus();
     }
+
+    // --- All your existing getters and setters are fine, just ensuring 'owner' is present ---
 
     public UUID getId() {
         return id;
@@ -80,6 +95,7 @@ public class ToDo {
         this.dueDate = dueDate;
     }
 
+    // Getter and Setter for 'owner'
     public String getOwner() {
         return owner;
     }
@@ -150,7 +166,6 @@ public class ToDo {
         return users;
     }
 
-
     public void addUser(User user) {
         if (user != null) {
             users.add(user);
@@ -185,7 +200,7 @@ public class ToDo {
     }
 
     public void addActivity(String title) {
-        if (title != null && !title.trim().isEmpty() && !activityList.containsKey(title)) { // Prevent duplicate activities
+        if (title != null && !title.trim().isEmpty() && !activityList.containsKey(title)) {
             this.activityList.put(title, false);
             System.out.printf("Added activity: %s%n", title);
             updateOverallStatus();
@@ -255,7 +270,7 @@ public class ToDo {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ToDo toDo = (ToDo) o;
-
+        // Equality is based on the unique ID
         return Objects.equals(id, toDo.id);
     }
 
@@ -271,6 +286,7 @@ public class ToDo {
                 ", title='" + title + '\'' +
                 ", status='" + status + '\'' +
                 ", dueDate=" + dueDate +
+                ", owner='" + owner + '\'' + // Include owner in toString
                 ", activities=" + activityList.size() +
                 ", done=" + done +
                 '}';

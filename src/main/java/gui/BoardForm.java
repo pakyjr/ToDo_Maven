@@ -17,6 +17,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
+import java.util.List; // Import List
 
 public class BoardForm {
     private JPanel board;
@@ -36,8 +37,8 @@ public class BoardForm {
     private JButton changeBoard;
     private JComboBox<String> colorChange;
     private JPanel campo1;
-    private JComboBox memberdToDo;
-    private JButton changeSharing;
+    private JComboBox<String> membersToDo; // Ensure this is JComboBox<String>
+    private JButton changeSharing; // This is the button we are implementing
     public JFrame frameBoardForm;
 
     public static DefaultListModel<String> listModel;
@@ -73,7 +74,6 @@ public class BoardForm {
             }
         });
 
-
         setPanelColors((String) colorChange.getSelectedItem());
 
         colorChange.addActionListener(new ActionListener() {
@@ -106,6 +106,9 @@ public class BoardForm {
         orderToDoByTitle.setEnabled(false);
         OrderByDueDate.setEnabled(false);
         todayDueDate.setEnabled(false);
+        shareToDo.setEnabled(false);
+        membersToDo.setEnabled(false);
+        changeSharing.setEnabled(false); // Disable changeSharing initially
 
 
         jList.addListSelectionListener(e -> {
@@ -115,6 +118,25 @@ public class BoardForm {
                 MoveDown.setEnabled(isSelected && jList.getSelectedIndex() < listModel.getSize() - 1);
                 deleteToDo.setEnabled(isSelected);
                 changeBoard.setEnabled(isSelected);
+                shareToDo.setEnabled(isSelected);
+
+                // Enable Change Sharing button based on ToDo selection and ownership
+                if (isSelected) {
+                    String selectedToDoTitle = listModel.getElementAt(jList.getSelectedIndex());
+                    String currentBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+                    if (!"Boards".equals(currentBoardDisplayName)) {
+                        ToDo selectedToDo = controller.getToDoByTitle(selectedToDoTitle, currentBoardDisplayName);
+                        if (selectedToDo != null && controller.isCurrentUserToDoCreator(selectedToDo)) { // New method in Controller
+                            changeSharing.setEnabled(true);
+                        } else {
+                            changeSharing.setEnabled(false);
+                        }
+                    } else {
+                        changeSharing.setEnabled(false);
+                    }
+                } else {
+                    changeSharing.setEnabled(false);
+                }
             }
         });
 
@@ -179,13 +201,17 @@ public class BoardForm {
                 MoveDown.setEnabled(false);
                 deleteToDo.setEnabled(false);
                 changeBoard.setEnabled(false);
+                shareToDo.setEnabled(false);
+                membersToDo.setEnabled(boardSelected);
+                changeSharing.setEnabled(false); // Disable when board changes
 
                 if (boardSelected) {
-
+                    populateMembersComboBox();
                     ArrayList<String> todos = controller.getToDoListString(selectedBoardDisplayName);
                     listModel.addAll(todos);
                     ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(selectedBoardDisplayName);
                 } else {
+                    membersToDo.removeAllItems();
                     ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(null);
                 }
                 jList.repaint();
@@ -248,6 +274,8 @@ public class BoardForm {
                 MoveDown.setEnabled(false);
                 deleteToDo.setEnabled(false);
                 changeBoard.setEnabled(false);
+                shareToDo.setEnabled(false);
+                changeSharing.setEnabled(false);
             }
         });
 
@@ -274,6 +302,8 @@ public class BoardForm {
                 MoveDown.setEnabled(false);
                 deleteToDo.setEnabled(false);
                 changeBoard.setEnabled(false);
+                shareToDo.setEnabled(false);
+                changeSharing.setEnabled(false);
             }
         });
 
@@ -365,7 +395,7 @@ public class BoardForm {
                             JOptionPane.YES_NO_OPTION);
 
                     if (confirmResult == JOptionPane.YES_OPTION) {
-                        controller.deleteToDo(currentBoardDisplayName, selectedToDoTitle); // Corrected
+                        controller.deleteToDo(currentBoardDisplayName, selectedToDoTitle);
                         listModel.remove(selectedIndex);
 
                         jList.clearSelection();
@@ -373,6 +403,9 @@ public class BoardForm {
                         MoveDown.setEnabled(false);
                         deleteToDo.setEnabled(false);
                         changeBoard.setEnabled(false);
+                        shareToDo.setEnabled(false);
+                        changeSharing.setEnabled(false);
+
 
                         JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' deleted successfully.");
                     }
@@ -392,7 +425,7 @@ public class BoardForm {
 
                     ArrayList<String> availableBoardDisplayNames = new ArrayList<>();
                     for (BoardName name : BoardName.values()) {
-                        if (!name.getDisplayName().equals(currentBoardDisplayName)) { // Compare display names
+                        if (!name.getDisplayName().equals(currentBoardDisplayName)) {
                             availableBoardDisplayNames.add(name.getDisplayName());
                         }
                     }
@@ -416,15 +449,17 @@ public class BoardForm {
 
                     if (destinationBoardString != null) {
 
-                        boolean moved = controller.moveToDo(selectedToDoTitle, currentBoardDisplayName, destinationBoardString); // Corrected
+                        boolean moved = controller.moveToDo(selectedToDoTitle, currentBoardDisplayName, destinationBoardString);
 
                         if (moved) {
-                            listModel.remove(selectedIndex); // Remove from the current board's list
+                            listModel.remove(selectedIndex);
                             jList.clearSelection();
                             MoveUp.setEnabled(false);
                             MoveDown.setEnabled(false);
                             deleteToDo.setEnabled(false);
                             changeBoard.setEnabled(false);
+                            shareToDo.setEnabled(false);
+                            changeSharing.setEnabled(false);
                             JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' moved successfully to " + destinationBoardString + " board.");
                         } else {
                             JOptionPane.showMessageDialog(frameBoardForm, "Failed to move '" + selectedToDoTitle + "'.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -432,6 +467,111 @@ public class BoardForm {
                     }
                 } else {
                     JOptionPane.showMessageDialog(frameBoardForm, "Please select a ToDo to move and ensure a board is selected.", "No ToDo Selected", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+
+        // Share ToDo button action listener
+        shareToDo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = jList.getSelectedIndex();
+                String currentBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+
+                if (selectedIndex == -1 || "Boards".equals(currentBoardDisplayName)) {
+                    JOptionPane.showMessageDialog(frameBoardForm, "Please select a ToDo to share and ensure a board is selected.", "No ToDo Selected", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                String selectedToDoTitle = listModel.getElementAt(selectedIndex);
+                String selectedRecipientUsername = (String) membersToDo.getSelectedItem();
+
+                if (selectedRecipientUsername == null || selectedRecipientUsername.isEmpty() || selectedRecipientUsername.equals("Select User")) {
+                    JOptionPane.showMessageDialog(frameBoardForm, "Please select a user to share with.", "No User Selected", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                int confirmResult = JOptionPane.showConfirmDialog(frameBoardForm,
+                        "Are you sure you want to share '" + selectedToDoTitle + "' with '" + selectedRecipientUsername + "'?",
+                        "Confirm Share",
+                        JOptionPane.YES_NO_OPTION);
+
+                if (confirmResult == JOptionPane.YES_OPTION) {
+                    boolean shared = controller.shareToDo(selectedToDoTitle, currentBoardDisplayName, selectedRecipientUsername);
+
+                    if (shared) {
+                        JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' shared successfully with '" + selectedRecipientUsername + "'.");
+                    } else {
+                        JOptionPane.showMessageDialog(frameBoardForm, "Failed to share '" + selectedToDoTitle + "'. It might already exist in the recipient's board or an error occurred.", "Sharing Failed", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+
+        // Change Sharing button action listener
+        changeSharing.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selectedIndex = jList.getSelectedIndex();
+                String currentBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
+
+                if (selectedIndex == -1 || "Boards".equals(currentBoardDisplayName)) {
+                    JOptionPane.showMessageDialog(frameBoardForm, "Please select a ToDo to manage sharing for.", "No ToDo Selected", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                String selectedToDoTitle = listModel.getElementAt(selectedIndex);
+                ToDo selectedToDo = controller.getToDoByTitle(selectedToDoTitle, currentBoardDisplayName);
+
+                if (selectedToDo == null) {
+                    JOptionPane.showMessageDialog(frameBoardForm, "Selected ToDo not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Check again if the current user is the creator before allowing changes
+                if (!controller.isCurrentUserToDoCreator(selectedToDo)) {
+                    JOptionPane.showMessageDialog(frameBoardForm, "You can only manage sharing for ToDos you created.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                // Get current sharing status or list of users it's shared with
+                List<String> sharedWithUsers = controller.getUsersToDoIsSharedWith(selectedToDoTitle, currentBoardDisplayName); // New Controller method
+
+                if (sharedWithUsers.isEmpty()) {
+                    JOptionPane.showMessageDialog(frameBoardForm, "This ToDo is not currently shared with anyone.", "No Sharing", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                String[] userOptions = sharedWithUsers.toArray(new String[0]);
+                String userToUnshare = (String) JOptionPane.showInputDialog(
+                        frameBoardForm,
+                        "Select user to unshare '" + selectedToDoTitle + "' with:",
+                        "Unshare ToDo",
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        userOptions,
+                        userOptions[0]
+                );
+
+                if (userToUnshare != null) {
+                    int confirmUnshare = JOptionPane.showConfirmDialog(frameBoardForm,
+                            "Are you sure you want to unshare '" + selectedToDoTitle + "' with '" + userToUnshare + "'?",
+                            "Confirm Unshare",
+                            JOptionPane.YES_NO_OPTION);
+
+                    if (confirmUnshare == JOptionPane.YES_OPTION) {
+                        boolean unshared = controller.unshareToDo(selectedToDoTitle, currentBoardDisplayName, userToUnshare); // New Controller method
+
+                        if (unshared) {
+                            JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' successfully unshared with '" + userToUnshare + "'.");
+                            // Re-populate list or update UI if needed (e.g., if unsharing means it disappears from a "shared with me" view)
+                            // For this specific context, the UI won't change as it's the creator's view.
+                            jList.clearSelection(); // Clear selection to reset button states
+                            changeSharing.setEnabled(false); // Disable after action
+                        } else {
+                            JOptionPane.showMessageDialog(frameBoardForm, "Failed to unshare '" + selectedToDoTitle + "' with '" + userToUnshare + "'.", "Unsharing Failed", JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
                 }
             }
         });
@@ -477,6 +617,15 @@ public class BoardForm {
         return null;
     }
 
+    private void populateMembersComboBox() {
+        membersToDo.removeAllItems();
+        membersToDo.addItem("Select User"); // Default item
+        ArrayList<String> usernames = controller.getAllUsernamesExcludingCurrentUser();
+        for (String username : usernames) {
+            membersToDo.addItem(username);
+        }
+    }
+
     private void filterToDoList() {
         String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
         if ("Boards".equals(selectedBoardDisplayName)) {
@@ -485,7 +634,7 @@ public class BoardForm {
         }
 
         String searchText = textFieldSearchTitle.getText().toLowerCase();
-        ArrayList<String> allTodos = controller.getToDoListString(selectedBoardDisplayName); // Corrected
+        ArrayList<String> allTodos = controller.getToDoListString(selectedBoardDisplayName);
         listModel.clear();
 
         for (String todoTitle : allTodos) {
@@ -498,6 +647,8 @@ public class BoardForm {
         MoveDown.setEnabled(false);
         deleteToDo.setEnabled(false);
         changeBoard.setEnabled(false);
+        shareToDo.setEnabled(false);
+        changeSharing.setEnabled(false);
     }
 
     private void filterByDate() {
@@ -521,6 +672,8 @@ public class BoardForm {
             MoveDown.setEnabled(false);
             deleteToDo.setEnabled(false);
             changeBoard.setEnabled(false);
+            shareToDo.setEnabled(false);
+            changeSharing.setEnabled(false);
             return;
         }
 
@@ -541,6 +694,8 @@ public class BoardForm {
             MoveDown.setEnabled(false);
             deleteToDo.setEnabled(false);
             changeBoard.setEnabled(false);
+            shareToDo.setEnabled(false);
+            changeSharing.setEnabled(false);
         } catch (DateTimeParseException e) {
             JOptionPane.showMessageDialog(frameBoardForm, "Invalid date format. Please use dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
             listModel.clear();
@@ -549,6 +704,8 @@ public class BoardForm {
             MoveDown.setEnabled(false);
             deleteToDo.setEnabled(false);
             changeBoard.setEnabled(false);
+            shareToDo.setEnabled(false);
+            changeSharing.setEnabled(false);
         }
     }
 
@@ -573,11 +730,13 @@ public class BoardForm {
         MoveDown.setEnabled(false);
         deleteToDo.setEnabled(false);
         changeBoard.setEnabled(false);
+        shareToDo.setEnabled(false);
+        changeSharing.setEnabled(false);
     }
 
     private class ToDoListCellRenderer extends DefaultListCellRenderer {
         private Controller controller;
-        private String currentBoardDisplayName; // Now stores display name
+        private String currentBoardDisplayName;
 
         public ToDoListCellRenderer(Controller controller, String initialBoardDisplayName) {
             this.controller = controller;
@@ -601,7 +760,7 @@ public class BoardForm {
             if (value instanceof String) {
                 String toDoTitle = (String) value;
 
-                ToDo toDo = controller.getToDoByTitle(toDoTitle, currentBoardDisplayName); // Corrected
+                ToDo toDo = controller.getToDoByTitle(toDoTitle, currentBoardDisplayName);
 
                 if (toDo != null && toDo.getDueDate() != null) {
                     LocalDate today = LocalDate.now();
