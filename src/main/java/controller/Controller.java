@@ -5,7 +5,6 @@ import models.board.Board;
 import models.board.BoardName;
 import dao.UserDAO;
 import dao.UserDAOImpl;
-
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.sql.SQLException;
@@ -22,11 +21,8 @@ public class Controller {
     }
 
     public void register(String username, String plainPassword){
-        String hashedPassword = Integer.toHexString(plainPassword.hashCode());
-        //DEGUGGING
-        System.out.println("DEBUG (Register): Username='" + username + "', PlainPassword='" + plainPassword + "', HashedPassword Generated='" + hashedPassword + "'");
-        //DEBUGGING
-        User newUser = new User(username, hashedPassword);
+
+        User newUser = new User(username, plainPassword);
 
         try {
             boolean success = userDAO.saveUser(newUser);
@@ -49,12 +45,7 @@ public class Controller {
 
         if (optionalUser.isPresent()) {
             User foundUser = optionalUser.get();
-            String hashedPasswordAttempt = Integer.toHexString(plainPassword.hashCode());
-
-            //DEBUGGING
-            System.out.println("DEBUG (Login): Username='" + username + "', PlainPassword='" + plainPassword + "', HashedPassword Attempt='" + hashedPasswordAttempt + "'");
-            System.out.println("DEBUG (Login): HashedPassword from DB for '" + username + "': '" + foundUser.getHashedPassword() + "'");
-            // DEBUGGING
+            String hashedPasswordAttempt = User.hashPassword(plainPassword);
 
             if (foundUser.getHashedPassword().equals(hashedPasswordAttempt)) {
                 this.user = foundUser;

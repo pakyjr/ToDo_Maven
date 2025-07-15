@@ -22,6 +22,10 @@ public class User {
         this.boardList = existingBoards != null ? existingBoards : new ArrayList<>();
     }
 
+    public static String hashPassword(String password) {
+        return Integer.toHexString(password.hashCode());
+    }
+
 
     public Board addBoard(BoardName boardName, String username) {
 
@@ -64,10 +68,6 @@ public class User {
         } else {
             System.out.println("Board does not exist");
         }
-    }
-
-    private String hashPassword(String password) {
-        return Integer.toHexString(password.hashCode());
     }
 
     public String getUsername() {

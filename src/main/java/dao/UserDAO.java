@@ -15,8 +15,6 @@ public interface UserDAO {
 
     Optional<User> getUserByUsername(String username) throws SQLException;
 
-    boolean deleteUser(String username) throws SQLException;
-
     List<Board> loadBoardsForUser(String username) throws SQLException;
 
     boolean saveBoard(Board board, String username) throws SQLException;

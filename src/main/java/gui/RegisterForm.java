@@ -26,8 +26,8 @@ public class RegisterForm {
         frameRegisterForm.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent windowEvent) {
-                frame.setVisible(true); // Show parent frame (UserForm) on close
-                frameRegisterForm.dispose(); // Dispose of this frame
+                frame.setVisible(true);
+                frameRegisterForm.dispose();
             }
         });
 

@@ -111,17 +111,6 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
-    @Override
-    public boolean deleteBoard(BoardName boardName, String username) throws SQLException {
-        String sql = "DELETE FROM boards WHERE board_name = ? AND username = ?";
-        try (Connection conn = DatabaseConnection.getInstance();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, boardName.getDisplayName()); // <-- Use getDisplayName() for deletion
-            pstmt.setString(2, username);
-            int affectedRows = pstmt.executeUpdate();
-            return affectedRows > 0;
-        }
-    }
 
     @Override
     public boolean saveToDo(ToDo toDo, int boardId) throws SQLException {
@@ -157,6 +146,7 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    // Rimosso @Override
     private void saveToDoActivities(UUID todoId, Map<String, Boolean> activityList) throws SQLException {
         String sql = "INSERT INTO todo_activities (todo_id, activity_title, completed) VALUES (?, ?, ?);";
         try (Connection conn = DatabaseConnection.getInstance();
@@ -171,6 +161,7 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    // Rimosso @Override
     private void saveToDoSharedUsers(UUID todoId, Set<User> users) throws SQLException {
         String sql = "INSERT INTO todo_shared_users (todo_id, username) VALUES (?, ?);";
         try (Connection conn = DatabaseConnection.getInstance();
@@ -271,6 +262,7 @@ public class UserDAOImpl implements UserDAO {
         return toDos;
     }
 
+    // Rimosso @Override
     private Map<String, Boolean> loadToDoActivities(UUID todoId) throws SQLException {
         Map<String, Boolean> activities = new LinkedHashMap<>();
         String sql = "SELECT activity_title, completed FROM todo_activities WHERE todo_id = ? ORDER BY activity_id;";
@@ -286,6 +278,7 @@ public class UserDAOImpl implements UserDAO {
         return activities;
     }
 
+    // Rimosso @Override
     private Set<User> loadToDoSharedUsers(UUID todoId) throws SQLException {
         Set<User> sharedUsers = new HashSet<>();
         String sql = "SELECT username FROM todo_shared_users WHERE todo_id = ?;";
@@ -306,7 +299,7 @@ public class UserDAOImpl implements UserDAO {
         String sql = "SELECT board_id FROM boards WHERE board_name = ? AND username = ?";
         try (Connection conn = DatabaseConnection.getInstance();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
-            pstmt.setString(1, boardName.getDisplayName()); // <-- Use getDisplayName() for query
+            pstmt.setString(1, boardName.getDisplayName());
             pstmt.setString(2, username);
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
