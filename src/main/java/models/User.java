@@ -7,18 +7,18 @@ import java.util.*;
 public class User {
     private final String username;
     private final String hashedPassword;
-    private final Map<String, Board> boardList;
+    private final ArrayList<Board> boardList;
 
     public User(String username, String plainPassword) {
         this.username = username;
         this.hashedPassword = hashPassword(plainPassword);
-        this.boardList = new HashMap<>();
+        this.boardList = new ArrayList<>();
         fillBoard(this.username);
     }
 
     public Board addBoard(BoardName boardName, String username) {
         Board board = new Board(boardName, username);
-        boardList.put(boardName.toString(), board);
+        boardList.add(board);
 
         return board;
     }
@@ -31,7 +31,7 @@ public class User {
 
     public void deleteBoard(BoardName boardName) {
         String boardNameStr = boardName.toString();
-        if (!boardList.containsKey(boardNameStr)) {
+        if (!boardList.contains(boardNameStr)) {
             System.out.println("Board does not exist");
             return;
         }
@@ -47,17 +47,19 @@ public class User {
         return username;
     }
 
-    public Map<String, Board> getBoardList() {
-        return Collections.unmodifiableMap(boardList);
+    public ArrayList<Board> getBoardList() {
+        return this.boardList;
     }
 
     public Board getBoard(BoardName boardName) {
-        String boardNameStr = boardName.toString();
-        if (!boardList.containsKey(boardNameStr)) {
-            System.out.println("Board does not exist");
-            return null;
+        String boardNameStr = boardName.toString().toLowerCase();
+        for (Board board : boardList) {
+            if (board.getName().toString().toLowerCase().equals(boardNameStr)) {
+                return board;
+            }
         }
-        return boardList.get(boardNameStr);
+        System.out.println("Board does not exist");
+        return null;
     }
 
     public void moveToDoToAnotherBoard(BoardName sourceBoardName, BoardName targetBoardName, int position) {
