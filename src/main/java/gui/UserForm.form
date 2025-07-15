@@ -57,7 +57,7 @@
             <properties>
               <background color="-1114125"/>
               <font name="Elephant" size="14" style="0"/>
-              <foreground color="-16759297"/>
+              <foreground color="-16777216"/>
             </properties>
           </component>
           <component id="b0d35" class="javax.swing.JButton" binding="loginButton" default-binding="true">

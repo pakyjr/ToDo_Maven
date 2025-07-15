@@ -37,7 +37,6 @@ public class BoardForm {
     private JComboBox<String> colorChange;
     private JPanel campo1;
     private JLabel campo2;
-    private JLabel campo3;
     private JLabel campo4;
     private JComboBox memberdToDo;
     private JButton changeSharing;

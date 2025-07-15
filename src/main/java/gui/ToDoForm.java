@@ -37,7 +37,10 @@ public class ToDoForm {
     private String currentBoard;
     private Controller controller;
     private ToDo currentToDo;
-    private String[] imageNames = {"lupo.png", "lettura.png", "immagine3.jpg", "immagine4.jpg", "immagine5.jpg"};
+    private String[] imageNames = {"read.jpg", "art.jpg", "happybirthday.jpg", "happyhalloween.jpg", "happynewyear.jpg",
+                                   "santa.jpg", "music.jpg", "choco.jpg", "coffee.jpg", "sweet.jpg","film.jpg",
+                                    "filo.jpg","game.jpg", "graduated.jpg", "mountain.jpg", "pool.jpg", "sher.jpg",
+                                    "theatre.jpg", "sport.jpg", "study.jpg", "martial.jpg"};
     private int currentImageIndex = 0;
 
 
@@ -406,8 +409,8 @@ public class ToDoForm {
                 ImageIcon icon = new ImageIcon(imageUrl);
                 Image img = icon.getImage();
 
-                Image scaledImg = img.getScaledInstance(image.getWidth() > 0 ? image.getWidth() : 150,
-                        image.getHeight() > 0 ? image.getHeight() : 150,
+                Image scaledImg = img.getScaledInstance(image.getWidth() > 0 ? image.getWidth() : 180,
+                        image.getHeight() > 0 ? image.getHeight() : 195,
                         Image.SCALE_SMOOTH);
                 icon = new ImageIcon(scaledImg);
                 image.setIcon(icon);
