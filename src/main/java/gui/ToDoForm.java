@@ -2,18 +2,21 @@ package gui;
 
 import controller.Controller;
 import models.ToDo;
-import models.board.BoardName; // Keep this import for getBoardNameFromString if still used
+import models.User;
+import models.board.BoardName;
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.net.URI;
+        import java.awt.*;
+        import java.awt.event.*;
+        import java.net.URI;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class ToDoForm {
     private JPanel todoPanel;
@@ -30,15 +33,15 @@ public class ToDoForm {
     private JPanel panelActivity;
     private JButton deleteButton;
     private JButton openURL;
-    private JTextField ownerfield; // This field will display the creator's username
+    private JTextField ownerfield;
     private JButton shareToDo;
     private JButton changeSharing;
-    private JComboBox membersToDo;
+    private JComboBox<String> membersToDo;
     public JFrame frameToDoForm, frame;
 
     private String currentBoard;
     private Controller controller;
-    private ToDo currentToDo; // This ToDo object now has an 'owner' field
+    private ToDo currentToDo;
     private String[] imageNames = {"read.jpg", "art.jpg", "happybirthday.jpg", "happyhalloween.jpg", "happynewyear.jpg",
             "santa.jpg", "music.jpg", "choco.jpg", "coffee.jpg", "sweet.jpg","film.jpg",
             "filo.jpg","game.jpg", "graduated.jpg", "mountain.jpg", "pool.jpg", "sher.jpg",
@@ -50,7 +53,7 @@ public class ToDoForm {
         this.frame = parent;
         this.controller = c;
         this.currentBoard = cu;
-        this.currentToDo = toDoToEdit; // currentToDo's 'owner' field will be used
+        this.currentToDo = toDoToEdit;
 
         frameToDoForm = new JFrame(toDoToEdit == null ? "ToDo Creation" : "Edit ToDo");
         frameToDoForm.setContentPane(todoPanel);
@@ -59,14 +62,12 @@ public class ToDoForm {
         frameToDoForm.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                // When closing the ToDoForm, refresh the BoardForm's list
-                // Ensure the list is repopulated based on the current board
                 if (BoardForm.listModel != null) {
                     BoardForm.listModel.clear();
                     BoardForm.listModel.addAll(controller.getToDoListString(currentBoard));
                 }
-                frame.setVisible(true); // Make the BoardForm visible again
-                frameToDoForm.dispose(); // Close the ToDoForm
+                frame.setVisible(true);
+                frameToDoForm.dispose();
             }
         });
 
@@ -100,7 +101,6 @@ public class ToDoForm {
             }
         });
 
-        // Set owner field as non-editable as it represents the fixed creator of the ToDo
         ownerfield.setEditable(false);
         statusField.setEditable(false);
 
@@ -115,21 +115,21 @@ public class ToDoForm {
             }
             urlField.setText(currentToDo.getUrl());
 
-            // Set the owner field from the current ToDo's owner
             ownerfield.setText(currentToDo.getOwner());
 
             // Disable editing for all fields if the current user is NOT the owner
-            // This prevents recipients of shared ToDos from altering the original.
-            if (!controller.isCurrentUserToDoCreator(currentToDo)) { // Use the new Controller method
+            if (!controller.isCurrentUserToDoCreator(currentToDo)) {
                 nameField.setEditable(false);
                 descriptionField.setEditable(false);
                 dueDateField.setEditable(false);
                 urlField.setEditable(false);
                 colorChange.setEnabled(false);
-                image.setEnabled(false); // Disable image clicking
-                panelActivity.setEnabled(false); // Disable adding activities
-                buttonSave.setEnabled(false); // Disable saving
-                deleteButton.setEnabled(false); // Disable deleting activities
+                image.setEnabled(false);
+                panelActivity.setEnabled(false);
+                buttonSave.setEnabled(false);
+                deleteButton.setEnabled(false);
+                shareToDo.setEnabled(false);
+                changeSharing.setEnabled(false);
             }
 
 
@@ -162,8 +162,6 @@ public class ToDoForm {
                 for (Map.Entry<String, Boolean> entry : currentToDo.getActivityList().entrySet()) {
                     JCheckBox checkBox = new JCheckBox(entry.getKey());
                     checkBox.setSelected(entry.getValue());
-                    // Only allow activity status changes if the current user is the creator or if you want shared users to track their own progress
-                    // For now, let's assume only creator can change activities.
                     if (!controller.isCurrentUserToDoCreator(currentToDo)) {
                         checkBox.setEnabled(false);
                     } else {
@@ -177,11 +175,18 @@ public class ToDoForm {
             } else {
                 statusField.setText("Not Started");
             }
+            if (controller.isCurrentUserToDoCreator(currentToDo)) {
+                populateMembersComboBox();
+            } else {
+                membersToDo.setEnabled(false);
+            }
         } else {
             // Creating a new ToDo
             statusField.setText("Not Started");
-            // Set the owner field to the currently logged-in user's username
             ownerfield.setText(controller.user.getUsername());
+            membersToDo.setEnabled(false);
+            shareToDo.setEnabled(false);
+            changeSharing.setEnabled(false);
         }
 
 
@@ -222,7 +227,7 @@ public class ToDoForm {
                 String description = descriptionField.getText().trim();
                 String dueDateString = dueDateField.getText().trim();
                 String url = urlField.getText().trim();
-                String owner = ownerfield.getText(); // This is the creator's username
+                String owner = ownerfield.getText();
 
                 if (title.isEmpty() || description.isEmpty() || dueDateString.isEmpty()) {
                     JOptionPane.showMessageDialog(frameToDoForm, "Please fill in all required fields (Title, Description, Due Date).", "Missing Data", JOptionPane.ERROR_MESSAGE);
@@ -263,22 +268,27 @@ public class ToDoForm {
 
                 if (currentToDo == null) {
                     // Creating a new ToDo
-                    // Pass the owner (current logged-in user) to the controller
-                    controller.addToDo(currentBoard, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus, owner); // ADDED OWNER
-                    JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
+                    String newToDoId = controller.addToDo(currentBoard, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus, owner);
+                    if (newToDoId != null) {
+                        currentToDo = controller.getToDoByTitle(title, currentBoard); // Fetch the newly created ToDo object
+                        JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
+                        shareToDo.setEnabled(true);
+                        changeSharing.setEnabled(true);
+                        membersToDo.setEnabled(true);
+                        populateMembersComboBox();
+                    } else {
+                        JOptionPane.showMessageDialog(frameToDoForm, "Failed to add ToDo.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 } else {
                     // Updating an existing ToDo
-                    // Ensure the current user is the owner before updating
                     if (!controller.isCurrentUserToDoCreator(currentToDo)) {
                         JOptionPane.showMessageDialog(frameToDoForm, "You can only edit ToDos you created.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
 
                     String oldTitle = currentToDo.getTitle();
-                    // Pass the existing owner (currentToDo.getOwner()) to the controller
-                    controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus, currentToDo.getOwner()); // ADDED CURRENT_TODO.GETOWNER()
+                    controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus, currentToDo.getOwner());
 
-                    // Update the in-memory currentToDo object
                     currentToDo.setTitle(title);
                     currentToDo.setDescription(description);
                     currentToDo.setDueDate(dueDate);
@@ -286,12 +296,10 @@ public class ToDoForm {
                     currentToDo.setActivityList(activitiesMap);
                     currentToDo.setColor(selectedColor);
                     currentToDo.setImage(selectedImageName);
-                    // No need to update owner for existing ToDo, it's fixed.
 
                     JOptionPane.showMessageDialog(frameToDoForm, "ToDo updated successfully.");
                 }
 
-                // Refresh the BoardForm's JList
                 if (BoardForm.listModel != null) {
                     BoardForm.listModel.clear();
                     BoardForm.listModel.addAll(controller.getToDoListString(currentBoard));
@@ -313,12 +321,10 @@ public class ToDoForm {
             }
         });
 
-        // Event listener for adding activities
         panelActivity.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 super.mouseClicked(e);
-                // Only allow adding activities if the current user is the owner
                 if (currentToDo != null && !controller.isCurrentUserToDoCreator(currentToDo)) {
                     JOptionPane.showMessageDialog(frameToDoForm, "You can only add activities to ToDos you created.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
                     return;
@@ -338,9 +344,8 @@ public class ToDoForm {
                     panelActivity.repaint();
 
                     if (currentToDo != null) {
-                        currentToDo.addActivity(label); // This will update the ToDo's activity list in memory
+                        currentToDo.addActivity(label);
                     }
-                    // For a new ToDo, activities are just added to the UI and will be saved when "Save" is clicked.
                 }
                 checkCompletionStatus();
             }
@@ -349,7 +354,6 @@ public class ToDoForm {
         deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Only allow deleting activities if the current user is the owner
                 if (currentToDo != null && !controller.isCurrentUserToDoCreator(currentToDo)) {
                     JOptionPane.showMessageDialog(frameToDoForm, "You can only delete activities from ToDos you created.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
                     return;
@@ -379,7 +383,7 @@ public class ToDoForm {
                     for (JCheckBox cb : selectedCheckBoxes) {
                         panelActivity.remove(cb);
                         if (currentToDo != null) {
-                            currentToDo.deleteActivity(cb.getText()); // This will update the ToDo's activity list in memory
+                            currentToDo.deleteActivity(cb.getText());
                         }
                     }
                     panelActivity.revalidate();
@@ -389,7 +393,133 @@ public class ToDoForm {
                 }
             }
         });
+
+        shareToDo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentToDo == null) {
+                    JOptionPane.showMessageDialog(frameToDoForm, "Please save the ToDo first before sharing.", "Cannot Share", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+                if (!controller.isCurrentUserToDoCreator(currentToDo)) {
+                    JOptionPane.showMessageDialog(frameToDoForm, "Only the creator can share this ToDo.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                Set<User> allUsers = controller.getAllUsers();
+                Set<String> alreadySharedUsernames = new HashSet<>();
+                for(User u : currentToDo.getUsers()){
+                    alreadySharedUsernames.add(u.getUsername());
+                }
+                alreadySharedUsernames.add(currentToDo.getOwner());
+
+                java.util.List<String> availableUsers = new ArrayList<>();
+                for (User user : allUsers) {
+                    if (!alreadySharedUsernames.contains(user.getUsername())) {
+                        availableUsers.add(user.getUsername());
+                    }
+                }
+
+                if (availableUsers.isEmpty()) {
+                    JOptionPane.showMessageDialog(frameToDoForm, "No other users available to share with.", "No Users", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                String[] userChoices = availableUsers.toArray(new String[0]);
+                JList<String> userList = new JList<>(userChoices);
+                userList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+                JScrollPane scrollPane = new JScrollPane(userList);
+                scrollPane.setPreferredSize(new Dimension(200, 150));
+
+                int option = JOptionPane.showConfirmDialog(frameToDoForm, scrollPane, "Select Users to Share With", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (option == JOptionPane.OK_OPTION) {
+                    java.util.List<String> selectedUsernames = userList.getSelectedValuesList();
+                    if (selectedUsernames.isEmpty()) {
+                        JOptionPane.showMessageDialog(frameToDoForm, "No users selected for sharing.", "No Selection", JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+
+                    // CORRECTED LINE: Added current user's username as the third argument
+                    boolean success = controller.shareToDoWithUsers(currentToDo, selectedUsernames, controller.user.getUsername());
+                    if (success) {
+                        JOptionPane.showMessageDialog(frameToDoForm, "ToDo shared successfully with selected users.");
+                        populateMembersComboBox();
+                    } else {
+                        JOptionPane.showMessageDialog(frameToDoForm, "Failed to share ToDo.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+
+        changeSharing.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (currentToDo == null || !controller.isCurrentUserToDoCreator(currentToDo)) {
+                    JOptionPane.showMessageDialog(frameToDoForm, "Only the creator can manage sharing for this ToDo.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                Set<String> sharedUsernames = new HashSet<>();
+                for(User u : currentToDo.getUsers()){
+                    sharedUsernames.add(u.getUsername());
+                }
+
+                if (sharedUsernames.isEmpty()) {
+                    JOptionPane.showMessageDialog(frameToDoForm, "This ToDo is not currently shared with anyone.", "No Shared Users", JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+
+                String[] sharedUserChoices = sharedUsernames.toArray(new String[0]);
+                JList<String> userList = new JList<>(sharedUserChoices);
+                userList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
+                JScrollPane scrollPane = new JScrollPane(userList);
+                scrollPane.setPreferredSize(new Dimension(200, 150));
+
+                int option = JOptionPane.showConfirmDialog(frameToDoForm, scrollPane, "Select Users to Remove Sharing From", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+                if (option == JOptionPane.OK_OPTION) {
+                    java.util.List<String> selectedUsernames = userList.getSelectedValuesList();
+                    if (selectedUsernames.isEmpty()) {
+                        JOptionPane.showMessageDialog(frameToDoForm, "No users selected to remove sharing.", "No Selection", JOptionPane.INFORMATION_MESSAGE);
+                        return;
+                    }
+
+                    boolean success = controller.removeToDoSharing(currentToDo, selectedUsernames);
+                    if (success) {
+                        JOptionPane.showMessageDialog(frameToDoForm, "Sharing revoked successfully for selected users.");
+                        populateMembersComboBox();
+                    } else {
+                        JOptionPane.showMessageDialog(frameToDoForm, "Failed to revoke sharing.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            }
+        });
+
+        membersToDo.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            }
+        });
     }
+
+    private void populateMembersComboBox() {
+        membersToDo.removeAllItems();
+        if (currentToDo != null && currentToDo.getUsers() != null) {
+            if (currentToDo.getUsers().isEmpty()) {
+                membersToDo.addItem("No members shared with");
+            } else {
+                for (User user : currentToDo.getUsers()) {
+                    membersToDo.addItem(user.getUsername());
+                }
+            }
+        } else {
+            membersToDo.addItem("Not applicable");
+        }
+    }
+
 
     private void setPanelColors(String colorSelected) {
         if (colorSelected == null) return;
@@ -452,10 +582,8 @@ public class ToDoForm {
         }
 
         if (currentToDo != null) {
-            // Update the status in the currentToDo object if it exists
             currentToDo.setStatus(statusField.getText());
         }
-        // No need to call controller.updateToDo here, it will be done on buttonSave click.
     }
 
     private void loadImage(String imageName) {
@@ -485,9 +613,6 @@ public class ToDoForm {
         }
     }
 
-    // This method is likely no longer needed if BoardName.fromDisplayName is used directly
-    // or if the enum is directly mapped.
-    // However, if you still use it somewhere, keep it.
     private BoardName getBoardNameFromString(String boardName) {
         String formattedBoardName = boardName.toUpperCase();
         if (formattedBoardName.equals("FREE TIME")) {

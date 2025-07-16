@@ -9,15 +9,17 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List; // Import List
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set; // Import Set
 import java.util.stream.Collectors;
 
 public class Controller {
     public User user;
     private UserDAO userDAO;
 
-    public Controller() {
+    public Controller() throws SQLException { // Add this
         this.userDAO = new UserDAOImpl();
     }
 
@@ -81,7 +83,7 @@ public class Controller {
      * @param owner The username of the ToDo's creator (should be current user's username).
      * @return The UUID string of the newly added ToDo, or null if creation failed.
      */
-    public String addToDo(String boardNameStr, String toDoName, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status, String owner){ // ADDED 'owner' PARAMETER
+    public String addToDo(String boardNameStr, String toDoName, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status, String owner){
         if (this.user == null) {
             System.err.println("Error: No user is logged in to add a ToDo.");
             return null;
@@ -92,7 +94,6 @@ public class Controller {
             System.err.println("Error: Attempted to create ToDo with owner '" + owner + "' but current user is '" + this.user.getUsername() + "'. ToDo owner must match current user.");
             return null;
         }
-
 
         BoardName boardEnumName;
         try {
@@ -130,7 +131,6 @@ public class Controller {
             System.err.println("Error parsing due date: " + date + " - " + e.getMessage());
             return null; // Or handle as needed
         }
-
 
         try {
             int boardId = userDAO.getBoardId(boardEnumName, user.getUsername());
@@ -170,7 +170,7 @@ public class Controller {
      * @param status The new overall status.
      * @param owner The username of the ToDo's creator (should be current user's username).
      */
-    public void updateToDo(String boardNameStr, String oldToDoTitle, String newToDoTitle, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status, String owner) { // ADDED 'owner' PARAMETER
+    public void updateToDo(String boardNameStr, String oldToDoTitle, String newToDoTitle, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status, String owner) {
         if (this.user == null) {
             System.err.println("Error: No user is logged in to update a ToDo.");
             return;
@@ -218,8 +218,6 @@ public class Controller {
             toDoToUpdate.setImage(image);
             toDoToUpdate.setActivityList(activities);
             toDoToUpdate.setStatus(status);
-            // The owner should not be changed during an update. It's the creator.
-            // toDoToUpdate.setOwner(owner); // This line should NOT be here.
 
             try {
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -229,7 +227,6 @@ public class Controller {
                 System.err.println("Error parsing due date: " + date + " - " + e.getMessage());
                 return; // Or handle as needed
             }
-
 
             try {
                 int boardId = userDAO.getBoardId(boardEnumName, user.getUsername());
@@ -278,9 +275,6 @@ public class Controller {
             return null;
         }
 
-        // Return the actual ToDo object from the board's list
-        // Filter by title and also by owner if you want to distinguish between original and shared with same title
-        // For UI purposes, usually, you want the one displayed on *this* board.
         return board.getTodoList().stream()
                 .filter(toDo -> toDo.getTitle().equals(title))
                 .findFirst()
@@ -358,437 +352,255 @@ public class Controller {
             boolean isRecipientDeleting = !isCreator && this.user.getBoard(boardEnumName).getTodoList().contains(toDoToRemove);
 
             if (!isCreator && !isRecipientDeleting) {
-                System.err.println("Permission Denied: You cannot delete this ToDo. Only the creator can delete the original, or you can delete your shared copy.");
+                System.err.println("Permission Denied: You cannot delete this ToDo.");
                 return;
             }
 
-            // Remove from the current user's board (in-memory)
-            board.removeToDo(toDoToRemove);
-            System.out.println("ToDo '" + toDoTitle + "' removed from board " + boardNameStr + " for user '" + this.user.getUsername() + "'.");
-
             try {
-                // Delete from the database
-                // If it's the original ToDo, delete all instances (original + shared copies)
-                // This logic is tricky. The `Board.removeToDo` method handles removing shared
-                // copies from *other users' in-memory boards*.
-                // Here, we need to handle the database removal.
-
+                // If the current user is the creator, remove all shared instances from DB
                 if (isCreator) {
-                    // If the current user is the owner, delete the ToDo and all its shared copies from DB.
-                    // This implies a mechanism in UserDAO to find and delete all copies based on original owner and title,
-                    // or better, by an 'original_todo_id' if you add one to ToDo.
-                    // For now, let's assume `deleteToDo` in DAO intelligently handles this based on UUID.
-                    userDAO.deleteToDo(toDoToRemove.getId()); // Deletes the specific instance and potentially others based on owner/title in DAO
-                    System.out.println("Original ToDo '" + toDoTitle + "' and its shared copies (if any) deleted from database.");
-
-                    // After deleting the original, also ensure it's removed from any user's `users` set that it was shared with.
-                    // The `Board.removeToDo` handles this for in-memory.
-                    // For DB, we need to update records that represent shared ToDos no longer existing.
-                    // This often means removing rows from a "shared_todos" table, or deleting actual ToDo entries.
-
-                } else { // It's a shared copy being deleted by a recipient
-                    userDAO.deleteToDo(toDoToRemove.getId()); // Delete only this specific shared instance from DB
-                    System.out.println("Shared ToDo copy '" + toDoTitle + "' deleted from database for user '" + this.user.getUsername() + "'.");
+                    userDAO.removeAllToDoSharing(toDoToRemove.getId().toString());
+                    System.out.println("Removed all shared instances of ToDo '" + toDoTitle + "'.");
                 }
+                // Delete from the current user's board (in-memory and DB)
+                userDAO.deleteToDo(toDoToRemove.getId().toString(), user.getUsername()); // Ensure DAO handles deletion by creator or recipient
+                board.removeToDo(toDoToRemove);
+                System.out.println("ToDo '" + toDoTitle + "' deleted successfully from board '" + boardNameStr + "'.");
+
+                // If a recipient deleted a shared ToDo, refresh creator's in-memory users list for that ToDo
+                if (isRecipientDeleting) {
+                    // This is a complex scenario. Ideally, the creator's ToDo object should be updated.
+                    // For simplicity, we assume the shared ToDo is a distinct entry for the recipient.
+                    // If a true "shared object" model is needed, a more robust synchronization is required.
+                }
+
             } catch (SQLException e) {
                 System.err.println("Database error deleting ToDo: " + e.getMessage());
                 e.printStackTrace();
             }
         } else {
-            System.err.println("ToDo '" + toDoTitle + "' not found on board " + boardNameStr + " for deletion.");
+            System.err.println("ToDo with title '" + toDoTitle + "' not found on board " + boardNameStr);
         }
     }
 
     /**
-     * Moves a ToDo between boards for the current user.
-     * This operation moves the *single instance* of the ToDo.
+     * Moves a ToDo from one board to another for the current user.
+     * Only the creator (owner) of the ToDo can move it.
      *
      * @param toDoTitle The title of the ToDo to move.
-     * @param sourceBoardNameStr The display name of the source board.
-     * @param destinationBoardNameStr The display name of the destination board.
+     * @param currentBoardDisplayName The display name of the board the ToDo is currently on.
+     * @param destinationBoardDisplayName The display name of the board to move the ToDo to.
      * @return true if the ToDo was successfully moved, false otherwise.
      */
-    public boolean moveToDo(String toDoTitle, String sourceBoardNameStr, String destinationBoardNameStr) {
+    public boolean moveToDo(String toDoTitle, String currentBoardDisplayName, String destinationBoardDisplayName) {
         if (this.user == null) {
             System.err.println("Error: No user is logged in to move a ToDo.");
             return false;
         }
 
-        BoardName sourceBoardEnumName;
-        BoardName destinationBoardEnumName;
+        // Get BoardName enums from display names
+        BoardName currentBoardEnum;
+        BoardName destinationBoardEnum;
         try {
-            sourceBoardEnumName = BoardName.fromDisplayName(sourceBoardNameStr);
-            destinationBoardEnumName = BoardName.fromDisplayName(destinationBoardNameStr);
+            currentBoardEnum = BoardName.fromDisplayName(currentBoardDisplayName);
+            destinationBoardEnum = BoardName.fromDisplayName(destinationBoardDisplayName);
         } catch (IllegalArgumentException e) {
-            System.err.println("Error: Invalid board name for move operation: " + e.getMessage());
+            System.err.println("Error: Invalid board name provided. " + e.getMessage());
             return false;
         }
 
-        Board sourceBoard = user.getBoard(sourceBoardEnumName);
-        Board destinationBoard = user.getBoard(destinationBoardEnumName);
+        // Get board objects from user's boards
+        Board currentBoard = user.getBoard(currentBoardEnum);
+        Board destinationBoard = user.getBoard(destinationBoardEnum);
 
-        if (sourceBoard == null) {
-            System.err.println("Error: Source Board '" + sourceBoardNameStr + "' not found.");
+        if (currentBoard == null) {
+            System.err.println("Error: Source board '" + currentBoardDisplayName + "' not found for current user.");
             return false;
         }
         if (destinationBoard == null) {
-            System.err.println("Error: Destination Board '" + destinationBoardNameStr + "' not found.");
-            return false;
-        }
-        if (sourceBoardEnumName.equals(destinationBoardEnumName)) {
-            System.out.println("Cannot move ToDo to the same board.");
+            System.err.println("Error: Destination board '" + destinationBoardDisplayName + "' not found for current user.");
             return false;
         }
 
-        Optional<ToDo> optionalToDo = sourceBoard.getTodoList().stream()
+        // Find the ToDo in the current board
+        Optional<ToDo> optionalToDo = currentBoard.getTodoList().stream()
                 .filter(t -> t.getTitle().equals(toDoTitle))
                 .findFirst();
 
-        if (optionalToDo.isPresent()) {
-            ToDo toDoToMove = optionalToDo.get();
-
-            // Check if a ToDo with the same title AND owner already exists in the destination board
-            // This is crucial to prevent internal duplicates for the same *logical* ToDo.
-            if (destinationBoard.getTodoList().stream().anyMatch(t -> t.getTitle().equals(toDoTitle) && t.getOwner().equals(toDoToMove.getOwner()))) {
-                System.err.println("Error: A ToDo with title '" + toDoTitle + "' and same owner already exists in the destination board '" + destinationBoardNameStr + "'.");
-                return false;
-            }
-
-            // In-memory move
-            sourceBoard.removeToDo(toDoToMove); // Removes from source, re-indexes
-            destinationBoard.addExistingTodo(toDoToMove); // Adds to destination, re-indexes
-
-            System.out.println("ToDo '" + toDoTitle + "' moved from " + sourceBoardNameStr + " to " + destinationBoardNameStr + " for user '" + this.user.getUsername() + "'.");
-
-            try {
-                int sourceBoardId = userDAO.getBoardId(sourceBoardEnumName, user.getUsername());
-                int destBoardId = userDAO.getBoardId(destinationBoardEnumName, user.getUsername());
-
-                if (sourceBoardId != -1 && destBoardId != -1) {
-                    // Update the board_id of the existing ToDo in the database
-                    userDAO.updateToDoBoardId(toDoToMove.getId(), destBoardId);
-                } else {
-                    System.err.println("Error: Source or Destination board not found in database for moving ToDo.");
-                    return false;
-                }
-            } catch (SQLException e) {
-                System.err.println("Database error moving ToDo: " + e.getMessage());
-                e.printStackTrace();
-                return false;
-            }
-
-            return true;
-        } else {
-            System.err.println("ToDo '" + toDoTitle + "' not found on board " + sourceBoardNameStr + " for moving.");
+        if (!optionalToDo.isPresent()) {
+            System.err.println("Error: ToDo '" + toDoTitle + "' not found on board '" + currentBoardDisplayName + "'.");
             return false;
         }
-    }
+        ToDo toDoToMove = optionalToDo.get();
 
-
-    /**
-     * Checks if the currently logged-in user is the creator (owner) of the given ToDo.
-     * This is essential for controlling edit/delete permissions.
-     * @param toDo The ToDo object to check.
-     * @return true if the current user created the ToDo, false otherwise.
-     */
-    public boolean isCurrentUserToDoCreator(ToDo toDo) {
-        if (this.user == null || toDo == null || toDo.getOwner() == null) {
+        // Permission check: Only the creator can move the ToDo
+        if (!isCurrentUserToDoCreator(toDoToMove)) {
+            System.err.println("Permission Denied: Only the creator can move this ToDo.");
             return false;
         }
-        return this.user.getUsername().equals(toDo.getOwner());
-    }
 
-    /**
-     * Retrieves a list of all registered usernames, excluding the currently logged-in user.
-     * This method interacts with the UserDAO to get all users from the database.
-     * @return An ArrayList of usernames (Strings).
-     */
-    public ArrayList<String> getAllUsernamesExcludingCurrentUser() {
-        if (this.user == null) {
-            System.err.println("Error: No user is logged in to get other usernames.");
-            return new ArrayList<>();
+        // Check for duplicate title in destination board (optional but good practice)
+        if (destinationBoard.getTodoList().stream().anyMatch(t -> t.getTitle().equals(toDoTitle) && t.getOwner().equals(toDoToMove.getOwner()))) {
+            System.err.println("Error: A ToDo with title '" + toDoTitle + "' and same owner already exists on destination board '" + destinationBoardDisplayName + "'. Move aborted.");
+            return false;
         }
 
         try {
-            // Fetch all users from the database using UserDAO
-            ArrayList<User> allUsers = userDAO.getAllUsers();
+            // Get database IDs for current and destination boards
+            int currentBoardId = userDAO.getBoardId(currentBoardEnum, user.getUsername()); // Not strictly needed for moving, but good for consistency check
+            int destinationBoardId = userDAO.getBoardId(destinationBoardEnum, user.getUsername());
 
-            // Filter out the current user's username
-            return allUsers.stream()
-                    .filter(u -> !u.getUsername().equals(user.getUsername()))
-                    .map(User::getUsername)
-                    .collect(Collectors.toCollection(ArrayList::new));
+            if (currentBoardId == -1 || destinationBoardId == -1) {
+                System.err.println("Database error: Could not find board IDs for move operation.");
+                return false;
+            }
+
+            // Update the ToDo's board_id in the database
+            userDAO.updateToDoBoardId(toDoToMove.getId().toString(), destinationBoardId);
+
+            // Update in-memory model
+            currentBoard.removeToDo(toDoToMove); // Remove from source board's in-memory list
+            destinationBoard.addExistingTodo(toDoToMove); // Add to destination board's in-memory list (without creating new ID)
+
+            System.out.println("ToDo '" + toDoTitle + "' successfully moved from '" + currentBoardDisplayName + "' to '" + destinationBoardDisplayName + "'.");
+            return true;
+
+        } catch (SQLException e) {
+            System.err.println("Database error moving ToDo '" + toDoTitle + "': " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+
+    /**
+     * Shares a ToDo with a list of specified users.
+     * This method adds entries to the shared_todos table and updates the in-memory ToDo object.
+     *
+     * @param toDo The ToDo object to share.
+     * @param usernamesToShareWith A list of usernames to share the ToDo with.
+     * @param boardNameStr The display name of the board the ToDo belongs to. (Needed for context, though not directly used in DAO calls for sharing itself)
+     * @return true if sharing was successful for all users, false otherwise.
+     */
+    public boolean shareToDoWithUsers(ToDo toDo, List<String> usernamesToShareWith, String boardNameStr) {
+        if (this.user == null) {
+            System.err.println("Error: No user is logged in.");
+            return false;
+        }
+        if (toDo == null) {
+            System.err.println("Error: ToDo to share cannot be null.");
+            return false;
+        }
+        if (!isCurrentUserToDoCreator(toDo)) {
+            System.err.println("Permission Denied: Only the creator can share this ToDo.");
+            return false;
+        }
+        if (usernamesToShareWith == null || usernamesToShareWith.isEmpty()) {
+            System.out.println("No users selected to share with.");
+            return true; // No action needed, consider it successful
+        }
+
+        boolean allSuccess = true;
+        for (String username : usernamesToShareWith) {
+            try {
+                // Add to shared_todos table
+                userDAO.shareToDo(toDo.getId().toString(), username);
+
+                // Add to in-memory ToDo object's shared users list
+                Optional<User> sharedUserOptional = userDAO.getUserByUsername(username);
+                if (sharedUserOptional.isPresent()) {
+                    toDo.addSharedUser(sharedUserOptional.get());
+                    System.out.println("ToDo '" + toDo.getTitle() + "' shared with user '" + username + "'.");
+                } else {
+                    System.err.println("User '" + username + "' not found to add to in-memory ToDo object.");
+                    allSuccess = false; // Even if DB write was successful, in-memory is inconsistent
+                }
+
+            } catch (SQLException e) {
+                System.err.println("Database error sharing ToDo '" + toDo.getTitle() + "' with '" + username + "': " + e.getMessage());
+                e.printStackTrace();
+                allSuccess = false;
+            }
+        }
+        return allSuccess;
+    }
+
+    /**
+     * Removes sharing of a ToDo from a list of specified users.
+     * This method deletes entries from the shared_todos table and updates the in-memory ToDo object.
+     *
+     * @param toDo The ToDo object to remove sharing from.
+     * @param usernamesToRemoveSharing A list of usernames to remove sharing from.
+     * @return true if removal was successful for all users, false otherwise.
+     */
+    public boolean removeToDoSharing(ToDo toDo, List<String> usernamesToRemoveSharing) {
+        if (this.user == null) {
+            System.err.println("Error: No user is logged in.");
+            return false;
+        }
+        if (toDo == null) {
+            System.err.println("Error: ToDo cannot be null.");
+            return false;
+        }
+        if (!isCurrentUserToDoCreator(toDo)) {
+            System.err.println("Permission Denied: Only the creator can manage sharing for this ToDo.");
+            return false;
+        }
+        if (usernamesToRemoveSharing == null || usernamesToRemoveSharing.isEmpty()) {
+            System.out.println("No users selected to remove sharing from.");
+            return true; // No action needed, consider it successful
+        }
+
+        boolean allSuccess = true;
+        for (String username : usernamesToRemoveSharing) {
+            try {
+                // Remove from shared_todos table
+                userDAO.removeToDoSharing(toDo.getId().toString(), username);
+
+                // Remove from in-memory ToDo object's shared users list
+                toDo.removeSharedUser(username);
+                System.out.println("Removed sharing of ToDo '" + toDo.getTitle() + "' from user '" + username + "'.");
+
+            } catch (SQLException e) {
+                System.err.println("Database error removing sharing of ToDo '" + toDo.getTitle() + "' from '" + username + "': " + e.getMessage());
+                e.printStackTrace();
+                allSuccess = false;
+            }
+        }
+        return allSuccess;
+    }
+
+    /**
+     * Retrieves all registered users from the database.
+     *
+     * @return A Set of User objects, or an empty set if no users are found or an error occurs.
+     */
+    public Set<User> getAllUsers() {
+        if (this.user == null) {
+            System.err.println("Error: No user is logged in to retrieve all users.");
+            return java.util.Collections.emptySet();
+        }
+        try {
+            return userDAO.getAllUsers();
         } catch (SQLException e) {
             System.err.println("Database error retrieving all users: " + e.getMessage());
             e.printStackTrace();
-            return new ArrayList<>();
+            return java.util.Collections.emptySet();
         }
     }
 
     /**
-     * Shares a ToDo item from the current user's board to another user's board.
-     * A *copy* of the ToDo will be created and added to the recipient's board.
-     * The original ToDo (on the creator's board) will keep track of who it was shared with.
+     * Checks if the currently logged-in user is the creator (owner) of a given ToDo.
      *
-     * @param toDoTitle The title of the ToDo to share.
-     * @param currentBoardDisplayName The display name of the board where the ToDo currently resides (source board for the creator).
-     * @param recipientUsername The username of the user to share the ToDo with.
-     * @return true if the ToDo was successfully shared, false otherwise.
+     * @param toDo The ToDo object to check.
+     * @return true if the current user is the owner, false otherwise.
      */
-    public boolean shareToDo(String toDoTitle, String currentBoardDisplayName, String recipientUsername) {
-        if (this.user == null) {
-            System.err.println("Error: No user is logged in to share a ToDo.");
-            return false;
-        }
-
-        // 1. Get the original ToDo from the current user's board (the creator's board)
-        BoardName sourceBoardEnumName;
-        try {
-            sourceBoardEnumName = BoardName.fromDisplayName(currentBoardDisplayName);
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: Invalid source board name '" + currentBoardDisplayName + "'. " + e.getMessage());
-            return false;
-        }
-
-        Board sourceBoard = user.getBoard(sourceBoardEnumName);
-        if (sourceBoard == null) {
-            System.err.println("Error: Source Board '" + currentBoardDisplayName + "' not found for current user.");
-            return false;
-        }
-
-        Optional<ToDo> optionalOriginalToDoToShare = sourceBoard.getTodoList().stream()
-                .filter(t -> t.getTitle().equals(toDoTitle))
-                .findFirst();
-
-        if (optionalOriginalToDoToShare.isEmpty()) {
-            System.err.println("Error: ToDo '" + toDoTitle + "' not found in board '" + currentBoardDisplayName + "' for sharing.");
-            return false;
-        }
-        ToDo originalToDoToShare = optionalOriginalToDoToShare.get();
-
-        // Critical check: Only the creator can share their ToDo.
-        if (!isCurrentUserToDoCreator(originalToDoToShare)) {
-            System.err.println("Permission Denied: Only the creator of a ToDo can share it. You are not the owner of '" + toDoTitle + "'.");
-            return false;
-        }
-
-
-        // 2. Get the recipient user from the database and ensure their boards are loaded
-        Optional<User> optionalRecipientUser;
-        try {
-            optionalRecipientUser = userDAO.getUserByUsername(recipientUsername);
-        } catch (SQLException e) {
-            System.err.println("Database error fetching recipient user: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-
-        if (optionalRecipientUser.isEmpty()) {
-            System.err.println("Error: Recipient user '" + recipientUsername + "' not found.");
-            return false;
-        }
-        User recipientUser = optionalRecipientUser.get();
-
-        // Load the recipient's boards and their ToDos from the database if not already loaded
-        try {
-            userDAO.loadUserBoardsAndToDos(recipientUser);
-        } catch (SQLException e) {
-            System.err.println("Database error loading recipient's boards and ToDos: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-
-        // 3. Determine the target board for the recipient (same board name as source)
-        BoardName targetBoardEnumName = sourceBoardEnumName; // Shared to the same named board in recipient's account
-
-        Board recipientBoard = recipientUser.getBoard(targetBoardEnumName);
-        if (recipientBoard == null) {
-            System.err.println("Error: Recipient user '" + recipientUsername + "' does not have a board named '" + currentBoardDisplayName + "'. Cannot share ToDo.");
-            // Optionally, you might create the board for them here if it doesn't exist.
-            // For now, let's assume boards exist.
-            return false;
-        }
-
-        // 4. Check if a ToDo with the *same original ID* or *same title/owner* already exists in the recipient's target board.
-        // This prevents multiple identical shared copies of the *same logical ToDo* on the recipient's board.
-        // If you had an `originalId` field in ToDo, this would be `t.getOriginalId().equals(originalToDoToShare.getId())`.
-        // Since we don't, we check by title and original owner.
-        if (recipientBoard.getTodoList().stream().anyMatch(t -> t.getTitle().equals(originalToDoToShare.getTitle()) && t.getOwner().equals(originalToDoToShare.getOwner()))) {
-            System.out.println("ToDo '" + toDoTitle + "' from '" + originalToDoToShare.getOwner() + "' already exists in '" + recipientUsername + "'s board '" + currentBoardDisplayName + "'. Sharing aborted.");
-            return false;
-        }
-
-        // 5. Use the Board class's shareTodo method to handle in-memory logic
-        // This method creates a COPY of the ToDo for the recipient, adds it to their board,
-        // and updates the original ToDo's 'users' set.
-        sourceBoard.shareTodo(recipientUser, originalToDoToShare); // Pass the ORIGINAL ToDo
-
-        // 6. Persist the new ToDo in the database for the recipient
-        // The `Board.shareTodo` method added `newSharedToDo` to `recipientBoard` in memory.
-        // Now find that new shared ToDo instance to save it to DB.
-        Optional<ToDo> newlySharedToDoOptional = recipientBoard.getTodoList().stream()
-                .filter(t -> t.getTitle().equals(originalToDoToShare.getTitle()) &&
-                        t.getOwner().equals(originalToDoToShare.getOwner()) &&
-                        !t.getId().equals(originalToDoToShare.getId())) // Ensure it's the newly copied instance
-                .findFirst();
-
-        if (newlySharedToDoOptional.isPresent()) {
-            ToDo newlySharedToDo = newlySharedToDoOptional.get();
-            try {
-                int recipientBoardId = userDAO.getBoardId(targetBoardEnumName, recipientUser.getUsername());
-                if (recipientBoardId != -1) {
-                    userDAO.saveToDo(newlySharedToDo, recipientBoardId); // Save the new, unique instance
-                    System.out.println("ToDo '" + toDoTitle + "' (ID: " + newlySharedToDo.getId() + ") successfully saved to database for '" + recipientUsername + "' in board '" + currentBoardDisplayName + "'.");
-
-                    // Update the original ToDo's shared_with relationship in DB (if you have one)
-                    // For now, assume this is handled by UserDAO.saveToDo, or needs a separate method.
-                    // If you add a dedicated 'shared_todos' table, you'd insert a record here.
-
-                    return true;
-                } else {
-                    System.err.println("Error: Recipient board not found in database for saving shared ToDo.");
-                    // Revert in-memory addition if DB save fails
-                    recipientBoard.removeToDo(newlySharedToDo);
-                    originalToDoToShare.removeUser(recipientUser); // Also remove from original ToDo's tracking
-                    return false;
-                }
-            } catch (SQLException e) {
-                System.err.println("Database error sharing ToDo with '" + recipientUsername + "': " + e.getMessage());
-                e.printStackTrace();
-                // Revert in-memory addition if DB save fails
-                recipientBoard.removeToDo(newlySharedToDo);
-                originalToDoToShare.removeUser(recipientUser); // Also remove from original ToDo's tracking
-                return false;
-            }
-        } else {
-            System.err.println("Internal Error: Could not find the newly shared ToDo in recipient's board after in-memory addition.");
-            return false;
-        }
+    public boolean isCurrentUserToDoCreator(ToDo toDo) {
+        return this.user != null && toDo != null && this.user.getUsername().equals(toDo.getOwner());
     }
 
 
-    /**
-     * Unshares a ToDo by removing it from a specific recipient's board.
-     * This only removes the shared copy, it does not affect the original ToDo.
-     * This method can only be called by the creator of the original ToDo.
-     *
-     * @param toDoTitle The title of the original ToDo that was shared.
-     * @param boardNameStr The display name of the board from which the ToDo was originally shared.
-     * @param recipientUsername The username of the user from whom to unshare the ToDo.
-     * @return true if the shared ToDo was successfully removed, false otherwise.
-     */
-    public boolean unshareToDo(String toDoTitle, String boardNameStr, String recipientUsername) {
-        if (this.user == null) {
-            System.err.println("Error: No user is logged in to unshare a ToDo.");
-            return false;
-        }
-
-        // 1. Get the original ToDo from the current user's board (the creator's board)
-        BoardName sourceBoardEnumName;
-        try {
-            sourceBoardEnumName = BoardName.fromDisplayName(boardNameStr);
-        } catch (IllegalArgumentException e) {
-            System.err.println("Error: Invalid source board name '" + boardNameStr + "'. " + e.getMessage());
-            return false;
-        }
-
-        Board sourceBoard = user.getBoard(sourceBoardEnumName);
-        if (sourceBoard == null) {
-            System.err.println("Error: Source Board '" + boardNameStr + "' not found for current user.");
-            return false;
-        }
-
-        Optional<ToDo> optionalOriginalToDo = sourceBoard.getTodoList().stream()
-                .filter(t -> t.getTitle().equals(toDoTitle))
-                .findFirst();
-
-        if (optionalOriginalToDo.isEmpty()) {
-            System.err.println("Error: Original ToDo '" + toDoTitle + "' not found in your board '" + boardNameStr + "'.");
-            return false;
-        }
-        ToDo originalToDo = optionalOriginalToDo.get();
-
-        // Permission check: Only the creator can unshare their ToDo.
-        if (!isCurrentUserToDoCreator(originalToDo)) {
-            System.err.println("Permission Denied: Only the creator of a ToDo can unshare it. You are not the owner of '" + toDoTitle + "'.");
-            return false;
-        }
-
-
-        // 2. Get the recipient user from the database and ensure their boards are loaded
-        Optional<User> optionalRecipientUser;
-        try {
-            optionalRecipientUser = userDAO.getUserByUsername(recipientUsername);
-        } catch (SQLException e) {
-            System.err.println("Database error fetching recipient user: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-
-        if (optionalRecipientUser.isEmpty()) {
-            System.err.println("Error: Recipient user '" + recipientUsername + "' not found.");
-            return false;
-        }
-        User recipientUser = optionalRecipientUser.get();
-
-        try {
-            userDAO.loadUserBoardsAndToDos(recipientUser); // Ensure recipient's boards are loaded
-        } catch (SQLException e) {
-            System.err.println("Database error loading recipient's boards and ToDos: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-
-        // 3. Get the recipient's board (same name as the original board)
-        Board recipientBoard = recipientUser.getBoard(sourceBoardEnumName);
-        if (recipientBoard == null) {
-            System.out.println("Recipient user '" + recipientUsername + "' does not have a board named '" + boardNameStr + "'. ToDo already unshared or never shared to this board.");
-            originalToDo.removeUser(recipientUser); // Clean up the original ToDo's tracking if the board is gone
-            return true; // Consider it successfully "unshared" if there's no board
-        }
-
-        // 4. Find the specific shared copy on the recipient's board
-        // This is where having an `original_todo_id` in `ToDo` would make this much more robust.
-        // Without it, we have to rely on title and original owner matching.
-        Optional<ToDo> sharedCopyToRemoveOptional = recipientBoard.getTodoList().stream()
-                .filter(t -> t.getTitle().equals(toDoTitle) && t.getOwner().equals(originalToDo.getOwner()))
-                .findFirst();
-
-        if (sharedCopyToRemoveOptional.isEmpty()) {
-            System.out.println("ToDo '" + toDoTitle + "' (from " + originalToDo.getOwner() + ") not found on '" + recipientUsername + "'s board '" + boardNameStr + "'. Already unshared or never shared.");
-            originalToDo.removeUser(recipientUser); // Clean up the original ToDo's tracking
-            return true; // Consider it successfully "unshared"
-        }
-
-        ToDo sharedCopyToRemove = sharedCopyToRemoveOptional.get();
-
-        // 5. Remove the shared copy from the recipient's board (in-memory)
-        recipientBoard.removeToDo(sharedCopyToRemove); // This removes the specific instance from the recipient's board
-
-        // 6. Remove the shared copy from the database
-        try {
-            userDAO.deleteToDo(sharedCopyToRemove.getId()); // Delete only this specific instance from the DB
-            System.out.println("Shared ToDo '" + toDoTitle + "' successfully unshared from '" + recipientUsername + "' and deleted from database.");
-            originalToDo.removeUser(recipientUser); // Remove the user from the original ToDo's tracking list
-            return true;
-        } catch (SQLException e) {
-            System.err.println("Database error unsharing ToDo from '" + recipientUsername + "': " + e.getMessage());
-            e.printStackTrace();
-            // If DB deletion fails, you might want to re-add it to recipient's board in memory
-            recipientBoard.addExistingTodo(sharedCopyToRemove); // Revert in-memory change
-            return false;
-        }
-    }
-
-    /**
-     * Retrieves the list of users with whom a specific ToDo has been shared.
-     * This relies on the 'users' Set within the ToDo object.
-     *
-     * @param toDoTitle The title of the ToDo to query.
-     * @param boardNameStr The display name of the board where the original ToDo resides.
-     * @return An ArrayList of usernames (Strings) that the ToDo has been shared with.
-     */
-    public ArrayList<String> getUsersToDoIsSharedWith(String toDoTitle, String boardNameStr) {
+    public ArrayList<String> getSharedUsersForToDo(String boardNameStr, String toDoTitle) {
         if (this.user == null) {
             System.err.println("Error: No user is logged in.");
             return new ArrayList<>();
@@ -804,7 +616,7 @@ public class Controller {
 
         Board board = user.getBoard(boardEnumName);
         if (board == null) {
-            System.err.println("Error: Board '" + boardNameStr + "' not found for current user.");
+            System.err.println("Error: Board \"" + boardNameStr + "\" not found for current user.");
             return new ArrayList<>();
         }
 

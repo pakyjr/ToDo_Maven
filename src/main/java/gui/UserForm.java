@@ -29,9 +29,22 @@ public class UserForm {
 
     }
 
-
     public UserForm(JFrame parentFrame) {
-        this.controller = new Controller();
+        // Wrap the Controller instantiation in a try-catch block
+        try {
+            this.controller = new Controller();
+        } catch (SQLException e) {
+            System.err.println("Error initializing Controller: " + e.getMessage());
+            e.printStackTrace();
+            // Display an error message to the user
+            JOptionPane.showMessageDialog(parentFrame,
+                    "A database error occurred during application startup. Please contact support.",
+                    "Startup Error",
+                    JOptionPane.ERROR_MESSAGE);
+            // Exit the application if the controller cannot be initialized
+            System.exit(1);
+        }
+
         this.frame = parentFrame;
 
         loginButton.addActionListener(new ActionListener() {
@@ -46,6 +59,7 @@ public class UserForm {
                         System.out.println("Login successful for user: " + loggedInUser.getUsername());
                         frame.setVisible(false);
 
+                        // Pass the controller instance to BoardForm
                         BoardForm boardForm = new BoardForm(frame, controller);
                         boardForm.frameBoardForm.setVisible(true);
                     } else {
@@ -64,6 +78,7 @@ public class UserForm {
             public void actionPerformed(ActionEvent e) {
                 frame.setVisible(false);
 
+                // Pass the controller instance to RegisterForm
                 RegisterForm registerinterface = new RegisterForm(frame, controller);
                 registerinterface.frameRegisterForm.setVisible(true);
             }
