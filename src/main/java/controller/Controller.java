@@ -7,19 +7,20 @@ import dao.UserDAO;
 import dao.UserDAOImpl;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.sql.SQLException;
+import java.sql.SQLException; // Ensure SQLException is imported
 import java.util.ArrayList;
-import java.util.List; // Import List
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set; // Import Set
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Controller {
     public User user;
     private UserDAO userDAO;
 
-    public Controller() throws SQLException { // Add this
+    // MODIFIED: Declare that the constructor can throw SQLException
+    public Controller() throws SQLException {
         this.userDAO = new UserDAOImpl();
     }
 
@@ -27,10 +28,19 @@ public class Controller {
         User newUser = new User(username, plainPassword);
 
         try {
-            boolean success = userDAO.saveUser(newUser);
+            boolean success = userDAO.saveUser(newUser); // Save user to DB, newUser's ID is set by DAO
             if (success) {
                 this.user = newUser; // Set the newly registered user as the current user
-                System.out.println("User '" + username + "' registered successfully.");
+
+                // NEW: Populate in-memory boards for the new user
+                newUser.fillBoard(newUser.getUsername());
+
+                // NEW: Save each of these newly created boards to the database
+                for (Board board : newUser.getBoardList()) {
+                    userDAO.saveBoard(board, newUser.getId()); // Pass the User's ID
+                }
+
+                System.out.println("User '" + username + "' registered successfully and default boards created.");
             } else {
                 System.err.println("Registration failed: User '" + username + "' might already exist.");
                 this.user = null; // Registration failed, no user logged in
@@ -47,9 +57,8 @@ public class Controller {
 
         if (optionalUser.isPresent()) {
             User foundUser = optionalUser.get();
-            String hashedPasswordAttempt = User.hashPassword(plainPassword);
-
-            if (foundUser.getHashedPassword().equals(hashedPasswordAttempt)) {
+            // Using the checkPassword method (which uses BCrypt)
+            if (foundUser.checkPassword(plainPassword)) {
                 this.user = foundUser; // Set the logged-in user as the current user
                 // Load user's boards and their ToDos from the database upon successful login
                 userDAO.loadUserBoardsAndToDos(this.user);

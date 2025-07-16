@@ -1,15 +1,15 @@
 package dao;
 
-import models.board.Board;
-import models.ToDo;
 import models.User;
-import models.board.BoardName;
+import models.ToDo;
+import models.board.Board; // Import Board
+import models.board.BoardName; // Import BoardName
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set; // Make sure Set is imported
+import java.util.Set;
 
 public interface UserDAO {
     boolean saveUser(User user) throws SQLException;
@@ -18,6 +18,7 @@ public interface UserDAO {
     int getBoardId(BoardName boardName, String username) throws SQLException;
     void saveToDo(ToDo toDo, int boardId) throws SQLException;
     void updateToDo(ToDo toDo, int boardId) throws SQLException;
+    void updateToDoBoardId(String toDoId, int newBoardId) throws SQLException;
     void deleteToDo(String toDoId, String username) throws SQLException;
     void shareToDo(String toDoId, String sharedWithUsername) throws SQLException;
     void removeToDoSharing(String toDoId, String sharedWithUsername) throws SQLException;
@@ -25,6 +26,6 @@ public interface UserDAO {
     Set<User> getAllUsers() throws SQLException;
     List<String> getSharedUsernamesForToDo(String toDoId) throws SQLException;
 
-    // New method to update the board_id of a ToDo
-    void updateToDoBoardId(String toDoId, int newBoardId) throws SQLException;
+    // NEW METHOD: saveBoard
+    void saveBoard(Board board, int userId) throws SQLException;
 }

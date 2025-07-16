@@ -1,6 +1,7 @@
 package models;
 
 import models.board.*;
+import org.mindrot.jbcrypt.BCrypt; // Import BCrypt
 
 import java.util.*;
 
@@ -12,6 +13,7 @@ public class User {
 
     public User(String username, String plainPassword) {
         this.username = username;
+        // Hash the plain password using BCrypt
         this.hashedPassword = hashPassword(plainPassword);
         this.boardList = new ArrayList<>();
         this.id = -1;
@@ -19,7 +21,7 @@ public class User {
 
     public User(String username, String hashedPassword, ArrayList<Board> existingBoards) {
         this.username = username;
-        this.hashedPassword = hashedPassword;
+        this.hashedPassword = hashedPassword; // This hash should already be BCrypt-compatible from DB
         this.boardList = existingBoards != null ? existingBoards : new ArrayList<>();
         this.id = -1;
     }
@@ -32,20 +34,43 @@ public class User {
         this.id = id;
     }
 
-    public static String hashPassword(String password) {
-        return Integer.toHexString(password.hashCode());
+    /**
+     * Hashes a plain-text password using BCrypt.
+     * BCrypt automatically generates a salt and performs multiple rounds of hashing.
+     * The `log_rounds` parameter (e.g., 10) controls the computational cost.
+     * Higher values are more secure but slower.
+     * @param plainPassword The password in plain text.
+     * @return The BCrypt hashed password (includes salt and cost factor).
+     */
+    public static String hashPassword(String plainPassword) {
+        // Generate a random salt with 10 rounds of hashing (cost factor)
+        // 10 is generally suitable for desktop applications, 12-14 for web services.
+        // Adjust based on your performance needs vs. security requirements.
+        return BCrypt.hashpw(plainPassword, BCrypt.gensalt(10));
     }
+
+    /**
+     * Verifies a plain-text password against a BCrypt hashed password.
+     * This method correctly extracts the salt from the hashed password and applies it.
+     * @param plainPassword The plain-text password to check.
+     * @return true if the plain password matches the hashed password, false otherwise.
+     */
+    public boolean checkPassword(String plainPassword) {
+        return BCrypt.checkpw(plainPassword, this.hashedPassword);
+    }
+
 
     // Original method to create and add a new board
     public Board addBoard(BoardName boardName, String username) {
         for (Board existingBoard : boardList) {
             if (existingBoard.getName().equals(boardName) && existingBoard.getOwner().equals(username)) {
-                System.out.println("Board with name " + boardName + " already exists for this user.");
+                System.out.println("Board with name " + boardName.getDisplayName() + " already exists for this user. Not adding duplicate.");
                 return null;
             }
         }
         Board board = new Board(boardName, username);
         boardList.add(board);
+        System.out.println("DEBUG: User.addBoard(BoardName, username) added board '" + boardName.getDisplayName() + "' to in-memory list.");
         return board;
     }
 
@@ -54,11 +79,12 @@ public class User {
         // Check if a board with the same name and owner already exists to prevent duplicates
         for (Board existingBoard : boardList) {
             if (existingBoard.getName().equals(boardToAdd.getName()) && existingBoard.getOwner().equals(boardToAdd.getOwner())) {
-                System.out.println("Board with name " + boardToAdd.getName() + " already exists for this user.");
+                System.out.println("DEBUG: Board with name '" + boardToAdd.getName().getDisplayName() + "' already exists in user's in-memory list. Not adding duplicate.");
                 return;
             }
         }
         boardList.add(boardToAdd);
+        System.out.println("DEBUG: User.addBoard(Board) successfully added board '" + boardToAdd.getName().getDisplayName() + "' to in-memory list.");
     }
 
     public void fillBoard(String user) {
@@ -114,6 +140,7 @@ public class User {
                 return board;
             }
         }
+        System.out.println("DEBUG: getBoard(" + boardName.getDisplayName() + ") returned null for user '" + this.username + "'. Board not found in in-memory list.");
         return null;
     }
 
@@ -157,5 +184,6 @@ public class User {
      */
     public void clearBoards() {
         this.boardList.clear();
+        System.out.println("DEBUG: User's in-memory board list cleared.");
     }
 }
