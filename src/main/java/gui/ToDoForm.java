@@ -31,6 +31,9 @@ public class ToDoForm {
     private JButton deleteButton;
     private JButton openURL;
     private JTextField ownerfield; // This field will display the creator's username
+    private JButton shareToDo;
+    private JButton changeSharing;
+    private JComboBox membersToDo;
     public JFrame frameToDoForm, frame;
 
     private String currentBoard;
