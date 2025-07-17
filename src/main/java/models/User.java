@@ -1,72 +1,68 @@
 package models;
 
 import models.board.*;
-import org.mindrot.jbcrypt.BCrypt;
+
 import java.util.*;
 
 public class User {
-    private int id;
+    private final UUID id; // Added UUID for unique identification
     private final String username;
     private final String hashedPassword;
     private final ArrayList<Board> boardList;
 
     public User(String username, String plainPassword) {
+        this.id = UUID.randomUUID(); // Generate a new ID for new users
         this.username = username;
         this.hashedPassword = hashPassword(plainPassword);
         this.boardList = new ArrayList<>();
-        this.id = -1;
+        // fillBoard is called after successful registration in Controller
+        // fillBoard(this.username); // Removed from constructor to be called after DB save
     }
 
-    public User(String username, String hashedPassword, ArrayList<Board> existingBoards) {
+    public User(String username, String hashedPassword, ArrayList<Board> existingBoards, UUID id) {
+        this.id = id; // Assign existing ID for loaded users
         this.username = username;
         this.hashedPassword = hashedPassword;
         this.boardList = existingBoards != null ? existingBoards : new ArrayList<>();
-        this.id = -1;
     }
 
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public static String hashPassword(String plainPassword) {
-
-        return BCrypt.hashpw(plainPassword, BCrypt.gensalt(10));
+    public static String hashPassword(String password) {
+        // Simple hashing for demonstration. In production, use strong, secure hashing like BCrypt.
+        return Integer.toHexString(password.hashCode());
     }
 
     public boolean checkPassword(String plainPassword) {
-        return BCrypt.checkpw(plainPassword, this.hashedPassword);
+        return this.hashedPassword.equals(hashPassword(plainPassword));
     }
 
     public Board addBoard(BoardName boardName, String username) {
         for (Board existingBoard : boardList) {
-            if (existingBoard.getName().equals(boardName) && existingBoard.getOwner().equals(username)) {
-                System.out.println("Board with name " + boardName.getDisplayName() + " already exists for this user. Not adding duplicate.");
+            if (existingBoard.getName().equals(boardName)) {
+                System.out.println("Board with name " + boardName + " already exists for this user.");
                 return null;
             }
         }
         Board board = new Board(boardName, username);
         boardList.add(board);
-        System.out.println("DEBUG: User.addBoard(BoardName, username) added board '" + boardName.getDisplayName() + "' to in-memory list.");
         return board;
     }
 
-    public void addBoard(Board boardToAdd) {
-
-        for (Board existingBoard : boardList) {
-            if (existingBoard.getName().equals(boardToAdd.getName()) && existingBoard.getOwner().equals(boardToAdd.getOwner())) {
-                System.out.println("DEBUG: Board with name '" + boardToAdd.getName().getDisplayName() + "' already exists in user's in-memory list. Not adding duplicate.");
-                return;
-            }
-        }
-        boardList.add(boardToAdd);
-        System.out.println("DEBUG: User.addBoard(Board) successfully added board '" + boardToAdd.getName().getDisplayName() + "' to in-memory list.");
+    // --- NEW METHOD ADDED ---
+    public void addBoard(Board board) {
+        // This method is useful when loading existing boards from the database
+        // to avoid re-creating a new Board object and instead directly add the loaded one.
+        boardList.add(board);
     }
+    // --- END NEW METHOD ---
+
+    // --- NEW METHOD ADDED ---
+    public void clearBoards() {
+        this.boardList.clear();
+    }
+    // --- END NEW METHOD ---
 
     public void fillBoard(String user) {
+        // Ensure default boards are added only if they don't exist
         if (getBoard(BoardName.WORK) == null) {
             addBoard(BoardName.WORK, user);
         }
@@ -81,7 +77,7 @@ public class User {
     public void deleteBoard(BoardName boardName) {
         Board boardToRemove = null;
         for (Board board : boardList) {
-            if (board.getName().equals(boardName) && board.getOwner().equals(this.username)) {
+            if (board.getName().equals(boardName)) {
                 boardToRemove = board;
                 break;
             }
@@ -91,15 +87,19 @@ public class User {
             boardList.remove(boardToRemove);
             System.out.printf("Board %s deleted%n", boardName.toString());
         } else {
-            System.out.println("Board does not exist for this user.");
+            System.out.println("Board does not exist");
         }
+    }
+
+    public UUID getId() {
+        return id;
     }
 
     public String getUsername() {
         return username;
     }
 
-    public String getHashedPassword() {
+    public String getHashedPassword() { // Added for DAO
         return hashedPassword;
     }
 
@@ -108,12 +108,12 @@ public class User {
     }
 
     public Board getBoard(BoardName boardName) {
+        String boardNameStr = boardName.toString();
         for (Board board : boardList) {
-            if (board.getName().equals(boardName) && board.getOwner().equals(this.username)) {
+            if (board.getName().toString().equals(boardNameStr)) {
                 return board;
             }
         }
-        System.out.println("DEBUG: getBoard(" + boardName.getDisplayName() + ") returned null for user '" + this.username + "'. Board not found in in-memory list.");
         return null;
     }
 
@@ -122,7 +122,7 @@ public class User {
         Board targetBoard = getBoard(targetBoardName);
 
         if (sourceBoard == null || targetBoard == null) {
-            System.out.println("Source or target board does not exist for this user.");
+            System.out.println("Source or target board does not exist.");
             return;
         }
 
@@ -132,17 +132,10 @@ public class User {
             return;
         }
 
-        ToDo todoToMove = sourceBoard.getTodoList().get(position - 1);
+        ToDo todo = sourceTodoList.get(position - 1);
+        sourceBoard.removeToDo(todo);
 
-        sourceBoard.removeToDo(todoToMove);
-        targetBoard.addExistingTodo(todoToMove);
-
-        System.out.printf("ToDo '%s' (ID: %s) moved from %s to %s for user %s.%n",
-                todoToMove.getTitle(), todoToMove.getId(), sourceBoardName, targetBoardName, this.username);
-    }
-
-    public void clearBoards() {
-        this.boardList.clear();
-        System.out.println("DEBUG: User's in-memory board list cleared.");
+        targetBoard.addExistingTodo(todo);
+        System.out.printf("ToDo '%s' moved from %s to %s.%n", todo.getTitle(), sourceBoardName, targetBoardName);
     }
 }

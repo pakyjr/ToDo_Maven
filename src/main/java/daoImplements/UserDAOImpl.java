@@ -19,18 +19,14 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public boolean saveUser(User user) throws SQLException {
-        String sql = "INSERT INTO users (username, password_hash) VALUES (?, ?)";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setString(1, user.getUsername());
-            pstmt.setString(2, user.getHashedPassword());
+        String sql = "INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setString(1, user.getId().toString()); // OK - Already corrected
+            pstmt.setString(2, user.getUsername());
+            pstmt.setString(3, user.getHashedPassword());
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
-                try (ResultSet generatedKeys = pstmt.getGeneratedKeys()) {
-                    if (generatedKeys.next()) {
-                        user.setId(generatedKeys.getInt(1));
-                        System.out.println("DEBUG: User '" + user.getUsername() + "' saved to DB with ID: " + user.getId());
-                    }
-                }
+                System.out.println("DEBUG: User '" + user.getUsername() + "' saved to DB with ID: " + user.getId());
                 return true;
             }
             return false;
@@ -44,13 +40,13 @@ public class UserDAOImpl implements UserDAO {
     }
 
     @Override
-    public void saveBoard(Board board, int userId) throws SQLException {
+    public void saveBoard(Board board, UUID userId) throws SQLException {
         String sql = "INSERT INTO boards (name, description, color, user_id) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, board.getName().getDisplayName());
             pstmt.setString(2, board.getDescription());
             pstmt.setString(3, board.getColor());
-            pstmt.setInt(4, userId);
+            pstmt.setString(4, userId.toString()); // MODIFIED: userId (UUID) to String
             int affectedRows = pstmt.executeUpdate();
 
             if (affectedRows > 0) {
@@ -64,7 +60,6 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
-
     @Override
     public Optional<User> getUserByUsername(String username) throws SQLException {
         String sql = "SELECT id, username, password_hash FROM users WHERE username = ?";
@@ -72,8 +67,12 @@ public class UserDAOImpl implements UserDAO {
             pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
-                User user = new User(rs.getString("username"), rs.getString("password_hash"));
-                user.setId(rs.getInt("id"));
+                User user = new User(
+                        rs.getString("username"),
+                        rs.getString("password_hash"),
+                        null,
+                        UUID.fromString(rs.getString("id"))
+                );
                 return Optional.of(user);
             }
         }
@@ -90,7 +89,7 @@ public class UserDAOImpl implements UserDAO {
 
         String boardSql = "SELECT id, name, description, color FROM boards WHERE user_id = ?";
         try (PreparedStatement pstmtBoard = connection.prepareStatement(boardSql)) {
-            pstmtBoard.setInt(1, user.getId());
+            pstmtBoard.setString(1, user.getId().toString()); // OK - Already corrected
             ResultSet rsBoards = pstmtBoard.executeQuery();
             while (rsBoards.next()) {
                 String boardDisplayName = rsBoards.getString("name");
@@ -112,13 +111,11 @@ public class UserDAOImpl implements UserDAO {
                 user.addBoard(board);
                 System.out.println("DEBUG: UserDAOImpl loaded board '" + boardDisplayName + "' (ID: " + board.getId() + ") for user '" + user.getUsername() + "'.");
 
-
                 String todoSql = "SELECT id, title, description, status, due_date, created_date, position, owner_username FROM todos WHERE board_id = ?";
                 try (PreparedStatement pstmtTodo = connection.prepareStatement(todoSql)) {
                     pstmtTodo.setInt(1, board.getId());
                     ResultSet rsTodos = pstmtTodo.executeQuery();
                     while (rsTodos.next()) {
-                        // When retrieving from DB, convert UUID string back to UUID object
                         ToDo toDo = new ToDo(
                                 UUID.fromString(rsTodos.getString("id")),
                                 rsTodos.getString("title"),
@@ -132,8 +129,7 @@ public class UserDAOImpl implements UserDAO {
 
                         String activitySql = "SELECT activity_title, completed FROM activities WHERE todo_id = ?";
                         try (PreparedStatement pstmtActivity = connection.prepareStatement(activitySql)) {
-
-                            pstmtActivity.setObject(1, toDo.getId());
+                            pstmtActivity.setString(1, toDo.getId().toString()); // MODIFIED: toDo.getId() (UUID) to String
                             ResultSet rsActivities = pstmtActivity.executeQuery();
                             Map<String, Boolean> activitiesMap = new HashMap<>();
                             while (rsActivities.next()) {
@@ -143,7 +139,7 @@ public class UserDAOImpl implements UserDAO {
                         }
 
                         if (toDo.getOwner().equals(user.getUsername())) {
-                            List<String> sharedUsernames = getSharedUsernamesForToDo(toDo.getId().toString()); // getSharedUsernamesForToDo takes String
+                            List<String> sharedUsernames = getSharedUsernamesForToDo(toDo.getId().toString());
                             for (String sharedUsername : sharedUsernames) {
                                 Optional<User> sharedUser = getUserByUsername(sharedUsername);
                                 sharedUser.ifPresent(toDo::addSharedUser);
@@ -175,7 +171,7 @@ public class UserDAOImpl implements UserDAO {
     public void saveToDo(ToDo toDo, int boardId) throws SQLException {
         String sql = "INSERT INTO todos (id, title, description, status, due_date, created_date, position, owner_username, board_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, toDo.getId());
+            pstmt.setString(1, toDo.getId().toString()); // MODIFIED: toDo.getId() (UUID) to String
             pstmt.setString(2, toDo.getTitle());
             pstmt.setString(3, toDo.getDescription());
             pstmt.setString(4, toDo.getStatus());
@@ -200,7 +196,7 @@ public class UserDAOImpl implements UserDAO {
             pstmt.setDate(4, toDo.getDueDate() != null ? Date.valueOf(toDo.getDueDate()) : null);
             pstmt.setInt(5, toDo.getPosition());
             pstmt.setString(6, toDo.getOwner());
-            pstmt.setObject(7, toDo.getId());
+            pstmt.setString(7, toDo.getId().toString()); // MODIFIED: toDo.getId() (UUID) to String
             pstmt.setInt(8, boardId);
             pstmt.executeUpdate();
 
@@ -214,7 +210,7 @@ public class UserDAOImpl implements UserDAO {
         String sql = "UPDATE todos SET board_id = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, newBoardId);
-            pstmt.setObject(2, UUID.fromString(toDoId));
+            pstmt.setString(2, UUID.fromString(toDoId).toString()); // MODIFIED: UUID.fromString(toDoId) (UUID) to String
             pstmt.executeUpdate();
         }
     }
@@ -223,7 +219,7 @@ public class UserDAOImpl implements UserDAO {
         String sql = "INSERT INTO activities (todo_id, activity_title, completed) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             for (Map.Entry<String, Boolean> entry : activities.entrySet()) {
-                pstmt.setObject(1, UUID.fromString(toDoId));
+                pstmt.setString(1, UUID.fromString(toDoId).toString()); // MODIFIED: UUID.fromString(toDoId) (UUID) to String
                 pstmt.setString(2, entry.getKey());
                 pstmt.setBoolean(3, entry.getValue());
                 pstmt.addBatch();
@@ -235,7 +231,7 @@ public class UserDAOImpl implements UserDAO {
     private void clearActivities(String toDoId) throws SQLException {
         String sql = "DELETE FROM activities WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId));
+            pstmt.setString(1, UUID.fromString(toDoId).toString()); // MODIFIED: UUID.fromString(toDoId) (UUID) to String
             pstmt.executeUpdate();
         }
     }
@@ -243,11 +239,10 @@ public class UserDAOImpl implements UserDAO {
     @Override
     public void deleteToDo(String toDoId, String username) throws SQLException {
         clearActivities(toDoId);
-        removeAllToDoSharing(toDoId);
 
         String sql = "DELETE FROM todos WHERE id = ? AND owner_username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId));
+            pstmt.setString(1, UUID.fromString(toDoId).toString()); // MODIFIED: UUID.fromString(toDoId) (UUID) to String
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
@@ -257,7 +252,7 @@ public class UserDAOImpl implements UserDAO {
     public void shareToDo(String toDoId, String sharedWithUsername) throws SQLException {
         String sql = "INSERT INTO shared_todos (todo_id, shared_with_username) VALUES (?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId));
+            pstmt.setString(1, UUID.fromString(toDoId).toString()); // MODIFIED: UUID.fromString(toDoId) (UUID) to String
             pstmt.setString(2, sharedWithUsername);
             pstmt.executeUpdate();
         }
@@ -267,7 +262,7 @@ public class UserDAOImpl implements UserDAO {
     public void removeToDoSharing(String toDoId, String sharedWithUsername) throws SQLException {
         String sql = "DELETE FROM shared_todos WHERE todo_id = ? AND shared_with_username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId));
+            pstmt.setString(1, UUID.fromString(toDoId).toString()); // MODIFIED: UUID.fromString(toDoId) (UUID) to String
             pstmt.setString(2, sharedWithUsername);
             pstmt.executeUpdate();
         }
@@ -277,7 +272,7 @@ public class UserDAOImpl implements UserDAO {
     public void removeAllToDoSharing(String toDoId) throws SQLException {
         String sql = "DELETE FROM shared_todos WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId));
+            pstmt.setString(1, UUID.fromString(toDoId).toString()); // MODIFIED: UUID.fromString(toDoId) (UUID) to String
             pstmt.executeUpdate();
         }
     }
@@ -285,12 +280,16 @@ public class UserDAOImpl implements UserDAO {
     @Override
     public Set<User> getAllUsers() throws SQLException {
         Set<User> users = new HashSet<>();
-        String sql = "SELECT username FROM users";
+        String sql = "SELECT id, username, password_hash FROM users";
         try (Statement stmt = connection.createStatement();
              ResultSet rs = stmt.executeQuery(sql)) {
             while (rs.next()) {
-                Optional<User> userOptional = getUserByUsername(rs.getString("username"));
-                userOptional.ifPresent(users::add);
+                users.add(new User(
+                        rs.getString("username"),
+                        rs.getString("password_hash"),
+                        null,
+                        UUID.fromString(rs.getString("id"))
+                ));
             }
         }
         return users;
@@ -301,7 +300,7 @@ public class UserDAOImpl implements UserDAO {
         List<String> sharedUsernames = new ArrayList<>();
         String sql = "SELECT shared_with_username FROM shared_todos WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId));
+            pstmt.setString(1, UUID.fromString(toDoId).toString()); // MODIFIED: UUID.fromString(toDoId) (UUID) to String
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 sharedUsernames.add(rs.getString("shared_with_username"));

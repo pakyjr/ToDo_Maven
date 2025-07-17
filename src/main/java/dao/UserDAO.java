@@ -8,6 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID; // Import UUID
 
 public interface UserDAO {
     boolean saveUser(User user) throws SQLException;
@@ -23,5 +24,5 @@ public interface UserDAO {
     void removeAllToDoSharing(String toDoId) throws SQLException;
     Set<User> getAllUsers() throws SQLException;
     List<String> getSharedUsernamesForToDo(String toDoId) throws SQLException;
-    void saveBoard(Board board, int userId) throws SQLException;
+    void saveBoard(Board board, UUID userId) throws SQLException; // Changed userId from int to UUID
 }
