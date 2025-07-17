@@ -309,6 +309,7 @@ public class ToDoForm {
 
                     String oldTitle = currentToDo.getTitle();
                     controller.updateToDo(currentBoard, oldTitle, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus, currentToDo.getOwner());
+
                     currentToDo.setTitle(title);
                     currentToDo.setDescription(description);
                     currentToDo.setDueDate(dueDate);
