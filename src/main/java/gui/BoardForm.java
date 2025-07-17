@@ -4,10 +4,10 @@ import controller.Controller;
 import models.ToDo;
 import models.board.BoardName;
 import javax.swing.*;
-        import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
-        import java.awt.event.ActionEvent;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -17,7 +17,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
-import java.util.List; // Import List
+import java.util.List;
 
 public class BoardForm {
     private JPanel board;
@@ -289,8 +289,6 @@ public class BoardForm {
                     String elementToMove = listModel.remove(selectedIndex);
                     listModel.add(selectedIndex - 1, elementToMove);
 
-                    // Then update the underlying data model in the Controller/User
-                    // Changed from ArrayList<ToDo> to List<ToDo>
                     List<ToDo> todos = controller.user.getBoard(currentBoardEnum).getTodoList();
                     ToDo todoToMove = null;
                     int actualIndex = -1;
@@ -416,8 +414,6 @@ public class BoardForm {
 
                     if (destinationBoardString != null) {
 
-                        // Assuming controller.moveToDo exists and returns a boolean
-                        // You'll need to implement moveToDo in your Controller if it doesn't exist
                         boolean moved = controller.moveToDo(selectedToDoTitle, currentBoardDisplayName, destinationBoardString);
 
                         if (moved) {
@@ -530,7 +526,6 @@ public class BoardForm {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
             LocalDate searchDate = LocalDate.parse(dateText, formatter);
 
-            // Changed from ArrayList<ToDo> to List<ToDo>
             List<ToDo> todos = controller.user.getBoard(boardNameEnum).getTodoList();
 
             listModel.clear();
@@ -563,7 +558,6 @@ public class BoardForm {
         BoardName boardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
         if (boardEnum == null) return;
 
-        // Changed from ArrayList<ToDo> to List<ToDo>
         List<ToDo> todos = controller.user.getBoard(boardEnum).getTodoList();
 
         listModel.clear();

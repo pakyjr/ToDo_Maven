@@ -23,7 +23,7 @@ public enum BoardName {
 
     public static BoardName fromDisplayName(String text) {
         for (BoardName b : BoardName.values()) {
-            if (b.displayName.equalsIgnoreCase(text)) { // Case-insensitive comparison
+            if (b.displayName.equalsIgnoreCase(text)) {
                 return b;
             }
         }

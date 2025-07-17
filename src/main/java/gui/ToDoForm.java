@@ -5,9 +5,9 @@ import models.ToDo;
 import models.User;
 import models.board.BoardName;
 import javax.swing.*;
-        import java.awt.*;
-        import java.awt.event.*;
-        import java.net.URI;
+import java.awt.*;
+import java.awt.event.*;
+import java.net.URI;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -57,6 +57,7 @@ public class ToDoForm {
 
         frameToDoForm = new JFrame(toDoToEdit == null ? "ToDo Creation" : "Edit ToDo");
         frameToDoForm.setContentPane(todoPanel);
+        todoPanel.setPreferredSize(new Dimension(800,600));
         frameToDoForm.pack();
 
         frameToDoForm.addWindowListener(new WindowAdapter() {
@@ -104,9 +105,9 @@ public class ToDoForm {
         ownerfield.setEditable(false);
         statusField.setEditable(false);
 
-        // --- Initialization Logic ---
+
         if (currentToDo != null) {
-            // Editing an existing ToDo
+
             nameField.setText(currentToDo.getTitle());
             descriptionField.setText(currentToDo.getDescription());
 
@@ -117,7 +118,6 @@ public class ToDoForm {
 
             ownerfield.setText(currentToDo.getOwner());
 
-            // Disable editing for all fields if the current user is NOT the owner
             if (!controller.isCurrentUserToDoCreator(currentToDo)) {
                 nameField.setEditable(false);
                 descriptionField.setEditable(false);
@@ -131,7 +131,6 @@ public class ToDoForm {
                 shareToDo.setEnabled(false);
                 changeSharing.setEnabled(false);
             }
-
 
             String storedImage = currentToDo.getImage();
             if (storedImage != null && !storedImage.isEmpty()) {
@@ -267,7 +266,7 @@ public class ToDoForm {
                 String selectedImageName = imageNames[currentImageIndex];
 
                 if (currentToDo == null) {
-                    // Creating a new ToDo
+
                     String newToDoId = controller.addToDo(currentBoard, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus, owner);
                     if (newToDoId != null) {
                         currentToDo = controller.getToDoByTitle(title, currentBoard); // Fetch the newly created ToDo object
@@ -280,7 +279,7 @@ public class ToDoForm {
                         JOptionPane.showMessageDialog(frameToDoForm, "Failed to add ToDo.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
                 } else {
-                    // Updating an existing ToDo
+
                     if (!controller.isCurrentUserToDoCreator(currentToDo)) {
                         JOptionPane.showMessageDialog(frameToDoForm, "You can only edit ToDos you created.", "Permission Denied", JOptionPane.WARNING_MESSAGE);
                         return;
@@ -441,7 +440,6 @@ public class ToDoForm {
                         return;
                     }
 
-                    // CORRECTED LINE: Added current user's username as the third argument
                     boolean success = controller.shareToDoWithUsers(currentToDo, selectedUsernames, controller.user.getUsername());
                     if (success) {
                         JOptionPane.showMessageDialog(frameToDoForm, "ToDo shared successfully with selected users.");

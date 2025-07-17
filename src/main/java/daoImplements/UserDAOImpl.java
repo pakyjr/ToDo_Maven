@@ -5,11 +5,8 @@ import models.ToDo;
 import models.User;
 import models.board.BoardName;
 import db.DatabaseConnection;
-
 import java.sql.*;
 import java.sql.Date;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class UserDAOImpl implements UserDAO {
@@ -135,8 +132,8 @@ public class UserDAOImpl implements UserDAO {
 
                         String activitySql = "SELECT activity_title, completed FROM activities WHERE todo_id = ?";
                         try (PreparedStatement pstmtActivity = connection.prepareStatement(activitySql)) {
-                            // When querying activities by todo_id, ensure UUID conversion
-                            pstmtActivity.setObject(1, toDo.getId()); // Pass UUID object
+
+                            pstmtActivity.setObject(1, toDo.getId());
                             ResultSet rsActivities = pstmtActivity.executeQuery();
                             Map<String, Boolean> activitiesMap = new HashMap<>();
                             while (rsActivities.next()) {
@@ -178,7 +175,7 @@ public class UserDAOImpl implements UserDAO {
     public void saveToDo(ToDo toDo, int boardId) throws SQLException {
         String sql = "INSERT INTO todos (id, title, description, status, due_date, created_date, position, owner_username, board_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, toDo.getId()); // Correct: Pass UUID object for UUID column
+            pstmt.setObject(1, toDo.getId());
             pstmt.setString(2, toDo.getTitle());
             pstmt.setString(3, toDo.getDescription());
             pstmt.setString(4, toDo.getStatus());
@@ -203,7 +200,7 @@ public class UserDAOImpl implements UserDAO {
             pstmt.setDate(4, toDo.getDueDate() != null ? Date.valueOf(toDo.getDueDate()) : null);
             pstmt.setInt(5, toDo.getPosition());
             pstmt.setString(6, toDo.getOwner());
-            pstmt.setObject(7, toDo.getId()); // Correct: Pass UUID object for UUID column in WHERE clause
+            pstmt.setObject(7, toDo.getId());
             pstmt.setInt(8, boardId);
             pstmt.executeUpdate();
 
@@ -217,7 +214,7 @@ public class UserDAOImpl implements UserDAO {
         String sql = "UPDATE todos SET board_id = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, newBoardId);
-            pstmt.setObject(2, UUID.fromString(toDoId)); // Correct: Convert string to UUID object
+            pstmt.setObject(2, UUID.fromString(toDoId));
             pstmt.executeUpdate();
         }
     }
@@ -226,7 +223,7 @@ public class UserDAOImpl implements UserDAO {
         String sql = "INSERT INTO activities (todo_id, activity_title, completed) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             for (Map.Entry<String, Boolean> entry : activities.entrySet()) {
-                pstmt.setObject(1, UUID.fromString(toDoId)); // Correct: Convert string to UUID object
+                pstmt.setObject(1, UUID.fromString(toDoId));
                 pstmt.setString(2, entry.getKey());
                 pstmt.setBoolean(3, entry.getValue());
                 pstmt.addBatch();
@@ -238,19 +235,19 @@ public class UserDAOImpl implements UserDAO {
     private void clearActivities(String toDoId) throws SQLException {
         String sql = "DELETE FROM activities WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId)); // Correct: Convert string to UUID object
+            pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.executeUpdate();
         }
     }
 
     @Override
     public void deleteToDo(String toDoId, String username) throws SQLException {
-        clearActivities(toDoId); // Call to clearActivities already handles UUID conversion
-        removeAllToDoSharing(toDoId); // Call to removeAllToDoSharing already handles UUID conversion
+        clearActivities(toDoId);
+        removeAllToDoSharing(toDoId);
 
         String sql = "DELETE FROM todos WHERE id = ? AND owner_username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId)); // Correct: Convert string to UUID object
+            pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
@@ -260,7 +257,7 @@ public class UserDAOImpl implements UserDAO {
     public void shareToDo(String toDoId, String sharedWithUsername) throws SQLException {
         String sql = "INSERT INTO shared_todos (todo_id, shared_with_username) VALUES (?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId)); // Correct: Convert string to UUID object
+            pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.setString(2, sharedWithUsername);
             pstmt.executeUpdate();
         }
@@ -270,7 +267,7 @@ public class UserDAOImpl implements UserDAO {
     public void removeToDoSharing(String toDoId, String sharedWithUsername) throws SQLException {
         String sql = "DELETE FROM shared_todos WHERE todo_id = ? AND shared_with_username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId)); // Correct: Convert string to UUID object
+            pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.setString(2, sharedWithUsername);
             pstmt.executeUpdate();
         }
@@ -280,7 +277,7 @@ public class UserDAOImpl implements UserDAO {
     public void removeAllToDoSharing(String toDoId) throws SQLException {
         String sql = "DELETE FROM shared_todos WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId)); // Correct: Convert string to UUID object
+            pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.executeUpdate();
         }
     }
@@ -304,7 +301,7 @@ public class UserDAOImpl implements UserDAO {
         List<String> sharedUsernames = new ArrayList<>();
         String sql = "SELECT shared_with_username FROM shared_todos WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setObject(1, UUID.fromString(toDoId)); // Correct: Convert string to UUID object
+            pstmt.setObject(1, UUID.fromString(toDoId));
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
                 sharedUsernames.add(rs.getString("shared_with_username"));

@@ -1,11 +1,10 @@
 package gui;
 
 import controller.Controller;
-
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.sql.SQLException; // Import SQLException
+
 
 public class RegisterForm {
     private JPanel register;

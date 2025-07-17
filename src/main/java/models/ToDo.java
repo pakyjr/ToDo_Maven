@@ -22,7 +22,6 @@ public class ToDo {
     private Map<String, Boolean> activityList;
     private Set<User> sharedUsers;
 
-    // Constructor for new ToDos
     public ToDo(String title, String owner) {
         this.id = UUID.randomUUID();
         this.title = title;
@@ -34,7 +33,6 @@ public class ToDo {
         this.position = 0;
     }
 
-    // Constructor for loading from DB
     public ToDo(UUID id, String title, String owner) {
         this.id = id;
         this.title = title;
@@ -44,14 +42,8 @@ public class ToDo {
         this.sharedUsers = new HashSet<>();
     }
 
-    // Getters and Setters
-
     public UUID getId() {
         return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
     }
 
     public String getTitle() {
@@ -142,52 +134,28 @@ public class ToDo {
         this.activityList = activityList;
     }
 
-    /**
-     * Adds an activity to the ToDo's activity list.
-     * @param activityTitle The title of the activity.
-     */
     public void addActivity(String activityTitle) {
         this.activityList.put(activityTitle, false);
     }
 
-    /**
-     * Deletes an activity from the ToDo's activity list.
-     * @param activityTitle The title of the activity to delete.
-     */
     public void deleteActivity(String activityTitle) {
         this.activityList.remove(activityTitle);
     }
 
-    /**
-     * Retrieves the set of users this ToDo is shared with.
-     * @return A Set of User objects.
-     */
     public Set<User> getUsers() {
         return sharedUsers;
     }
 
-    /**
-     * Adds a user to the set of users this ToDo is shared with.
-     * @param user The User object to add.
-     */
     public void addSharedUser(User user) {
         if (user != null) {
             this.sharedUsers.add(user);
         }
     }
 
-    /**
-     * Removes a user from the set of users this ToDo is shared with by username.
-     * @param username The username of the user to remove.
-     */
     public void removeSharedUser(String username) {
         this.sharedUsers.removeIf(u -> u.getUsername().equals(username));
     }
 
-    /**
-     * Clears all users this ToDo is shared with.
-     * This is typically called when the original ToDo is deleted by its owner.
-     */
     public void clearUsers() {
         this.sharedUsers.clear();
     }

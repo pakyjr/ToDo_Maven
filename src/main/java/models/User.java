@@ -1,8 +1,7 @@
 package models;
 
 import models.board.*;
-import org.mindrot.jbcrypt.BCrypt; // Import BCrypt
-
+import org.mindrot.jbcrypt.BCrypt;
 import java.util.*;
 
 public class User {
@@ -13,7 +12,6 @@ public class User {
 
     public User(String username, String plainPassword) {
         this.username = username;
-        // Hash the plain password using BCrypt
         this.hashedPassword = hashPassword(plainPassword);
         this.boardList = new ArrayList<>();
         this.id = -1;
@@ -21,7 +19,7 @@ public class User {
 
     public User(String username, String hashedPassword, ArrayList<Board> existingBoards) {
         this.username = username;
-        this.hashedPassword = hashedPassword; // This hash should already be BCrypt-compatible from DB
+        this.hashedPassword = hashedPassword;
         this.boardList = existingBoards != null ? existingBoards : new ArrayList<>();
         this.id = -1;
     }
@@ -34,33 +32,15 @@ public class User {
         this.id = id;
     }
 
-    /**
-     * Hashes a plain-text password using BCrypt.
-     * BCrypt automatically generates a salt and performs multiple rounds of hashing.
-     * The `log_rounds` parameter (e.g., 10) controls the computational cost.
-     * Higher values are more secure but slower.
-     * @param plainPassword The password in plain text.
-     * @return The BCrypt hashed password (includes salt and cost factor).
-     */
     public static String hashPassword(String plainPassword) {
-        // Generate a random salt with 10 rounds of hashing (cost factor)
-        // 10 is generally suitable for desktop applications, 12-14 for web services.
-        // Adjust based on your performance needs vs. security requirements.
+
         return BCrypt.hashpw(plainPassword, BCrypt.gensalt(10));
     }
 
-    /**
-     * Verifies a plain-text password against a BCrypt hashed password.
-     * This method correctly extracts the salt from the hashed password and applies it.
-     * @param plainPassword The plain-text password to check.
-     * @return true if the plain password matches the hashed password, false otherwise.
-     */
     public boolean checkPassword(String plainPassword) {
         return BCrypt.checkpw(plainPassword, this.hashedPassword);
     }
 
-
-    // Original method to create and add a new board
     public Board addBoard(BoardName boardName, String username) {
         for (Board existingBoard : boardList) {
             if (existingBoard.getName().equals(boardName) && existingBoard.getOwner().equals(username)) {
@@ -74,9 +54,8 @@ public class User {
         return board;
     }
 
-    // Added: Overloaded method to add an existing Board object (e.g., loaded from DAO)
     public void addBoard(Board boardToAdd) {
-        // Check if a board with the same name and owner already exists to prevent duplicates
+
         for (Board existingBoard : boardList) {
             if (existingBoard.getName().equals(boardToAdd.getName()) && existingBoard.getOwner().equals(boardToAdd.getOwner())) {
                 System.out.println("DEBUG: Board with name '" + boardToAdd.getName().getDisplayName() + "' already exists in user's in-memory list. Not adding duplicate.");
@@ -128,12 +107,6 @@ public class User {
         return new ArrayList<>(this.boardList);
     }
 
-    /**
-     * Retrieves a specific board for this user by its name.
-     * Assumes a user only has one board of a given BoardName.
-     * @param boardName The name of the board to retrieve.
-     * @return The Board object if found, otherwise null.
-     */
     public Board getBoard(BoardName boardName) {
         for (Board board : boardList) {
             if (board.getName().equals(boardName) && board.getOwner().equals(this.username)) {
@@ -144,15 +117,6 @@ public class User {
         return null;
     }
 
-    /**
-     * Moves a ToDo from a source board to a target board for the current user.
-     * This method directly operates on the in-memory ToDo objects.
-     * Database updates will be handled by the Controller after this operation.
-     *
-     * @param sourceBoardName The name of the board from which to move the ToDo.
-     * @param targetBoardName The name of the board to which to move the ToDo.
-     * @param position The 1-based position of the ToDo on the source board.
-     */
     public void moveToDoToAnotherBoard(BoardName sourceBoardName, BoardName targetBoardName, int position) {
         Board sourceBoard = getBoard(sourceBoardName);
         Board targetBoard = getBoard(targetBoardName);
@@ -177,11 +141,6 @@ public class User {
                 todoToMove.getTitle(), todoToMove.getId(), sourceBoardName, targetBoardName, this.username);
     }
 
-    /**
-     * Clears all boards currently associated with this user.
-     * This is typically used before loading boards from persistent storage
-     * to prevent in-memory duplicates.
-     */
     public void clearBoards() {
         this.boardList.clear();
         System.out.println("DEBUG: User's in-memory board list cleared.");

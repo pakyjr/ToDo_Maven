@@ -1,9 +1,7 @@
 package models.board;
 
 import models.ToDo;
-import models.User;
 import java.util.*;
-
 
 public class Board {
     private int id;
@@ -69,7 +67,6 @@ public class Board {
             return null;
         }
 
-        // CORRECTED LINE: Pass both title and owner to the ToDo constructor
         ToDo todo = new ToDo(title, owner);
         // todo.setOwner(owner); // This line is no longer needed after fixing the constructor call
         todoList.add(todo);
@@ -77,12 +74,6 @@ public class Board {
         return todo;
     }
 
-    /**
-     * Adds an already existing ToDo object to the board.
-     * This is typically used when loading ToDos from the database.
-     * It ensures the ToDo is not duplicated and assigns a position.
-     * @param existingTodo The ToDo object to add.
-     */
     public void addExistingTodo(ToDo existingTodo) {
         if (todoList.stream().anyMatch(todo -> todo.getId().equals(existingTodo.getId()))) {
             System.err.println("Error: ToDo with ID '" + existingTodo.getId() + "' already exists on board " + this.name);
@@ -91,12 +82,6 @@ public class Board {
         todoList.add(existingTodo);
     }
 
-    /**
-     * Removes a ToDo from the board and re-indexes the remaining ToDos.
-     * If the ToDo was shared by this board's owner, it also attempts to remove it from other boards it was shared with.
-     *
-     * @param toDoToRemove The ToDo object to remove.
-     */
     public void removeToDo(ToDo toDoToRemove) {
         boolean removed = todoList.remove(toDoToRemove);
         if (removed) {
