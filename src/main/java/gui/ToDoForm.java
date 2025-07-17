@@ -3,7 +3,6 @@ package gui;
 import controller.Controller;
 import models.ToDo;
 import models.User;
-import models.board.BoardName;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -36,7 +35,7 @@ public class ToDoForm {
     private JTextField ownerfield;
     private JButton shareToDo;
     private JButton changeSharing;
-    private JComboBox<String> membersToDo; // Keep this
+    private JComboBox<String> membersToDo;
     public JFrame frameToDoForm, frame;
 
     private String currentBoard;
@@ -80,6 +79,15 @@ public class ToDoForm {
         this.colorChange.addItem("Violet");
 
         colorChange.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                label.setHorizontalAlignment(SwingConstants.CENTER);
+                return label;
+            }
+        });
+
+        membersToDo.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -459,7 +467,7 @@ public class ToDoForm {
                     boolean success = controller.shareToDoWithUsers(currentToDo, selectedUsernames, controller.user.getUsername());
                     if (success) {
                         JOptionPane.showMessageDialog(frameToDoForm, "ToDo shared successfully with selected users.");
-                        populateMembersComboBox(); // Update the combobox after sharing
+                        populateMembersComboBox();
                     } else {
                         JOptionPane.showMessageDialog(frameToDoForm, "Failed to share ToDo.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -518,7 +526,7 @@ public class ToDoForm {
         membersToDo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // This listener is left empty because the combobox is only for informational purposes
+
             }
         });
     }
@@ -528,28 +536,34 @@ public class ToDoForm {
 
         if (currentToDo != null) {
 
-            Set<String> allUsersForThisToDo = new HashSet<>();
+            Set<String> addedUsernames = new HashSet<>();
 
-            allUsersForThisToDo.add(currentToDo.getOwner());
-            membersToDo.addItem(currentToDo.getOwner() + " (Owner)");
+            String ownerUsername = currentToDo.getOwner();
+            if (ownerUsername != null && !ownerUsername.isEmpty()) {
+                membersToDo.addItem(ownerUsername + " (Owner)");
+                addedUsernames.add(ownerUsername);
+            }
 
             if (currentToDo.getUsers() != null) {
                 for (User user : currentToDo.getUsers()) {
 
-                    if (!user.getUsername().equals(currentToDo.getOwner())) {
-                        allUsersForThisToDo.add(user.getUsername());
+                    if (!user.getUsername().equals(ownerUsername) && !addedUsernames.contains(user.getUsername())) {
                         membersToDo.addItem(user.getUsername());
+                        addedUsernames.add(user.getUsername());
                     }
                 }
             }
 
-            if (allUsersForThisToDo.size() == 1 && allUsersForThisToDo.contains(currentToDo.getOwner())) {
+            if (membersToDo.getItemCount() == 1 && membersToDo.getItemAt(0).equals(ownerUsername + " (Owner)")) {
                 membersToDo.addItem("Not shared with other users");
-            }
-        } else {
+            } else if (membersToDo.getItemCount() == 0) {
 
+                membersToDo.addItem("No members available");
+            }
+
+        } else {
             membersToDo.addItem("Not applicable (ToDo not saved)");
-            membersToDo.setEnabled(false); // Keep it disabled
+            membersToDo.setEnabled(false);
         }
     }
 
@@ -646,11 +660,4 @@ public class ToDoForm {
         }
     }
 
-    private BoardName getBoardNameFromString(String boardName) {
-        String formattedBoardName = boardName.toUpperCase();
-        if (formattedBoardName.equals("FREE TIME")) {
-            formattedBoardName = "FREE_TIME";
-        }
-        return BoardName.valueOf(formattedBoardName);
-    }
 }
