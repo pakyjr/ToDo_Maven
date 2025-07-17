@@ -1,89 +1,27 @@
 package models;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class ToDo {
     private UUID id;
+    private int position;
+    private LocalDate dueDate;
+    private String url;
+    private String image;
     private String title;
     private String description;
-    private String status;
-    private LocalDate dueDate;
-    private LocalDate createdDate;
-    private int position;
     private String owner;
-    private String url;
-    private String color;
-    private String image;
+    private Set<User> users;
+    private String color = "white";
+    private boolean done = false;
     private Map<String, Boolean> activityList;
-    private Set<User> sharedUsers;
 
-    public ToDo(String title, String owner) {
+    public ToDo(String title) {
         this.id = UUID.randomUUID();
         this.title = title;
-        this.owner = owner;
-        this.createdDate = LocalDate.now();
+        this.users = new HashSet<>();
         this.activityList = new HashMap<>();
-        this.sharedUsers = new HashSet<>();
-        this.status = "Not Started";
-        this.position = 0;
-    }
-
-    public ToDo(UUID id, String title, String owner) {
-        this.id = id;
-        this.title = title;
-        this.owner = owner;
-        this.createdDate = LocalDate.now();
-        this.activityList = new HashMap<>();
-        this.sharedUsers = new HashSet<>();
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public LocalDate getCreatedDate() {
-        return createdDate;
-    }
-
-    public void setCreatedDate(LocalDate createdDate) {
-        this.createdDate = createdDate;
     }
 
     public int getPosition() {
@@ -92,6 +30,14 @@ public class ToDo {
 
     public void setPosition(int position) {
         this.position = position;
+    }
+
+    public LocalDate getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(LocalDate dueDate) {
+        this.dueDate = dueDate;
     }
 
     public String getOwner() {
@@ -110,14 +56,6 @@ public class ToDo {
         this.url = url;
     }
 
-    public String getColor() {
-        return color;
-    }
-
-    public void setColor(String color) {
-        this.color = color;
-    }
-
     public String getImage() {
         return image;
     }
@@ -126,50 +64,90 @@ public class ToDo {
         this.image = image;
     }
 
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public void addActivity(String title) {
+        this.activityList.put(title, false);
+        System.out.printf("Added activity: %s%n", title);
+    }
+
+    public void deleteActivity(String title) {
+        this.activityList.remove(title);
+        System.out.printf("Deleted activity: %s%n", title);
+    }
+
+    public void setActivityStatus(String title, boolean completed) {
+        if (!checkValidActivity(title)) {
+            return;
+        }
+
+        this.activityList.put(title, completed);
+        updateDoneStatus();
+    }
+
+    public void setActivityTrue(String title) {
+        setActivityStatus(title, true);
+    }
+
+    public void setActivityFalse(String title) {
+        setActivityStatus(title, false);
+    }
+
+    private boolean checkValidActivity(String title) {
+        if (!activityList.containsKey(title)) {
+            System.out.println("Invalid activity: " + title);
+            return false;
+        }
+        return true;
+    }
+
+    private void updateDoneStatus() {
+        this.done = !activityList.isEmpty() && activityList.values().stream().allMatch(Boolean::booleanValue);
+    }
+
+    public void toggle() {
+        this.done = !done;
+    }
+
     public Map<String, Boolean> getActivityList() {
-        return activityList;
-    }
-
-    public void setActivityList(Map<String, Boolean> activityList) {
-        this.activityList = activityList;
-    }
-
-    public void addActivity(String activityTitle) {
-        this.activityList.put(activityTitle, false);
-    }
-
-    public void deleteActivity(String activityTitle) {
-        this.activityList.remove(activityTitle);
+        return new HashMap<>(activityList);
     }
 
     public Set<User> getUsers() {
-        return sharedUsers;
+        return new HashSet<>(users);
     }
 
-    public void addSharedUser(User user) {
-        if (user != null) {
-            this.sharedUsers.add(user);
-        }
+    public void addUser(User user) {
+        users.add(user);
     }
 
-    public void removeSharedUser(String username) {
-        this.sharedUsers.removeIf(u -> u.getUsername().equals(username));
-    }
-
-    public void clearUsers() {
-        this.sharedUsers.clear();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        ToDo toDo = (ToDo) o;
-        return id.equals(toDo.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return id.hashCode();
+    public void removeUser(User user) {
+        users.remove(user);
     }
 }
