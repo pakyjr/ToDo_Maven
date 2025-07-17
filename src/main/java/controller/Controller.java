@@ -1,7 +1,7 @@
 package controller;
 
 import models.*;
-import models.board.Board;
+import models.board.Board; // Make sure this import is present
 import models.board.BoardName;
 import dao.UserDAO;
 import dao.UserDAOImpl;
@@ -68,6 +68,36 @@ public class Controller {
             return null;
         }
     }
+
+    // --- NEW METHOD ADDED HERE ---
+    /**
+     * Updates an existing board's properties in the database, including its color.
+     * @param board The Board object with updated properties.
+     */
+    public void updateBoard(Board board) {
+        if (this.user == null) {
+            System.err.println("Error: No user is logged in to update a board.");
+            return;
+        }
+        if (board == null) {
+            System.err.println("Error: Board object cannot be null for update.");
+            return;
+        }
+        try {
+            // Ensure the board belongs to the current user (optional, but good practice)
+            if (!this.user.getUsername().equals(board.getOwner())) {
+                System.err.println("Permission Denied: User '" + this.user.getUsername() + "' is not the owner of board '" + board.getName().getDisplayName() + "'. Update aborted.");
+                return;
+            }
+            userDAO.updateBoard(board); // Call the DAO method to persist the changes
+            System.out.println("Board '" + board.getName().getDisplayName() + "' updated successfully in the database.");
+        } catch (SQLException e) {
+            System.err.println("Database error updating board '" + board.getName().getDisplayName() + "': " + e.getMessage());
+            e.printStackTrace();
+            // Optionally, show an error message to the user
+        }
+    }
+    // --- END NEW METHOD ---
 
     public String addToDo(String boardNameStr, String toDoName, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status, String owner){
         if (this.user == null) {

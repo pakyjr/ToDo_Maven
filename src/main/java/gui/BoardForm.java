@@ -2,6 +2,7 @@ package gui;
 
 import controller.Controller;
 import models.ToDo;
+import models.board.Board; // Import Board class
 import models.board.BoardName;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -71,6 +72,8 @@ public class BoardForm {
             }
         });
 
+        // Initial color setting (might be "Default" or the first item)
+        // This will be overridden by the selected board's color once a board is chosen.
         setPanelColors((String) colorChange.getSelectedItem());
 
         colorChange.addActionListener(new ActionListener() {
@@ -78,6 +81,21 @@ public class BoardForm {
             public void actionPerformed(ActionEvent e) {
                 String colorSelected = (String) colorChange.getSelectedItem();
                 setPanelColors(colorSelected);
+
+                // --- NEW LOGIC: Save the new board color ---
+                String selectedBoardDisplayName = (String) comboBoxBoards.getSelectedItem();
+                if (!"Boards".equals(selectedBoardDisplayName)) {
+                    BoardName selectedBoardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
+                    if (selectedBoardEnum != null) {
+                        Board currentBoard = controller.user.getBoard(selectedBoardEnum);
+                        if (currentBoard != null) {
+                            currentBoard.setColor(colorSelected); // Update the model
+                            controller.updateBoard(currentBoard); // Persist the change to DB via controller
+                            System.out.println("DEBUG: Board color changed to " + colorSelected + " for board " + selectedBoardDisplayName);
+                        }
+                    }
+                }
+                // --- END NEW LOGIC ---
             }
         });
 
@@ -178,11 +196,25 @@ public class BoardForm {
                 changeBoard.setEnabled(false);
 
                 if (boardSelected) {
+                    // --- NEW LOGIC: Set panel color based on selected board's stored color ---
+                    BoardName selectedBoardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
+                    if (selectedBoardEnum != null) {
+                        Board selectedBoard = controller.user.getBoard(selectedBoardEnum);
+                        if (selectedBoard != null) {
+                            setPanelColors(selectedBoard.getColor()); // Set color from loaded board
+                            colorChange.setSelectedItem(selectedBoard.getColor()); // Update the JComboBox to show current color
+                        }
+                    }
+                    // --- END NEW LOGIC ---
+
                     ArrayList<String> todos = controller.getToDoListString(selectedBoardDisplayName);
                     listModel.addAll(todos);
                     ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(selectedBoardDisplayName);
                 } else {
                     ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(null);
+                    // Optionally reset to a default color when no board is selected
+                    setPanelColors("Blue"); // Or any other default color
+                    colorChange.setSelectedItem("Blue");
                 }
                 jList.repaint();
             }
@@ -303,6 +335,8 @@ public class BoardForm {
                     if (todoToMove != null && actualIndex != -1 && actualIndex > 0) {
                         Collections.swap(todos, actualIndex, actualIndex - 1);
                         // TODO: You might need a controller method to persist this order change if order matters in DB
+                        // If order by position is crucial, you'll need to update positions in DB
+                        // controller.updateToDoPositions(todos); or similar
                     }
 
                     jList.setSelectedIndex(selectedIndex - 1);
@@ -341,6 +375,8 @@ public class BoardForm {
                     if (todoToMove != null && actualIndex != -1 && actualIndex < todos.size() - 1) {
                         Collections.swap(todos, actualIndex, actualIndex + 1);
                         // TODO: You might need a controller method to persist this order change if order matters in DB
+                        // If order by position is crucial, you'll need to update positions in DB
+                        // controller.updateToDoPositions(todos); or similar
                     }
 
                     jList.setSelectedIndex(selectedIndex + 1);
@@ -436,7 +472,9 @@ public class BoardForm {
     }
 
     private void setPanelColors(String colorSelected) {
-        if (colorSelected == null) return;
+        if (colorSelected == null) {
+            colorSelected = "Blue"; // Default to blue if null
+        }
 
         switch (colorSelected) {
             case "Blue":
@@ -462,6 +500,10 @@ public class BoardForm {
             case "Violet":
                 board.setBackground(new Color(217,165,255));
                 campo1.setBackground(new Color(175,64,255));
+                break;
+            default: // Fallback for unknown colors
+                board.setBackground(new Color(160, 235, 219)); // Default blue
+                campo1.setBackground(new Color(115, 207, 214));
                 break;
         }
     }

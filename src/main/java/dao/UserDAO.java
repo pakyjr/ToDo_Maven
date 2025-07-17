@@ -24,5 +24,6 @@ public interface UserDAO {
     void removeAllToDoSharing(String toDoId) throws SQLException;
     Set<User> getAllUsers() throws SQLException;
     List<String> getSharedUsernamesForToDo(String toDoId) throws SQLException;
-    void saveBoard(Board board, UUID userId) throws SQLException; // Changed userId from int to UUID
+    void saveBoard(Board board, UUID userId) throws SQLException;
+    void updateBoard(Board board) throws SQLException; // NEW: Added for updating board properties, including color
 }
