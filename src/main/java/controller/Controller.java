@@ -1,7 +1,7 @@
 package controller;
 
 import models.*;
-import models.board.Board; // Make sure this import is present
+import models.board.Board;
 import models.board.BoardName;
 import dao.UserDAO;
 import dao.UserDAOImpl;
@@ -15,7 +15,7 @@ public class Controller {
     public User user;
     private UserDAO userDAO;
 
-    public Controller() throws SQLException { // Constructor declares SQLException
+    public Controller() throws SQLException {
         this.userDAO = new UserDAOImpl();
     }
 
@@ -26,13 +26,10 @@ public class Controller {
             boolean success = userDAO.saveUser(newUser);
             if (success) {
                 this.user = newUser;
+                newUser.fillBoard(newUser.getUsername());
 
-                newUser.fillBoard(newUser.getUsername()); // Fill default boards in-memory
-
-                // Save newly created boards to the database for the new user
-                // Assuming userDAO.saveBoard method exists and accepts Board and userId
                 for (Board board : newUser.getBoardList()) {
-                    userDAO.saveBoard(board, newUser.getId()); // Pass User's UUID
+                    userDAO.saveBoard(board, newUser.getId());
                 }
 
                 System.out.println("User '" + username + "' registered successfully and default boards created.");
@@ -69,7 +66,6 @@ public class Controller {
         }
     }
 
-    // --- NEW METHOD ADDED HERE ---
     /**
      * Updates an existing board's properties in the database, including its color.
      * @param board The Board object with updated properties.
@@ -84,20 +80,17 @@ public class Controller {
             return;
         }
         try {
-            // Ensure the board belongs to the current user (optional, but good practice)
             if (!this.user.getUsername().equals(board.getOwner())) {
                 System.err.println("Permission Denied: User '" + this.user.getUsername() + "' is not the owner of board '" + board.getName().getDisplayName() + "'. Update aborted.");
                 return;
             }
-            userDAO.updateBoard(board); // Call the DAO method to persist the changes
+            userDAO.updateBoard(board);
             System.out.println("Board '" + board.getName().getDisplayName() + "' updated successfully in the database.");
         } catch (SQLException e) {
             System.err.println("Database error updating board '" + board.getName().getDisplayName() + "': " + e.getMessage());
             e.printStackTrace();
-            // Optionally, show an error message to the user
         }
     }
-    // --- END NEW METHOD ---
 
     public String addToDo(String boardNameStr, String toDoName, String description, String date, String url, String color, String image, Map<String, Boolean> activities, String status, String owner){
         if (this.user == null) {
@@ -319,9 +312,6 @@ public class Controller {
             ToDo toDoToRemove = toDoToRemoveOptional.get();
 
             boolean isCreator = isCurrentUserToDoCreator(toDoToRemove);
-            // Check if current user is a recipient and is trying to delete their copy
-            // This logic assumes `getBoard` on `this.user` returns the current user's boards correctly
-            // and `contains` checks by object identity or a meaningful equals/hashCode.
             boolean isRecipientDeleting = !isCreator && this.user.getBoard(boardEnumName).getTodoList().contains(toDoToRemove);
 
             if (!isCreator && !isRecipientDeleting) {
@@ -330,25 +320,18 @@ public class Controller {
             }
 
             try {
-                // If the user is the creator, remove all shared instances from DB
                 if (isCreator) {
-                    userDAO.removeAllToDoSharing(toDoToRemove.getId().toString()); // New DAO method
+                    userDAO.removeAllToDoSharing(toDoToRemove.getId().toString());
                     System.out.println("Removed all shared instances of ToDo '" + toDoTitle + "'.");
                 }
 
-                // Delete the ToDo from the current user's database and in-memory board
-                userDAO.deleteToDo(toDoToRemove.getId().toString(), user.getUsername()); // Adjusted to use ID string and current user
+                userDAO.deleteToDo(toDoToRemove.getId().toString(), user.getUsername());
                 board.removeToDo(toDoToRemove);
                 System.out.println("ToDo '" + toDoTitle + "' deleted successfully from board '" + boardNameStr + "'.");
-
-                // If it was a shared copy deleted by a recipient, no further action for original needed here.
-                // The `removeAllToDoSharing` handles cleaning up for the creator.
-                // The `deleteToDo` handles the specific copy for the recipient.
 
             } catch (SQLException e) {
                 System.err.println("Database error deleting ToDo: " + e.getMessage());
                 e.printStackTrace();
-                // Optionally, revert in-memory change if DB operation fails
             }
         } else {
             System.err.println("ToDo with title '" + toDoTitle + "' not found on board " + boardNameStr + " for deletion.");
@@ -411,10 +394,8 @@ public class Controller {
                 return false;
             }
 
-            // Update the board_id in the database for the ToDo
-            userDAO.updateToDoBoardId(toDoToMove.getId().toString(), destinationBoardId); // Fixed: UUID to String conversion
+            userDAO.updateToDoBoardId(toDoToMove.getId().toString(), destinationBoardId);
 
-            // Perform in-memory move
             currentBoard.removeToDo(toDoToMove);
             destinationBoard.addExistingTodo(toDoToMove);
 
@@ -451,34 +432,43 @@ public class Controller {
         }
         if (usernamesToShareWith == null || usernamesToShareWith.isEmpty()) {
             System.out.println("No users selected to share with.");
-            return true; // Consider it success if no users selected
+            return true;
         }
 
         boolean allSuccess = true;
         for (String username : usernamesToShareWith) {
             try {
-                // Share in the database (this typically means creating a new ToDo entry for the recipient
-                // or a linking entry in a shared_todos table)
-                userDAO.shareToDo(toDo.getId().toString(), username); // New DAO method
+                // 1. Persist the sharing in the database
+                userDAO.shareToDo(toDo.getId().toString(), username);
+                System.out.println("DEBUG: ToDo '" + toDo.getTitle() + "' DB shared with '" + username + "'.");
 
-                // Update in-memory ToDo object to reflect sharing
-                Optional<User> sharedUserOptional = userDAO.getUserByUsername(username); // Re-fetch user to get their full object
-                if (sharedUserOptional.isPresent()) {
-                    toDo.addSharedUser(sharedUserOptional.get()); // Assumes ToDo has this method
-                    System.out.println("ToDo '" + toDo.getTitle() + "' shared with user '" + username + "'.");
+                // 2. Crucial Update: Refresh the recipient's in-memory data
+                Optional<User> recipientUserOptional = userDAO.getUserByUsername(username);
 
-                    // Optionally, add a copy of the ToDo to the recipient's in-memory board right away
-                    // This depends on whether you want immediate UI update or rely on re-login/reload
-                    // To do this, you'd need recipient's board object, which might require loading it here.
-                    // For now, assuming in-memory update is handled by `addSharedUser` or will be on reload.
+                if (recipientUserOptional.isPresent()) {
+                    User recipientUser = recipientUserOptional.get();
+
+                    // Reload all boards and ToDos for the recipient user.
+                    // This ensures the newly shared ToDo is added to their in-memory data structure.
+                    userDAO.loadUserBoardsAndToDos(recipientUser);
+
+                    // Add the recipient user to the original ToDo's shared users list.
+                    // This keeps the creator's ToDo object consistent with who it's shared with.
+                    toDo.addSharedUser(recipientUser);
+
+                    System.out.println("ToDo '" + toDo.getTitle() + "' shared successfully with user '" + username + "' and recipient's in-memory data updated.");
 
                 } else {
-                    System.err.println("User '" + username + "' not found to add to in-memory ToDo object.");
+                    System.err.println("User '" + username + "' not found after sharing. In-memory update for recipient failed.");
                     allSuccess = false;
                 }
 
             } catch (SQLException e) {
                 System.err.println("Database error sharing ToDo '" + toDo.getTitle() + "' with '" + username + "': " + e.getMessage());
+                e.printStackTrace();
+                allSuccess = false;
+            } catch (IllegalArgumentException e) {
+                System.err.println("Error with board name during sharing: " + e.getMessage());
                 e.printStackTrace();
                 allSuccess = false;
             }
@@ -508,21 +498,19 @@ public class Controller {
         }
         if (usernamesToRemoveSharing == null || usernamesToRemoveSharing.isEmpty()) {
             System.out.println("No users selected to remove sharing from.");
-            return true; // Consider it success if no users selected
+            return true;
         }
 
         boolean allSuccess = true;
         for (String username : usernamesToRemoveSharing) {
             try {
-                // Remove sharing in the database (e.g., delete the shared ToDo entry for the recipient)
-                userDAO.removeToDoSharing(toDo.getId().toString(), username); // New DAO method
-
-                // Update in-memory ToDo object to reflect unsharing
-                toDo.removeSharedUser(username); // Assumes ToDo has this method
+                userDAO.removeToDoSharing(toDo.getId().toString(), username);
+                toDo.removeSharedUser(username);
                 System.out.println("Removed sharing of ToDo '" + toDo.getTitle() + "' from user '" + username + "'.");
 
-                // Optionally, also remove the ToDo copy from the recipient's in-memory board
-                // This would require loading the recipient's boards here if not already loaded.
+                // Optional: If you also need to remove the ToDo from the recipient's in-memory board immediately,
+                // you would add logic here to find the recipient's user object and remove the ToDo from their board.
+                // This is more complex and depends on how you manage active user sessions.
             } catch (SQLException e) {
                 System.err.println("Database error removing sharing of ToDo '" + toDo.getTitle() + "' from '" + username + "': " + e.getMessage());
                 e.printStackTrace();
@@ -542,7 +530,6 @@ public class Controller {
             return java.util.Collections.emptySet();
         }
         try {
-            // UserDAO.getAllUsers might return ArrayList<User>, converting to Set here.
             return new HashSet<>(userDAO.getAllUsers());
         } catch (SQLException e) {
             System.err.println("Database error retrieving all users: " + e.getMessage());
@@ -590,12 +577,11 @@ public class Controller {
         if (optionalToDo.isPresent()) {
             ToDo originalToDo = optionalToDo.get();
 
-            // Only the creator can see who it's shared with.
             if (!isCurrentUserToDoCreator(originalToDo)) {
                 System.err.println("Permission Denied: Only the creator can see who this ToDo is shared with.");
                 return new ArrayList<>();
             }
-            return originalToDo.getUsers().stream() // Assumes ToDo.getUsers() returns a Set<User>
+            return originalToDo.getUsers().stream()
                     .map(User::getUsername)
                     .collect(Collectors.toCollection(ArrayList::new));
         } else {

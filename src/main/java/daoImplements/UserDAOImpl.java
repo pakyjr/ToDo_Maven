@@ -6,7 +6,8 @@ import models.User;
 import models.board.BoardName;
 import db.DatabaseConnection;
 import java.sql.*;
-import java.sql.Date;
+import java.sql.Date; // Keep this for Date.valueOf() when writing to DB
+import java.time.LocalDate; // Import LocalDate for conversion
 import java.util.*;
 
 public class UserDAOImpl implements UserDAO {
@@ -21,7 +22,6 @@ public class UserDAOImpl implements UserDAO {
     public boolean saveUser(User user) throws SQLException {
         String sql = "INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            // FIX: Use setObject for UUID to let JDBC handle the type mapping
             pstmt.setObject(1, user.getId());
             pstmt.setString(2, user.getUsername());
             pstmt.setString(3, user.getHashedPassword());
@@ -42,13 +42,11 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void saveBoard(Board board, UUID userId) throws SQLException {
-        // MODIFIED: Added 'color' to the INSERT statement
         String sql = "INSERT INTO boards (name, description, color, user_id) VALUES (?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, board.getName().getDisplayName());
             pstmt.setString(2, board.getDescription());
-            pstmt.setString(3, board.getColor()); // Get the color from the board object
-            // FIX: Use setObject for UUID userId
+            pstmt.setString(3, board.getColor());
             pstmt.setObject(4, userId);
             int affectedRows = pstmt.executeUpdate();
 
@@ -65,15 +63,13 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void updateBoard(Board board) throws SQLException {
-        // NEW METHOD: To update an existing board's properties, including color
         String sql = "UPDATE boards SET name = ?, description = ?, color = ? WHERE id = ? AND user_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, board.getName().getDisplayName());
             pstmt.setString(2, board.getDescription());
-            pstmt.setString(3, board.getColor()); // Set the updated color
+            pstmt.setString(3, board.getColor());
             pstmt.setInt(4, board.getId());
 
-            // Fetch the owner's UUID based on the username stored in the Board object
             Optional<User> ownerUser = getUserByUsername(board.getOwner());
             if (ownerUser.isPresent()) {
                 pstmt.setObject(5, ownerUser.get().getId());
@@ -101,7 +97,6 @@ public class UserDAOImpl implements UserDAO {
                         rs.getString("username"),
                         rs.getString("password_hash"),
                         null,
-                        // FIX: Use getObject for UUID
                         (UUID) rs.getObject("id")
                 );
                 return Optional.of(user);
@@ -118,10 +113,9 @@ public class UserDAOImpl implements UserDAO {
 
         user.clearBoards();
 
-        // MODIFIED: Added 'color' to the SELECT statement for boards
+        // Step 1: Load all boards owned by the current user
         String boardSql = "SELECT id, name, description, color FROM boards WHERE user_id = ?";
         try (PreparedStatement pstmtBoard = connection.prepareStatement(boardSql)) {
-            // FIX: Use setObject for UUID user.getId()
             pstmtBoard.setObject(1, user.getId());
             ResultSet rsBoards = pstmtBoard.executeQuery();
             while (rsBoards.next()) {
@@ -137,98 +131,122 @@ public class UserDAOImpl implements UserDAO {
                 Board board = new Board(
                         rsBoards.getInt("id"),
                         boardName,
-                        user.getUsername(), // This is the owner of the board
+                        user.getUsername(),
                         rsBoards.getString("description"),
-                        rsBoards.getString("color") // Retrieve the color from the result set
+                        rsBoards.getString("color")
                 );
                 user.addBoard(board);
                 System.out.println("DEBUG: UserDAOImpl loaded board '" + boardDisplayName + "' (ID: " + board.getId() + ") for user '" + user.getUsername() + "'.");
+            }
+        }
 
-                // Carica i ToDo di proprietà di questa board
-                String todoSql = "SELECT id, title, description, status, due_date, created_date, position, owner_username FROM todos WHERE board_id = ?";
-                try (PreparedStatement pstmtTodo = connection.prepareStatement(todoSql)) {
-                    pstmtTodo.setInt(1, board.getId());
-                    ResultSet rsTodos = pstmtTodo.executeQuery();
-                    while (rsTodos.next()) {
-                        ToDo toDo = new ToDo(
-                                // FIX: Use getObject for UUID
-                                (UUID) rsTodos.getObject("id"),
-                                rsTodos.getString("title"),
-                                rsTodos.getString("owner_username")
-                        );
-                        toDo.setDescription(rsTodos.getString("description"));
-                        toDo.setStatus(rsTodos.getString("status"));
-                        toDo.setDueDate(rsTodos.getDate("due_date") != null ? rsTodos.getDate("due_date").toLocalDate() : null);
-                        toDo.setCreatedDate(rsTodos.getDate("created_date").toLocalDate());
-                        toDo.setPosition(rsTodos.getInt("position"));
+        // Step 2: Load all ToDos owned by the current user for their respective boards
+        for (Board board : user.getBoardList()) {
+            String todoSql = "SELECT id, title, description, status, due_date, created_date, position, owner_username FROM todos WHERE board_id = ? AND owner_username = ?";
+            try (PreparedStatement pstmtTodo = connection.prepareStatement(todoSql)) {
+                pstmtTodo.setInt(1, board.getId());
+                pstmtTodo.setString(2, user.getUsername());
+                ResultSet rsTodos = pstmtTodo.executeQuery();
+                while (rsTodos.next()) {
+                    ToDo toDo = new ToDo(
+                            (UUID) rsTodos.getObject("id"),
+                            rsTodos.getString("title"),
+                            rsTodos.getString("owner_username")
+                    );
+                    toDo.setDescription(rsTodos.getString("description"));
+                    toDo.setStatus(rsTodos.getString("status"));
+                    // FIX: Convert java.sql.Date from ResultSet to java.time.LocalDate
+                    java.sql.Date sqlDueDateOwned = rsTodos.getDate("due_date");
+                    toDo.setDueDate(sqlDueDateOwned != null ? sqlDueDateOwned.toLocalDate() : null);
+                    // No change needed for created_date if it's already LocalDate
+                    toDo.setCreatedDate(rsTodos.getDate("created_date").toLocalDate());
+                    toDo.setPosition(rsTodos.getInt("position"));
 
-                        // Carica le attività per questo ToDo
-                        String activitySql = "SELECT activity_title, completed FROM activities WHERE todo_id = ?";
-                        try (PreparedStatement pstmtActivity = connection.prepareStatement(activitySql)) {
-                            // FIX: Use setObject for UUID toDo.getId()
-                            pstmtActivity.setObject(1, toDo.getId());
-                            ResultSet rsActivities = pstmtActivity.executeQuery();
-                            Map<String, Boolean> activitiesMap = new HashMap<>();
-                            while (rsActivities.next()) {
-                                activitiesMap.put(rsActivities.getString("activity_title"), rsActivities.getBoolean("completed"));
-                            }
-                            toDo.setActivityList(activitiesMap);
+                    String activitySql = "SELECT activity_title, completed FROM activities WHERE todo_id = ?";
+                    try (PreparedStatement pstmtActivity = connection.prepareStatement(activitySql)) {
+                        pstmtActivity.setObject(1, toDo.getId());
+                        ResultSet rsActivities = pstmtActivity.executeQuery();
+                        Map<String, Boolean> activitiesMap = new HashMap<>();
+                        while (rsActivities.next()) {
+                            activitiesMap.put(rsActivities.getString("activity_title"), rsActivities.getBoolean("completed"));
                         }
+                        toDo.setActivityList(activitiesMap);
+                    }
 
-                        // Se l'utente corrente è il proprietario del ToDo, carica anche gli utenti con cui è stato condiviso
-                        if (toDo.getOwner().equals(user.getUsername())) {
-                            List<String> sharedUsernames = getSharedUsernamesForToDo(toDo.getId().toString());
-                            for (String sharedUsername : sharedUsernames) {
-                                Optional<User> sharedUser = getUserByUsername(sharedUsername);
-                                sharedUser.ifPresent(toDo::addSharedUser);
-                            }
-                        }
-                        board.addExistingTodo(toDo);
-                        System.out.println("DEBUG: UserDAOImpl loaded ToDo '" + toDo.getTitle() + "' for board '" + boardDisplayName + "'.");
+                    List<String> sharedUsernames = getSharedUsernamesForToDo(toDo.getId().toString());
+                    for (String sharedUsername : sharedUsernames) {
+                        Optional<User> sharedUser = getUserByUsername(sharedUsername);
+                        sharedUser.ifPresent(toDo::addSharedUser);
+                    }
+                    board.addExistingTodo(toDo);
+                    System.out.println("DEBUG: UserDAOImpl loaded OWNED ToDo '" + toDo.getTitle() + "' for board '" + board.getName().getDisplayName() + "'.");
+                }
+            }
+        }
+
+        // Step 3: Carica i ToDo condivisi CON l'utente corrente
+        String sharedTodoSql = "SELECT t.id, t.title, t.description, t.status, t.due_date, t.created_date, t.position, t.owner_username, " +
+                "b_orig.name AS original_board_name " +
+                "FROM todos t " +
+                "JOIN shared_todos st ON t.id = st.todo_id " +
+                "JOIN boards b_orig ON t.board_id = b_orig.id " +
+                "WHERE st.shared_with_username = ?";
+
+        try (PreparedStatement pstmtSharedTodo = connection.prepareStatement(sharedTodoSql)) {
+            pstmtSharedTodo.setString(1, user.getUsername());
+            ResultSet rsSharedTodos = pstmtSharedTodo.executeQuery();
+            while (rsSharedTodos.next()) {
+                ToDo sharedToDo = new ToDo(
+                        (UUID) rsSharedTodos.getObject("id"),
+                        rsSharedTodos.getString("title"),
+                        rsSharedTodos.getString("owner_username")
+                );
+                sharedToDo.setDescription(rsSharedTodos.getString("description"));
+                sharedToDo.setStatus(rsSharedTodos.getString("status"));
+                // FIX: Convert java.sql.Date from ResultSet to java.time.LocalDate
+                java.sql.Date sqlDueDateShared = rsSharedTodos.getDate("due_date");
+                sharedToDo.setDueDate(sqlDueDateShared != null ? sqlDueDateShared.toLocalDate() : null);
+                // No change needed for created_date if it's already LocalDate
+                sharedToDo.setCreatedDate(rsSharedTodos.getDate("created_date").toLocalDate());
+                sharedToDo.setPosition(rsSharedTodos.getInt("position"));
+
+                String activitySqlShared = "SELECT activity_title, completed FROM activities WHERE todo_id = ?";
+                try (PreparedStatement pstmtActivityShared = connection.prepareStatement(activitySqlShared)) {
+                    pstmtActivityShared.setObject(1, sharedToDo.getId());
+                    ResultSet rsActivitiesShared = pstmtActivityShared.executeQuery();
+                    Map<String, Boolean> activitiesMapShared = new HashMap<>();
+                    while (rsActivitiesShared.next()) {
+                        activitiesMapShared.put(rsActivitiesShared.getString("activity_title"), rsActivitiesShared.getBoolean("completed"));
+                    }
+                    sharedToDo.setActivityList(activitiesMapShared);
+                }
+
+                Optional<User> currentUserOptional = getUserByUsername(user.getUsername());
+                currentUserOptional.ifPresent(sharedToDo::addSharedUser);
+
+                String originalBoardNameStr = rsSharedTodos.getString("original_board_name");
+                BoardName originalBoardName = null;
+                try {
+                    originalBoardName = BoardName.fromDisplayName(originalBoardNameStr);
+                } catch (IllegalArgumentException e) {
+                    System.err.println("ERROR: Il nome della board originale '" + originalBoardNameStr + "' per il ToDo condiviso '" + sharedToDo.getTitle() + "' non è un valore valido per BoardName. Ignoro questo ToDo condiviso per il ricevente '" + user.getUsername() + "'.");
+                    continue;
+                }
+
+                Board targetBoard = null;
+                for (Board b : user.getBoardList()) {
+                    if (b.getName().equals(originalBoardName)) {
+                        targetBoard = b;
+                        break;
                     }
                 }
 
-                // --- INIZIO LOGICA PER TODO CONDIVISI ---
-                // Carica i ToDo che sono stati condivisi CON l'utente corrente
-                String sharedTodoSql = "SELECT t.id, t.title, t.description, t.status, t.due_date, t.created_date, t.position, t.owner_username " +
-                        "FROM todos t " +
-                        "JOIN shared_todos st ON t.id = st.todo_id " +
-                        "WHERE st.shared_with_username = ? AND t.board_id = ?";
-                try (PreparedStatement pstmtSharedTodo = connection.prepareStatement(sharedTodoSql)) {
-                    pstmtSharedTodo.setString(1, user.getUsername());
-                    pstmtSharedTodo.setInt(2, board.getId());
-                    ResultSet rsSharedTodos = pstmtSharedTodo.executeQuery();
-                    while (rsSharedTodos.next()) {
-                        ToDo sharedToDo = new ToDo(
-                                (UUID) rsSharedTodos.getObject("id"),
-                                rsSharedTodos.getString("title"),
-                                rsSharedTodos.getString("owner_username")
-                        );
-                        sharedToDo.setDescription(rsSharedTodos.getString("description"));
-                        sharedToDo.setStatus(rsSharedTodos.getString("status"));
-                        sharedToDo.setDueDate(rsSharedTodos.getDate("due_date") != null ? rsSharedTodos.getDate("due_date").toLocalDate() : null);
-                        sharedToDo.setCreatedDate(rsSharedTodos.getDate("created_date").toLocalDate());
-                        sharedToDo.setPosition(rsSharedTodos.getInt("position"));
-
-                        String activitySqlShared = "SELECT activity_title, completed FROM activities WHERE todo_id = ?";
-                        try (PreparedStatement pstmtActivityShared = connection.prepareStatement(activitySqlShared)) {
-                            pstmtActivityShared.setObject(1, sharedToDo.getId());
-                            ResultSet rsActivitiesShared = pstmtActivityShared.executeQuery();
-                            Map<String, Boolean> activitiesMapShared = new HashMap<>();
-                            while (rsActivitiesShared.next()) {
-                                activitiesMapShared.put(rsActivitiesShared.getString("activity_title"), rsActivitiesShared.getBoolean("completed"));
-                            }
-                            sharedToDo.setActivityList(activitiesMapShared);
-                        }
-
-                        Optional<User> currentUserOptional = getUserByUsername(user.getUsername());
-                        currentUserOptional.ifPresent(sharedToDo::addSharedUser);
-
-                        board.addExistingTodo(sharedToDo);
-                        System.out.println("DEBUG: UserDAOImpl loaded SHARED ToDo '" + sharedToDo.getTitle() + "' (Owner: " + sharedToDo.getOwner() + ") for board '" + boardDisplayName + "' (shared with '" + user.getUsername() + "').");
-                    }
+                if (targetBoard != null) {
+                    targetBoard.addExistingTodo(sharedToDo);
+                    System.out.println("DEBUG: UserDAOImpl ha caricato il ToDo CONDIVISO '" + sharedToDo.getTitle() + "' (Proprietario: " + sharedToDo.getOwner() + ") per la board del ricevente '" + targetBoard.getName().getDisplayName() + "' (ID: " + targetBoard.getId() + ", condiviso con '" + user.getUsername() + "').");
+                } else {
+                    System.out.println("WARN: Il ToDo condiviso '" + sharedToDo.getTitle() + "' (Proprietario: " + sharedToDo.getOwner() + ") non è stato assegnato a una board esistente con il nome '" + originalBoardNameStr + "' per il ricevente '" + user.getUsername() + "'.");
                 }
-                // --- FINE LOGICA PER TODO CONDIVISI ---
             }
         }
     }
@@ -251,11 +269,11 @@ public class UserDAOImpl implements UserDAO {
     public void saveToDo(ToDo toDo, int boardId) throws SQLException {
         String sql = "INSERT INTO todos (id, title, description, status, due_date, created_date, position, owner_username, board_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            // FIX: Use setObject for UUID toDo.getId()
             pstmt.setObject(1, toDo.getId());
             pstmt.setString(2, toDo.getTitle());
             pstmt.setString(3, toDo.getDescription());
             pstmt.setString(4, toDo.getStatus());
+            // This line is correct for converting LocalDate to sql.Date for DB storage
             pstmt.setDate(5, toDo.getDueDate() != null ? Date.valueOf(toDo.getDueDate()) : null);
             pstmt.setDate(6, Date.valueOf(toDo.getCreatedDate()));
             pstmt.setInt(7, toDo.getPosition());
@@ -274,10 +292,10 @@ public class UserDAOImpl implements UserDAO {
             pstmt.setString(1, toDo.getTitle());
             pstmt.setString(2, toDo.getDescription());
             pstmt.setString(3, toDo.getStatus());
+            // This line is correct for converting LocalDate to sql.Date for DB storage
             pstmt.setDate(4, toDo.getDueDate() != null ? Date.valueOf(toDo.getDueDate()) : null);
             pstmt.setInt(5, toDo.getPosition());
             pstmt.setString(6, toDo.getOwner());
-            // FIX: Use setObject for UUID toDo.getId()
             pstmt.setObject(7, toDo.getId());
             pstmt.setInt(8, boardId);
             pstmt.executeUpdate();
@@ -292,7 +310,6 @@ public class UserDAOImpl implements UserDAO {
         String sql = "UPDATE todos SET board_id = ? WHERE id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setInt(1, newBoardId);
-            // FIX: Use setObject for UUID.fromString(toDoId)
             pstmt.setObject(2, UUID.fromString(toDoId));
             pstmt.executeUpdate();
         }
@@ -302,7 +319,6 @@ public class UserDAOImpl implements UserDAO {
         String sql = "INSERT INTO activities (todo_id, activity_title, completed) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             for (Map.Entry<String, Boolean> entry : activities.entrySet()) {
-                // FIX: Use setObject for UUID.fromString(toDoId)
                 pstmt.setObject(1, UUID.fromString(toDoId));
                 pstmt.setString(2, entry.getKey());
                 pstmt.setBoolean(3, entry.getValue());
@@ -315,7 +331,6 @@ public class UserDAOImpl implements UserDAO {
     private void clearActivities(String toDoId) throws SQLException {
         String sql = "DELETE FROM activities WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            // FIX: Use setObject for UUID.fromString(toDoId)
             pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.executeUpdate();
         }
@@ -323,13 +338,11 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void deleteToDo(String toDoId, String username) throws SQLException {
-        // Prima di eliminare il ToDo, elimina anche le sue attività e le sue condivisioni
         clearActivities(toDoId);
-        removeAllToDoSharing(toDoId); // Aggiunto per pulire le condivisioni quando il ToDo viene eliminato
+        removeAllToDoSharing(toDoId);
 
         String sql = "DELETE FROM todos WHERE id = ? AND owner_username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            // FIX: Use setObject for UUID.fromString(toDoId)
             pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.setString(2, username);
             pstmt.executeUpdate();
@@ -340,7 +353,6 @@ public class UserDAOImpl implements UserDAO {
     public void shareToDo(String toDoId, String sharedWithUsername) throws SQLException {
         String sql = "INSERT INTO shared_todos (todo_id, shared_with_username) VALUES (?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            // FIX: Use setObject for UUID.fromString(toDoId)
             pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.setString(2, sharedWithUsername);
             pstmt.executeUpdate();
@@ -351,7 +363,6 @@ public class UserDAOImpl implements UserDAO {
     public void removeToDoSharing(String toDoId, String sharedWithUsername) throws SQLException {
         String sql = "DELETE FROM shared_todos WHERE todo_id = ? AND shared_with_username = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            // FIX: Use setObject for UUID.fromString(toDoId)
             pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.setString(2, sharedWithUsername);
             pstmt.executeUpdate();
@@ -362,7 +373,6 @@ public class UserDAOImpl implements UserDAO {
     public void removeAllToDoSharing(String toDoId) throws SQLException {
         String sql = "DELETE FROM shared_todos WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            // FIX: Use setObject for UUID.fromString(toDoId)
             pstmt.setObject(1, UUID.fromString(toDoId));
             pstmt.executeUpdate();
         }
@@ -379,7 +389,6 @@ public class UserDAOImpl implements UserDAO {
                         rs.getString("username"),
                         rs.getString("password_hash"),
                         null,
-                        // FIX: Use getObject for UUID
                         (UUID) rs.getObject("id")
                 ));
             }
@@ -392,7 +401,6 @@ public class UserDAOImpl implements UserDAO {
         List<String> sharedUsernames = new ArrayList<>();
         String sql = "SELECT shared_with_username FROM shared_todos WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            // FIX: Use setObject for UUID.fromString(toDoId)
             pstmt.setObject(1, UUID.fromString(toDoId));
             ResultSet rs = pstmt.executeQuery();
             while (rs.next()) {
