@@ -6,8 +6,7 @@ import models.User;
 import models.board.BoardName;
 import db.DatabaseConnection;
 import java.sql.*;
-import java.sql.Date; // Keep this for Date.valueOf() when writing to DB
-import java.time.LocalDate; // Import LocalDate for conversion
+import java.sql.Date;
 import java.util.*;
 
 public class UserDAOImpl implements UserDAO {
@@ -42,12 +41,11 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void saveBoard(Board board, UUID userId) throws SQLException {
-        String sql = "INSERT INTO boards (name, description, color, user_id) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO boards (name, color, user_id) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             pstmt.setString(1, board.getName().getDisplayName());
-            pstmt.setString(2, board.getDescription());
-            pstmt.setString(3, board.getColor());
-            pstmt.setObject(4, userId);
+            pstmt.setString(2, board.getColor());
+            pstmt.setObject(3, userId);
             int affectedRows = pstmt.executeUpdate();
 
             if (affectedRows > 0) {
@@ -63,16 +61,15 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void updateBoard(Board board) throws SQLException {
-        String sql = "UPDATE boards SET name = ?, description = ?, color = ? WHERE id = ? AND user_id = ?";
+        String sql = "UPDATE boards SET name = ?, color = ? WHERE id = ? AND user_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, board.getName().getDisplayName());
-            pstmt.setString(2, board.getDescription());
-            pstmt.setString(3, board.getColor());
-            pstmt.setInt(4, board.getId());
+            pstmt.setString(2, board.getColor());
+            pstmt.setInt(3, board.getId());
 
             Optional<User> ownerUser = getUserByUsername(board.getOwner());
             if (ownerUser.isPresent()) {
-                pstmt.setObject(5, ownerUser.get().getId());
+                pstmt.setObject(4, ownerUser.get().getId());
             } else {
                 throw new SQLException("Cannot update board: Owner user '" + board.getOwner() + "' not found.");
             }
@@ -114,7 +111,7 @@ public class UserDAOImpl implements UserDAO {
         user.clearBoards();
 
         // Step 1: Load all boards owned by the current user
-        String boardSql = "SELECT id, name, description, color FROM boards WHERE user_id = ?";
+        String boardSql = "SELECT id, name, color FROM boards WHERE user_id = ?";
         try (PreparedStatement pstmtBoard = connection.prepareStatement(boardSql)) {
             pstmtBoard.setObject(1, user.getId());
             ResultSet rsBoards = pstmtBoard.executeQuery();
@@ -132,7 +129,6 @@ public class UserDAOImpl implements UserDAO {
                         rsBoards.getInt("id"),
                         boardName,
                         user.getUsername(),
-                        rsBoards.getString("description"),
                         rsBoards.getString("color")
                 );
                 user.addBoard(board);
@@ -140,9 +136,9 @@ public class UserDAOImpl implements UserDAO {
             }
         }
 
-        // Step 2: Load all ToDos owned by the current user for their respective boards
         for (Board board : user.getBoardList()) {
-            String todoSql = "SELECT id, title, description, status, due_date, created_date, position, owner_username FROM todos WHERE board_id = ? AND owner_username = ?";
+
+            String todoSql = "SELECT id, title, description, status, due_date, created_date, position, owner_username, url, image, color FROM todos WHERE board_id = ? AND owner_username = ?";
             try (PreparedStatement pstmtTodo = connection.prepareStatement(todoSql)) {
                 pstmtTodo.setInt(1, board.getId());
                 pstmtTodo.setString(2, user.getUsername());
@@ -155,12 +151,13 @@ public class UserDAOImpl implements UserDAO {
                     );
                     toDo.setDescription(rsTodos.getString("description"));
                     toDo.setStatus(rsTodos.getString("status"));
-                    // FIX: Convert java.sql.Date from ResultSet to java.time.LocalDate
                     java.sql.Date sqlDueDateOwned = rsTodos.getDate("due_date");
                     toDo.setDueDate(sqlDueDateOwned != null ? sqlDueDateOwned.toLocalDate() : null);
-                    // No change needed for created_date if it's already LocalDate
                     toDo.setCreatedDate(rsTodos.getDate("created_date").toLocalDate());
                     toDo.setPosition(rsTodos.getInt("position"));
+                    toDo.setUrl(rsTodos.getString("url"));   // Load URL
+                    toDo.setImage(rsTodos.getString("image")); // Load Image
+                    toDo.setColor(rsTodos.getString("color")); // Load Color
 
                     String activitySql = "SELECT activity_title, completed FROM activities WHERE todo_id = ?";
                     try (PreparedStatement pstmtActivity = connection.prepareStatement(activitySql)) {
@@ -184,8 +181,7 @@ public class UserDAOImpl implements UserDAO {
             }
         }
 
-        // Step 3: Carica i ToDo condivisi CON l'utente corrente
-        String sharedTodoSql = "SELECT t.id, t.title, t.description, t.status, t.due_date, t.created_date, t.position, t.owner_username, " +
+        String sharedTodoSql = "SELECT t.id, t.title, t.description, t.status, t.due_date, t.created_date, t.position, t.owner_username, t.url, t.image, t.color, " +
                 "b_orig.name AS original_board_name " +
                 "FROM todos t " +
                 "JOIN shared_todos st ON t.id = st.todo_id " +
@@ -203,12 +199,13 @@ public class UserDAOImpl implements UserDAO {
                 );
                 sharedToDo.setDescription(rsSharedTodos.getString("description"));
                 sharedToDo.setStatus(rsSharedTodos.getString("status"));
-                // FIX: Convert java.sql.Date from ResultSet to java.time.LocalDate
                 java.sql.Date sqlDueDateShared = rsSharedTodos.getDate("due_date");
                 sharedToDo.setDueDate(sqlDueDateShared != null ? sqlDueDateShared.toLocalDate() : null);
-                // No change needed for created_date if it's already LocalDate
                 sharedToDo.setCreatedDate(rsSharedTodos.getDate("created_date").toLocalDate());
                 sharedToDo.setPosition(rsSharedTodos.getInt("position"));
+                sharedToDo.setUrl(rsSharedTodos.getString("url"));     // Load URL
+                sharedToDo.setImage(rsSharedTodos.getString("image")); // Load Image
+                sharedToDo.setColor(rsSharedTodos.getString("color")); // Load Color
 
                 String activitySqlShared = "SELECT activity_title, completed FROM activities WHERE todo_id = ?";
                 try (PreparedStatement pstmtActivityShared = connection.prepareStatement(activitySqlShared)) {
@@ -221,8 +218,15 @@ public class UserDAOImpl implements UserDAO {
                     sharedToDo.setActivityList(activitiesMapShared);
                 }
 
+                List<String> sharedUsernamesForSharedToDo = getSharedUsernamesForToDo(sharedToDo.getId().toString());
+                for (String sharedUsername : sharedUsernamesForSharedToDo) {
+                    Optional<User> sharedUser = getUserByUsername(sharedUsername);
+                    sharedUser.ifPresent(sharedToDo::addSharedUser);
+                }
+
                 Optional<User> currentUserOptional = getUserByUsername(user.getUsername());
                 currentUserOptional.ifPresent(sharedToDo::addSharedUser);
+
 
                 String originalBoardNameStr = rsSharedTodos.getString("original_board_name");
                 BoardName originalBoardName = null;
@@ -267,18 +271,21 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void saveToDo(ToDo toDo, int boardId) throws SQLException {
-        String sql = "INSERT INTO todos (id, title, description, status, due_date, created_date, position, owner_username, board_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        String sql = "INSERT INTO todos (id, title, description, status, due_date, created_date, position, owner_username, board_id, url, image, color) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setObject(1, toDo.getId());
             pstmt.setString(2, toDo.getTitle());
             pstmt.setString(3, toDo.getDescription());
             pstmt.setString(4, toDo.getStatus());
-            // This line is correct for converting LocalDate to sql.Date for DB storage
             pstmt.setDate(5, toDo.getDueDate() != null ? Date.valueOf(toDo.getDueDate()) : null);
             pstmt.setDate(6, Date.valueOf(toDo.getCreatedDate()));
             pstmt.setInt(7, toDo.getPosition());
             pstmt.setString(8, toDo.getOwner());
             pstmt.setInt(9, boardId);
+            pstmt.setString(10, toDo.getUrl());
+            pstmt.setString(11, toDo.getImage());
+            pstmt.setString(12, toDo.getColor());
             pstmt.executeUpdate();
 
             saveActivities(toDo.getId().toString(), toDo.getActivityList());
@@ -287,17 +294,20 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public void updateToDo(ToDo toDo, int boardId) throws SQLException {
-        String sql = "UPDATE todos SET title = ?, description = ?, status = ?, due_date = ?, position = ?, owner_username = ? WHERE id = ? AND board_id = ?";
+
+        String sql = "UPDATE todos SET title = ?, description = ?, status = ?, due_date = ?, position = ?, owner_username = ?, url = ?, image = ?, color = ? WHERE id = ? AND board_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
             pstmt.setString(1, toDo.getTitle());
             pstmt.setString(2, toDo.getDescription());
             pstmt.setString(3, toDo.getStatus());
-            // This line is correct for converting LocalDate to sql.Date for DB storage
             pstmt.setDate(4, toDo.getDueDate() != null ? Date.valueOf(toDo.getDueDate()) : null);
             pstmt.setInt(5, toDo.getPosition());
             pstmt.setString(6, toDo.getOwner());
-            pstmt.setObject(7, toDo.getId());
-            pstmt.setInt(8, boardId);
+            pstmt.setString(7, toDo.getUrl());
+            pstmt.setString(8, toDo.getImage());
+            pstmt.setString(9, toDo.getColor());
+            pstmt.setObject(10, toDo.getId());
+            pstmt.setInt(11, boardId);
             pstmt.executeUpdate();
 
             clearActivities(toDo.getId().toString());

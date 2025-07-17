@@ -1,11 +1,10 @@
 package gui;
 
 import controller.Controller;
-
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.sql.SQLException; // Import SQLException
+
 
 public class RegisterForm {
     private JPanel register;
@@ -26,9 +25,8 @@ public class RegisterForm {
         frameRegisterForm.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent windowEvent) {
-                frame.setVisible(true); // Show parent frame (UserForm) on close
-                frameRegisterForm.dispose(); // Dispose of this frame
-                // Removed duplicate frameRegisterForm.dispose();
+                frame.setVisible(true);
+                frameRegisterForm.dispose();
             }
         });
 
@@ -46,7 +44,6 @@ public class RegisterForm {
             if (controller.user != null) {
                 frameRegisterForm.setVisible(false);
 
-                // Assuming BoardForm constructor correctly handles the parent frame
                 BoardForm boardForm = new BoardForm(frameRegisterForm, controller);
                 boardForm.frameBoardForm.setVisible(true);
             } else {

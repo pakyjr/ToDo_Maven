@@ -6,7 +6,6 @@ import java.util.*;
 public class Board {
     private int id;
     private final BoardName name;
-    private String description;
     private final String owner;
     private String color;
     private final List<ToDo> todoList;
@@ -19,26 +18,12 @@ public class Board {
         this.id = 0;
     }
 
-    public Board(BoardName name, String owner, String description) {
-        this.name = name;
-        this.owner = owner;
-        this.description = description;
-        this.todoList = new ArrayList<>();
-        this.color = "Default";
-        this.id = 0;
-    }
-
-    public Board(int id, BoardName name, String owner, String description, String color) {
+    public Board(int id, BoardName name, String owner, String color) {
         this.id = id;
         this.name = name;
         this.owner = owner;
-        this.description = description;
         this.color = color;
         this.todoList = new ArrayList<>();
-    }
-
-    public Board(int id, BoardName name, String owner, String color) {
-        this(id, name, owner, null, color);
     }
 
     public String getColor() {
@@ -68,7 +53,6 @@ public class Board {
         }
 
         ToDo todo = new ToDo(title, owner);
-        // todo.setOwner(owner); // This line is no longer needed after fixing the constructor call
         todoList.add(todo);
         todo.setPosition(todoList.size());
         return todo;
@@ -107,16 +91,8 @@ public class Board {
         return name;
     }
 
-    public String getDescription() {
-        return description;
-    }
-
     public String getOwner() {
         return owner;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     @Override

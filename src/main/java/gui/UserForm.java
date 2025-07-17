@@ -54,7 +54,6 @@ public class UserForm {
                         System.out.println("Login successful for user: " + loggedInUser.getUsername());
                         frame.setVisible(false);
 
-                        // Pass the controller instance to BoardForm
                         BoardForm boardForm = new BoardForm(frame, controller);
                         boardForm.frameBoardForm.setVisible(true);
                     } else {

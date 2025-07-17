@@ -36,7 +36,7 @@ public class ToDoForm {
     private JTextField ownerfield;
     private JButton shareToDo;
     private JButton changeSharing;
-    private JComboBox<String> membersToDo;
+    private JComboBox<String> membersToDo; // Keep this
     public JFrame frameToDoForm, frame;
 
     private String currentBoard;
@@ -94,20 +94,10 @@ public class ToDoForm {
 
         loadImage(imageNames[currentImageIndex]);
 
-        image.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                currentImageIndex = (currentImageIndex + 1) % imageNames.length;
-                loadImage(imageNames[currentImageIndex]);
-            }
-        });
-
         ownerfield.setEditable(false);
         statusField.setEditable(false);
 
-
         if (currentToDo != null) {
-
             nameField.setText(currentToDo.getTitle());
             descriptionField.setText(currentToDo.getDescription());
 
@@ -118,18 +108,34 @@ public class ToDoForm {
 
             ownerfield.setText(currentToDo.getOwner());
 
+            populateMembersComboBox();
+
             if (!controller.isCurrentUserToDoCreator(currentToDo)) {
+
+                image.setEnabled(false);
                 nameField.setEditable(false);
                 descriptionField.setEditable(false);
                 dueDateField.setEditable(false);
                 urlField.setEditable(false);
                 colorChange.setEnabled(false);
-                image.setEnabled(false);
                 panelActivity.setEnabled(false);
                 buttonSave.setEnabled(false);
                 deleteButton.setEnabled(false);
                 shareToDo.setEnabled(false);
                 changeSharing.setEnabled(false);
+                membersToDo.setEnabled(true);
+            } else {
+
+                image.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        currentImageIndex = (currentImageIndex + 1) % imageNames.length;
+                        loadImage(imageNames[currentImageIndex]);
+                    }
+                });
+                shareToDo.setEnabled(true);
+                changeSharing.setEnabled(true);
+                membersToDo.setEnabled(true);
             }
 
             String storedImage = currentToDo.getImage();
@@ -174,20 +180,22 @@ public class ToDoForm {
             } else {
                 statusField.setText("Not Started");
             }
-            if (controller.isCurrentUserToDoCreator(currentToDo)) {
-                populateMembersComboBox();
-            } else {
-                membersToDo.setEnabled(false);
-            }
+
         } else {
-            // Creating a new ToDo
+
+            image.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    currentImageIndex = (currentImageIndex + 1) % imageNames.length;
+                    loadImage(imageNames[currentImageIndex]);
+                }
+            });
             statusField.setText("Not Started");
             ownerfield.setText(controller.user.getUsername());
             membersToDo.setEnabled(false);
             shareToDo.setEnabled(false);
             changeSharing.setEnabled(false);
         }
-
 
         openURL.addActionListener(new ActionListener() {
             @Override
@@ -269,12 +277,18 @@ public class ToDoForm {
 
                     String newToDoId = controller.addToDo(currentBoard, title, description, dueDateString, url, selectedColor, selectedImageName, activitiesMap, calculatedStatus, owner);
                     if (newToDoId != null) {
-                        currentToDo = controller.getToDoByTitle(title, currentBoard); // Fetch the newly created ToDo object
-                        JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
-                        shareToDo.setEnabled(true);
-                        changeSharing.setEnabled(true);
-                        membersToDo.setEnabled(true);
-                        populateMembersComboBox();
+
+                        currentToDo = controller.getToDoByTitle(title, currentBoard);
+                        if (currentToDo != null) {
+                            JOptionPane.showMessageDialog(frameToDoForm, "ToDo added successfully.");
+                            shareToDo.setEnabled(true);
+                            changeSharing.setEnabled(true);
+                            membersToDo.setEnabled(true);
+                            populateMembersComboBox();
+                        } else {
+
+                            JOptionPane.showMessageDialog(frameToDoForm, "Failed to retrieve newly created ToDo.", "Error", JOptionPane.ERROR_MESSAGE);
+                        }
                     } else {
                         JOptionPane.showMessageDialog(frameToDoForm, "Failed to add ToDo.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -407,9 +421,11 @@ public class ToDoForm {
 
                 Set<User> allUsers = controller.getAllUsers();
                 Set<String> alreadySharedUsernames = new HashSet<>();
+
                 for(User u : currentToDo.getUsers()){
                     alreadySharedUsernames.add(u.getUsername());
                 }
+
                 alreadySharedUsernames.add(currentToDo.getOwner());
 
                 java.util.List<String> availableUsers = new ArrayList<>();
@@ -443,7 +459,7 @@ public class ToDoForm {
                     boolean success = controller.shareToDoWithUsers(currentToDo, selectedUsernames, controller.user.getUsername());
                     if (success) {
                         JOptionPane.showMessageDialog(frameToDoForm, "ToDo shared successfully with selected users.");
-                        populateMembersComboBox();
+                        populateMembersComboBox(); // Update the combobox after sharing
                     } else {
                         JOptionPane.showMessageDialog(frameToDoForm, "Failed to share ToDo.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
@@ -460,17 +476,20 @@ public class ToDoForm {
                 }
 
                 Set<String> sharedUsernames = new HashSet<>();
+
                 for(User u : currentToDo.getUsers()){
-                    sharedUsernames.add(u.getUsername());
+                    if (!u.getUsername().equals(currentToDo.getOwner())) {
+                        sharedUsernames.add(u.getUsername());
+                    }
                 }
 
                 if (sharedUsernames.isEmpty()) {
-                    JOptionPane.showMessageDialog(frameToDoForm, "This ToDo is not currently shared with anyone.", "No Shared Users", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(frameToDoForm, "This ToDo is not currently shared with anyone (besides the owner).", "No Shared Users", JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
 
-                String[] sharedUserChoices = sharedUsernames.toArray(new String[0]);
-                JList<String> userList = new JList<>(sharedUserChoices);
+                String[] userChoices = sharedUsernames.toArray(new String[0]);
+                JList<String> userList = new JList<>(userChoices);
                 userList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
                 JScrollPane scrollPane = new JScrollPane(userList);
@@ -499,22 +518,38 @@ public class ToDoForm {
         membersToDo.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                // This listener is left empty because the combobox is only for informational purposes
             }
         });
     }
 
     private void populateMembersComboBox() {
         membersToDo.removeAllItems();
-        if (currentToDo != null && currentToDo.getUsers() != null) {
-            if (currentToDo.getUsers().isEmpty()) {
-                membersToDo.addItem("No members shared with");
-            } else {
+
+        if (currentToDo != null) {
+
+            Set<String> allUsersForThisToDo = new HashSet<>();
+
+            allUsersForThisToDo.add(currentToDo.getOwner());
+            membersToDo.addItem(currentToDo.getOwner() + " (Owner)");
+
+            if (currentToDo.getUsers() != null) {
                 for (User user : currentToDo.getUsers()) {
-                    membersToDo.addItem(user.getUsername());
+
+                    if (!user.getUsername().equals(currentToDo.getOwner())) {
+                        allUsersForThisToDo.add(user.getUsername());
+                        membersToDo.addItem(user.getUsername());
+                    }
                 }
             }
+
+            if (allUsersForThisToDo.size() == 1 && allUsersForThisToDo.contains(currentToDo.getOwner())) {
+                membersToDo.addItem("Not shared with other users");
+            }
         } else {
-            membersToDo.addItem("Not applicable");
+
+            membersToDo.addItem("Not applicable (ToDo not saved)");
+            membersToDo.setEnabled(false); // Keep it disabled
         }
     }
 

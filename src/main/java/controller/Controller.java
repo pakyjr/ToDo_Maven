@@ -66,10 +66,6 @@ public class Controller {
         }
     }
 
-    /**
-     * Updates an existing board's properties in the database, including its color.
-     * @param board The Board object with updated properties.
-     */
     public void updateBoard(Board board) {
         if (this.user == null) {
             System.err.println("Error: No user is logged in to update a board.");
@@ -142,6 +138,7 @@ public class Controller {
         try {
             int boardId = userDAO.getBoardId(boardEnumName, user.getUsername());
             if (boardId != -1) {
+
                 userDAO.saveToDo(toDo, boardId);
                 System.out.println("ToDo '" + toDoName + "' added successfully to board '" + boardNameStr + "'.");
             } else {
@@ -218,6 +215,7 @@ public class Controller {
             try {
                 int boardId = userDAO.getBoardId(boardEnumName, user.getUsername());
                 if (boardId != -1) {
+
                     userDAO.updateToDo(toDoToUpdate, boardId);
                     System.out.println("ToDo '" + oldToDoTitle + "' updated successfully to '" + newToDoTitle + "' on board '" + boardNameStr + "'.");
                 } else {
@@ -232,7 +230,6 @@ public class Controller {
             System.err.println("ToDo with title '" + oldToDoTitle + "' not found on board " + boardNameStr);
         }
     }
-
 
     public ToDo getToDoByTitle(String title, String boardNameStr){
         if (this.user == null) {
@@ -409,14 +406,6 @@ public class Controller {
         }
     }
 
-    /**
-     * Shares a ToDo with a list of specified users. Only the creator of the ToDo can perform this action.
-     * This method assumes `ToDo` class has `addSharedUser(User user)` and `getUsers()` methods.
-     * @param toDo The ToDo object to share.
-     * @param usernamesToShareWith A list of usernames to share the ToDo with.
-     * @param boardNameStr The display name of the board where the original ToDo resides.
-     * @return true if sharing was successful for all users, false otherwise.
-     */
     public boolean shareToDoWithUsers(ToDo toDo, List<String> usernamesToShareWith, String boardNameStr) {
         if (this.user == null) {
             System.err.println("Error: No user is logged in.");
@@ -438,22 +427,17 @@ public class Controller {
         boolean allSuccess = true;
         for (String username : usernamesToShareWith) {
             try {
-                // 1. Persist the sharing in the database
+
                 userDAO.shareToDo(toDo.getId().toString(), username);
                 System.out.println("DEBUG: ToDo '" + toDo.getTitle() + "' DB shared with '" + username + "'.");
 
-                // 2. Crucial Update: Refresh the recipient's in-memory data
                 Optional<User> recipientUserOptional = userDAO.getUserByUsername(username);
 
                 if (recipientUserOptional.isPresent()) {
                     User recipientUser = recipientUserOptional.get();
 
-                    // Reload all boards and ToDos for the recipient user.
-                    // This ensures the newly shared ToDo is added to their in-memory data structure.
                     userDAO.loadUserBoardsAndToDos(recipientUser);
 
-                    // Add the recipient user to the original ToDo's shared users list.
-                    // This keeps the creator's ToDo object consistent with who it's shared with.
                     toDo.addSharedUser(recipientUser);
 
                     System.out.println("ToDo '" + toDo.getTitle() + "' shared successfully with user '" + username + "' and recipient's in-memory data updated.");
@@ -476,13 +460,6 @@ public class Controller {
         return allSuccess;
     }
 
-    /**
-     * Removes sharing of a ToDo from a list of specified users. Only the creator of the ToDo can perform this action.
-     * This method assumes `ToDo` class has `removeSharedUser(String username)` method.
-     * @param toDo The ToDo object from which to remove sharing.
-     * @param usernamesToRemoveSharing A list of usernames to remove sharing from.
-     * @return true if unsharing was successful for all users, false otherwise.
-     */
     public boolean removeToDoSharing(ToDo toDo, List<String> usernamesToRemoveSharing) {
         if (this.user == null) {
             System.err.println("Error: No user is logged in.");
@@ -508,9 +485,6 @@ public class Controller {
                 toDo.removeSharedUser(username);
                 System.out.println("Removed sharing of ToDo '" + toDo.getTitle() + "' from user '" + username + "'.");
 
-                // Optional: If you also need to remove the ToDo from the recipient's in-memory board immediately,
-                // you would add logic here to find the recipient's user object and remove the ToDo from their board.
-                // This is more complex and depends on how you manage active user sessions.
             } catch (SQLException e) {
                 System.err.println("Database error removing sharing of ToDo '" + toDo.getTitle() + "' from '" + username + "': " + e.getMessage());
                 e.printStackTrace();
@@ -520,10 +494,6 @@ public class Controller {
         return allSuccess;
     }
 
-    /**
-     * Retrieves all registered users from the database.
-     * @return A Set of User objects.
-     */
     public Set<User> getAllUsers() {
         if (this.user == null) {
             System.err.println("Error: No user is logged in to retrieve all users.");
@@ -538,18 +508,10 @@ public class Controller {
         }
     }
 
-
     public boolean isCurrentUserToDoCreator(ToDo toDo) {
         return this.user != null && toDo != null && this.user.getUsername().equals(toDo.getOwner());
     }
 
-    /**
-     * Retrieves a list of usernames that a specific ToDo has been shared with.
-     * This relies on the `getUsers()` method of the ToDo object.
-     * @param boardNameStr The display name of the board where the original ToDo resides.
-     * @param toDoTitle The title of the ToDo to query.
-     * @return An ArrayList of usernames (Strings) that the ToDo has been shared with.
-     */
     public ArrayList<String> getSharedUsersForToDo(String boardNameStr, String toDoTitle) {
         if (this.user == null) {
             System.err.println("Error: No user is logged in.");

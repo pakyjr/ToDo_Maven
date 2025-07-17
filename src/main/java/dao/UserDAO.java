@@ -8,7 +8,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID; // Import UUID
+import java.util.UUID;
 
 public interface UserDAO {
     boolean saveUser(User user) throws SQLException;
@@ -25,5 +25,5 @@ public interface UserDAO {
     Set<User> getAllUsers() throws SQLException;
     List<String> getSharedUsernamesForToDo(String toDoId) throws SQLException;
     void saveBoard(Board board, UUID userId) throws SQLException;
-    void updateBoard(Board board) throws SQLException; // NEW: Added for updating board properties, including color
+    void updateBoard(Board board) throws SQLException;
 }

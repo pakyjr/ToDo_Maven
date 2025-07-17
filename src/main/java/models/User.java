@@ -1,33 +1,30 @@
 package models;
 
 import models.board.*;
-
 import java.util.*;
 
 public class User {
-    private final UUID id; // Added UUID for unique identification
+    private final UUID id;
     private final String username;
     private final String hashedPassword;
     private final ArrayList<Board> boardList;
 
     public User(String username, String plainPassword) {
-        this.id = UUID.randomUUID(); // Generate a new ID for new users
+        this.id = UUID.randomUUID();
         this.username = username;
         this.hashedPassword = hashPassword(plainPassword);
         this.boardList = new ArrayList<>();
-        // fillBoard is called after successful registration in Controller
-        // fillBoard(this.username); // Removed from constructor to be called after DB save
     }
 
     public User(String username, String hashedPassword, ArrayList<Board> existingBoards, UUID id) {
-        this.id = id; // Assign existing ID for loaded users
+        this.id = id;
         this.username = username;
         this.hashedPassword = hashedPassword;
         this.boardList = existingBoards != null ? existingBoards : new ArrayList<>();
     }
 
     public static String hashPassword(String password) {
-        // Simple hashing for demonstration. In production, use strong, secure hashing like BCrypt.
+
         return Integer.toHexString(password.hashCode());
     }
 
@@ -47,22 +44,17 @@ public class User {
         return board;
     }
 
-    // --- NEW METHOD ADDED ---
     public void addBoard(Board board) {
-        // This method is useful when loading existing boards from the database
-        // to avoid re-creating a new Board object and instead directly add the loaded one.
         boardList.add(board);
     }
-    // --- END NEW METHOD ---
 
-    // --- NEW METHOD ADDED ---
     public void clearBoards() {
         this.boardList.clear();
     }
-    // --- END NEW METHOD ---
+
 
     public void fillBoard(String user) {
-        // Ensure default boards are added only if they don't exist
+
         if (getBoard(BoardName.WORK) == null) {
             addBoard(BoardName.WORK, user);
         }

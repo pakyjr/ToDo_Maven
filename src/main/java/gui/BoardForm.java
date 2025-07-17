@@ -2,7 +2,7 @@ package gui;
 
 import controller.Controller;
 import models.ToDo;
-import models.board.Board; // Import Board class
+import models.board.Board;
 import models.board.BoardName;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -72,8 +72,6 @@ public class BoardForm {
             }
         });
 
-        // Initial color setting (might be "Default" or the first item)
-        // This will be overridden by the selected board's color once a board is chosen.
         setPanelColors((String) colorChange.getSelectedItem());
 
         colorChange.addActionListener(new ActionListener() {
@@ -82,20 +80,19 @@ public class BoardForm {
                 String colorSelected = (String) colorChange.getSelectedItem();
                 setPanelColors(colorSelected);
 
-                // --- NEW LOGIC: Save the new board color ---
                 String selectedBoardDisplayName = (String) comboBoxBoards.getSelectedItem();
                 if (!"Boards".equals(selectedBoardDisplayName)) {
                     BoardName selectedBoardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
                     if (selectedBoardEnum != null) {
                         Board currentBoard = controller.user.getBoard(selectedBoardEnum);
                         if (currentBoard != null) {
-                            currentBoard.setColor(colorSelected); // Update the model
-                            controller.updateBoard(currentBoard); // Persist the change to DB via controller
+                            currentBoard.setColor(colorSelected);
+                            controller.updateBoard(currentBoard);
                             System.out.println("DEBUG: Board color changed to " + colorSelected + " for board " + selectedBoardDisplayName);
                         }
                     }
                 }
-                // --- END NEW LOGIC ---
+
             }
         });
 
@@ -196,24 +193,22 @@ public class BoardForm {
                 changeBoard.setEnabled(false);
 
                 if (boardSelected) {
-                    // --- NEW LOGIC: Set panel color based on selected board's stored color ---
+
                     BoardName selectedBoardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
                     if (selectedBoardEnum != null) {
                         Board selectedBoard = controller.user.getBoard(selectedBoardEnum);
                         if (selectedBoard != null) {
-                            setPanelColors(selectedBoard.getColor()); // Set color from loaded board
-                            colorChange.setSelectedItem(selectedBoard.getColor()); // Update the JComboBox to show current color
+                            setPanelColors(selectedBoard.getColor());
+                            colorChange.setSelectedItem(selectedBoard.getColor());
                         }
                     }
-                    // --- END NEW LOGIC ---
 
                     ArrayList<String> todos = controller.getToDoListString(selectedBoardDisplayName);
                     listModel.addAll(todos);
                     ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(selectedBoardDisplayName);
                 } else {
                     ((ToDoListCellRenderer) jList.getCellRenderer()).setCurrentBoard(null);
-                    // Optionally reset to a default color when no board is selected
-                    setPanelColors("Blue"); // Or any other default color
+                    setPanelColors("Blue");
                     colorChange.setSelectedItem("Blue");
                 }
                 jList.repaint();
@@ -263,7 +258,6 @@ public class BoardForm {
                 BoardName selectedBoardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
                 if (selectedBoardEnum == null) return;
 
-                // Changed from ArrayList<ToDo> to List<ToDo>
                 List<ToDo> todos = controller.user.getBoard(selectedBoardEnum).getTodoList();
 
                 todos.sort(Comparator.comparing(ToDo::getDueDate, Comparator.nullsLast(LocalDate::compareTo)));
@@ -290,7 +284,6 @@ public class BoardForm {
                 BoardName selectedBoardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
                 if (selectedBoardEnum == null) return;
 
-                // Changed from ArrayList<ToDo> to List<ToDo>
                 List<ToDo> todos = controller.user.getBoard(selectedBoardEnum).getTodoList();
 
                 todos.sort(Comparator.comparing(todo -> todo.getTitle().toLowerCase()));
