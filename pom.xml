@@ -19,10 +19,14 @@
             <artifactId>postgresql</artifactId>
             <version>42.7.5</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.toedter</groupId>
+            <artifactId>jcalendar</artifactId>
+            <version>1.4</version> </dependency>
         <dependency>
             <groupId>org.mindrot</groupId>
             <artifactId>jbcrypt</artifactId>
-            <version>0.4</version> </dependency>
+            <version>0.4</version>
+        </dependency>
     </dependencies>
 </project>
