@@ -122,7 +122,10 @@ public class BoardForm {
         OrderByDueDate.setEnabled(false);
         todayDueDate.setEnabled(false);
 
+
         if (dateChooserSearchDate != null) {
+            dateChooserSearchDate.setDateFormatString("EEEE, dd MMMM yyyy");
+            dateChooserSearchDate.setPreferredSize(new Dimension(200, 25));
             dateChooserSearchDate.getDateEditor().addPropertyChangeListener(evt -> {
                 if ("date".equals(evt.getPropertyName())) {
                     filterByDate();
@@ -475,9 +478,10 @@ public class BoardForm {
     }
 
     private void createUIComponents() {
-
         dateChooserSearchDate = new JDateChooser();
-        dateChooserSearchDate.setDateFormatString("dd/MM/yyyy");
+
+        dateChooserSearchDate.setDateFormatString("EEEE, dd MMMM yyyy");
+        dateChooserSearchDate.setPreferredSize(new Dimension(200, 25));
     }
 
     private void setPanelColors(String colorSelected) {
@@ -676,7 +680,7 @@ public class BoardForm {
                     if (toDo.getDueDate() != null) {
                         LocalDate today = LocalDate.now();
                         if (toDo.getDueDate().isBefore(today) && !"Completo".equals(toDo.getStatus()) && !"Complete".equals(toDo.getStatus())) {
-                            renderer.setForeground(Color.RED); // Overdue ToDos are red
+                            renderer.setForeground(Color.RED);
                         }
                     }
 
