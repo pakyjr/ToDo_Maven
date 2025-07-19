@@ -125,7 +125,8 @@ public class BoardForm {
 
         if (dateChooserSearchDate != null) {
             dateChooserSearchDate.setDateFormatString("EEEE, dd MMMM yyyy");
-            dateChooserSearchDate.setPreferredSize(new Dimension(200, 25));
+            // Set preferred size to match textFieldSearchTitle's approximate height
+            dateChooserSearchDate.setPreferredSize(new Dimension(200, textFieldSearchTitle.getPreferredSize().height));
             dateChooserSearchDate.getDateEditor().addPropertyChangeListener(evt -> {
                 if ("date".equals(evt.getPropertyName())) {
                     filterByDate();
@@ -481,6 +482,7 @@ public class BoardForm {
         dateChooserSearchDate = new JDateChooser();
 
         dateChooserSearchDate.setDateFormatString("EEEE, dd MMMM yyyy");
+        // This will be set more precisely in the constructor after textFieldSearchTitle is initialized
         dateChooserSearchDate.setPreferredSize(new Dimension(200, 25));
     }
 
