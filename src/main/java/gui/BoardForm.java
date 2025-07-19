@@ -13,12 +13,15 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
+import java.time.ZoneId;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
+
+import com.toedter.calendar.JDateChooser;
 
 public class BoardForm {
     private JPanel board;
@@ -31,7 +34,7 @@ public class BoardForm {
     private JButton MoveUp;
     private JList jList;
     private JTextField textFieldSearchTitle;
-    private JTextField textFieldSearchDate;
+    private JDateChooser dateChooserSearchDate;
     private JButton OrderByDueDate;
     private JButton MoveDown;
     private JButton changeBoard;
@@ -41,6 +44,7 @@ public class BoardForm {
 
     public static DefaultListModel<String> listModel;
     private Controller controller;
+    private LocalDate highlightDate;
 
     public BoardForm(JFrame frame, Controller c){
         frameBoardForm = new JFrame("Personal Area");
@@ -92,7 +96,6 @@ public class BoardForm {
                         }
                     }
                 }
-
             }
         });
 
@@ -108,7 +111,7 @@ public class BoardForm {
         listModel = new DefaultListModel<String>();
         jList.setModel(listModel);
 
-        jList.setCellRenderer(new ToDoListCellRenderer(controller, null));
+        jList.setCellRenderer(new ToDoListCellRenderer(controller, null, this));
 
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
@@ -118,6 +121,17 @@ public class BoardForm {
         orderToDoByTitle.setEnabled(false);
         OrderByDueDate.setEnabled(false);
         todayDueDate.setEnabled(false);
+
+
+        if (dateChooserSearchDate != null) {
+            dateChooserSearchDate.setDateFormatString("EEEE, dd MMMM yyyy");
+            dateChooserSearchDate.setPreferredSize(new Dimension(200, 25));
+            dateChooserSearchDate.getDateEditor().addPropertyChangeListener(evt -> {
+                if ("date".equals(evt.getPropertyName())) {
+                    filterByDate();
+                }
+            });
+        }
 
 
         jList.addListSelectionListener(e -> {
@@ -191,6 +205,10 @@ public class BoardForm {
                 MoveDown.setEnabled(false);
                 deleteToDo.setEnabled(false);
                 changeBoard.setEnabled(false);
+                if (dateChooserSearchDate != null) {
+                    dateChooserSearchDate.setEnabled(boardSelected);
+                }
+
 
                 if (boardSelected) {
 
@@ -211,6 +229,12 @@ public class BoardForm {
                     setPanelColors("Blue");
                     colorChange.setSelectedItem("Blue");
                 }
+                textFieldSearchTitle.setText("");
+                if (dateChooserSearchDate != null) {
+                    dateChooserSearchDate.setDate(null);
+                }
+
+                highlightDate = null;
                 jList.repaint();
             }
         });
@@ -227,19 +251,6 @@ public class BoardForm {
 
             public void changedUpdate(DocumentEvent e) {
                 filterToDoList();
-            }
-        });
-
-
-        textFieldSearchDate.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) {
-                filterByDate();
-            }
-            public void removeUpdate(DocumentEvent e) {
-                filterByDate();
-            }
-            public void changedUpdate(DocumentEvent e) {
-                filterByDate();
             }
         });
 
@@ -271,6 +282,8 @@ public class BoardForm {
                 MoveDown.setEnabled(false);
                 deleteToDo.setEnabled(false);
                 changeBoard.setEnabled(false);
+                highlightDate = null;
+                jList.repaint();
             }
         });
 
@@ -297,6 +310,8 @@ public class BoardForm {
                 MoveDown.setEnabled(false);
                 deleteToDo.setEnabled(false);
                 changeBoard.setEnabled(false);
+                highlightDate = null;
+                jList.repaint();
             }
         });
 
@@ -327,13 +342,12 @@ public class BoardForm {
 
                     if (todoToMove != null && actualIndex != -1 && actualIndex > 0) {
                         Collections.swap(todos, actualIndex, actualIndex - 1);
-                        // TODO: You might need a controller method to persist this order change if order matters in DB
-                        // If order by position is crucial, you'll need to update positions in DB
-                        // controller.updateToDoPositions(todos); or similar
+
                     }
 
                     jList.setSelectedIndex(selectedIndex - 1);
                     jList.ensureIndexIsVisible(selectedIndex - 1);
+                    jList.repaint();
                 }
             }
         });
@@ -367,13 +381,11 @@ public class BoardForm {
 
                     if (todoToMove != null && actualIndex != -1 && actualIndex < todos.size() - 1) {
                         Collections.swap(todos, actualIndex, actualIndex + 1);
-                        // TODO: You might need a controller method to persist this order change if order matters in DB
-                        // If order by position is crucial, you'll need to update positions in DB
-                        // controller.updateToDoPositions(todos); or similar
                     }
 
                     jList.setSelectedIndex(selectedIndex + 1);
                     jList.ensureIndexIsVisible(selectedIndex + 1);
+                    jList.repaint();
                 }
             }
         });
@@ -400,7 +412,7 @@ public class BoardForm {
                         MoveDown.setEnabled(false);
                         deleteToDo.setEnabled(false);
                         changeBoard.setEnabled(false);
-
+                        jList.repaint();
                         JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' deleted successfully.");
                     }
                 } else {
@@ -452,6 +464,7 @@ public class BoardForm {
                             MoveDown.setEnabled(false);
                             deleteToDo.setEnabled(false);
                             changeBoard.setEnabled(false);
+                            jList.repaint(); // Repaint after move
                             JOptionPane.showMessageDialog(frameBoardForm, "'" + selectedToDoTitle + "' moved successfully to " + destinationBoardString + " board.");
                         } else {
                             JOptionPane.showMessageDialog(frameBoardForm, "Failed to move '" + selectedToDoTitle + "'.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -464,9 +477,16 @@ public class BoardForm {
         });
     }
 
+    private void createUIComponents() {
+        dateChooserSearchDate = new JDateChooser();
+
+        dateChooserSearchDate.setDateFormatString("EEEE, dd MMMM yyyy");
+        dateChooserSearchDate.setPreferredSize(new Dimension(200, 25));
+    }
+
     private void setPanelColors(String colorSelected) {
         if (colorSelected == null) {
-            colorSelected = "Blue"; // Default to blue if null
+            colorSelected = "Blue";
         }
 
         switch (colorSelected) {
@@ -494,8 +514,8 @@ public class BoardForm {
                 board.setBackground(new Color(217,165,255));
                 campo1.setBackground(new Color(175,64,255));
                 break;
-            default: // Fallback for unknown colors
-                board.setBackground(new Color(160, 235, 219)); // Default blue
+            default:
+                board.setBackground(new Color(160, 235, 219));
                 campo1.setBackground(new Color(115, 207, 214));
                 break;
         }
@@ -514,6 +534,8 @@ public class BoardForm {
         String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
         if ("Boards".equals(selectedBoardDisplayName)) {
             listModel.clear();
+            highlightDate = null;
+            jList.repaint();
             return;
         }
 
@@ -531,58 +553,63 @@ public class BoardForm {
         MoveDown.setEnabled(false);
         deleteToDo.setEnabled(false);
         changeBoard.setEnabled(false);
+        highlightDate = null;
+        if (dateChooserSearchDate != null) {
+            dateChooserSearchDate.setDate(null);
+        }
+
+        jList.repaint();
     }
 
     private void filterByDate() {
-        String dateText = textFieldSearchDate.getText().trim();
         String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
         if ("Boards".equals(selectedBoardDisplayName)) {
-            listModel.clear();
+            highlightDate = null;
+            jList.repaint();
             return;
         }
         BoardName boardNameEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
-        if (boardNameEnum == null) return;
-
-
-        if (dateText.isEmpty()) {
-
-            ArrayList<String> allTodos = controller.getToDoListString(selectedBoardDisplayName);
-            listModel.clear();
-            listModel.addAll(allTodos);
-            jList.clearSelection();
-            MoveUp.setEnabled(false);
-            MoveDown.setEnabled(false);
-            deleteToDo.setEnabled(false);
-            changeBoard.setEnabled(false);
+        if (boardNameEnum == null) {
+            highlightDate = null;
+            jList.repaint();
             return;
         }
 
-        try {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-            LocalDate searchDate = LocalDate.parse(dateText, formatter);
-
-            List<ToDo> todos = controller.user.getBoard(boardNameEnum).getTodoList();
-
-            listModel.clear();
-            for (ToDo todo : todos) {
-                if (todo.getDueDate() != null && todo.getDueDate().equals(searchDate)) {
-                    listModel.addElement(todo.getTitle());
-                }
-            }
-            jList.clearSelection();
-            MoveUp.setEnabled(false);
-            MoveDown.setEnabled(false);
-            deleteToDo.setEnabled(false);
-            changeBoard.setEnabled(false);
-        } catch (DateTimeParseException e) {
-            JOptionPane.showMessageDialog(frameBoardForm, "Invalid date format. Please use dd/MM/yyyy.", "Error", JOptionPane.ERROR_MESSAGE);
-            listModel.clear();
-            jList.clearSelection();
-            MoveUp.setEnabled(false);
-            MoveDown.setEnabled(false);
-            deleteToDo.setEnabled(false);
-            changeBoard.setEnabled(false);
+        Date selectedDate = null;
+        if (dateChooserSearchDate != null) {
+            selectedDate = dateChooserSearchDate.getDate();
         }
+
+
+        if (selectedDate == null) {
+            highlightDate = null;
+            ArrayList<String> allTodos = controller.getToDoListString(selectedBoardDisplayName);
+            listModel.clear();
+            listModel.addAll(allTodos);
+        } else {
+            try {
+                highlightDate = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                ArrayList<String> todosToDisplay = new ArrayList<>();
+                for (ToDo todo : controller.user.getBoard(boardNameEnum).getTodoList()) {
+                    if (todo != null && todo.getDueDate() != null && todo.getDueDate().equals(highlightDate)) {
+                        todosToDisplay.add(todo.getTitle());
+                    }
+                }
+                listModel.clear();
+                listModel.addAll(todosToDisplay);
+
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(frameBoardForm, "An error occurred while setting the highlight date.", "Error", JOptionPane.ERROR_MESSAGE);
+                highlightDate = null;
+            }
+        }
+        textFieldSearchTitle.setText("");
+        jList.clearSelection();
+        MoveUp.setEnabled(false);
+        MoveDown.setEnabled(false);
+        deleteToDo.setEnabled(false);
+        changeBoard.setEnabled(false);
+        jList.repaint();
     }
 
     private void showTodosToday() {
@@ -593,28 +620,39 @@ public class BoardForm {
         BoardName boardEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
         if (boardEnum == null) return;
 
-        List<ToDo> todos = controller.user.getBoard(boardEnum).getTodoList();
+        highlightDate = today;
+        if (dateChooserSearchDate != null) {
+            dateChooserSearchDate.setDate(Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        }
 
-        listModel.clear();
-        for (ToDo t : todos) {
-            if (t.getDueDate() != null && t.getDueDate().equals(today)) {
-                listModel.addElement(t.getTitle());
+        ArrayList<String> todosToDisplay = new ArrayList<>();
+        for (ToDo todo : controller.user.getBoard(boardEnum).getTodoList()) {
+            if (todo != null && todo.getDueDate() != null && todo.getDueDate().equals(today)) {
+                todosToDisplay.add(todo.getTitle());
             }
         }
+        listModel.clear();
+        listModel.addAll(todosToDisplay);
+
+
         jList.clearSelection();
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
         deleteToDo.setEnabled(false);
         changeBoard.setEnabled(false);
+        textFieldSearchTitle.setText("");
+        jList.repaint();
     }
 
-    private class ToDoListCellRenderer extends DefaultListCellRenderer {
+    public class ToDoListCellRenderer extends DefaultListCellRenderer {
         private Controller controller;
         private String currentBoardDisplayName;
+        private BoardForm boardForm;
 
-        public ToDoListCellRenderer(Controller controller, String initialBoardDisplayName) {
+        public ToDoListCellRenderer(Controller controller, String initialBoardDisplayName, BoardForm boardForm) {
             this.controller = controller;
             this.currentBoardDisplayName = initialBoardDisplayName;
+            this.boardForm = boardForm;
         }
 
         public void setCurrentBoard(String boardDisplayName) {
@@ -625,9 +663,10 @@ public class BoardForm {
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JLabel renderer = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
+            renderer.setForeground(list.getForeground());
+            renderer.setBackground(list.getBackground());
+
             if (currentBoardDisplayName == null || "Boards".equals(currentBoardDisplayName)) {
-                renderer.setForeground(list.getForeground());
-                renderer.setBackground(list.getBackground());
                 return renderer;
             }
 
@@ -636,25 +675,27 @@ public class BoardForm {
 
                 ToDo toDo = controller.getToDoByTitle(toDoTitle, currentBoardDisplayName);
 
-                if (toDo != null && toDo.getDueDate() != null) {
-                    LocalDate today = LocalDate.now();
+                if (toDo != null) {
 
-                    if (toDo.getDueDate().isBefore(today) && !"Completo".equals(toDo.getStatus()) && !"Complete".equals(toDo.getStatus())) {
-                        renderer.setForeground(Color.RED);
-                    } else {
-                        renderer.setForeground(list.getForeground());
+                    if (toDo.getDueDate() != null) {
+                        LocalDate today = LocalDate.now();
+                        if (toDo.getDueDate().isBefore(today) && !"Completo".equals(toDo.getStatus()) && !"Complete".equals(toDo.getStatus())) {
+                            renderer.setForeground(Color.RED);
+                        }
                     }
-                } else {
-                    renderer.setForeground(list.getForeground());
+
+                    if (boardForm.highlightDate != null && toDo.getDueDate() != null && toDo.getDueDate().equals(boardForm.highlightDate)) {
+
+                        renderer.setBackground(new Color(200, 255, 200));
+                    }
                 }
             }
 
             if (isSelected) {
                 renderer.setBackground(list.getSelectionBackground());
                 renderer.setForeground(list.getSelectionForeground());
-            } else {
-                renderer.setBackground(list.getBackground());
             }
+
             return renderer;
         }
     }
