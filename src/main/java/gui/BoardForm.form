@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="board" layout-manager="GridLayoutManager" row-count="3" column-count="11" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="30" left="30" bottom="30" right="30"/>
     <constraints>
-      <xy x="20" y="20" width="869" height="593"/>
+      <xy x="20" y="20" width="898" height="593"/>
     </constraints>
     <properties>
       <background color="-6231077"/>
@@ -184,12 +184,12 @@
           <background color="-1114125"/>
           <font name="Elephant" size="14" style="0"/>
           <foreground color="-16777216"/>
-          <text value="Search by Date:"/>
+          <text value="Search by DueDate:"/>
         </properties>
       </component>
       <component id="60ed3" class="com.toedter.calendar.JDateChooser" binding="dateChooserSearchDate" custom-create="true">
         <constraints>
-          <grid row="0" column="7" row-span="1" col-span="3" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="8" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
         </constraints>
       </component>
     </children>

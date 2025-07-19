@@ -1,29 +1,45 @@
 package models.board;
 
 import models.ToDo;
-import models.User;
-
-import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Board {
+    private int id;
     private final BoardName name;
-    private String description;
     private final String owner;
+    private String color;
     private final List<ToDo> todoList;
 
     public Board(BoardName name, String owner) {
         this.name = name;
         this.owner = owner;
         this.todoList = new ArrayList<>();
+        this.color = "Default";
+        this.id = 0;
     }
 
-    public Board(BoardName name, String owner, String description) {
+    public Board(int id, BoardName name, String owner, String color) {
+        this.id = id;
         this.name = name;
-        this.description = description;
         this.owner = owner;
+        this.color = color;
         this.todoList = new ArrayList<>();
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
     }
 
     public ToDo addTodo(String title) {
@@ -31,118 +47,64 @@ public class Board {
     }
 
     public ToDo addTodo(String title, String owner) {
-        ToDo todo = new ToDo(title);
-        todo.setOwner(owner);
+        if (todoList.stream().anyMatch(todo -> todo.getTitle().equals(title) && todo.getOwner().equals(owner))) {
+            System.err.println("Error: A ToDo with title '" + title + "' by owner '" + owner + "' already exists on board " + this.name);
+            return null;
+        }
+
+        ToDo todo = new ToDo(title, owner);
         todoList.add(todo);
-
-        int listSize = todoList.size();
-        todo.setPosition(listSize);
-
+        todo.setPosition(todoList.size());
         return todo;
     }
 
-    public void addExistingTodo(ToDo todo) {
-        todoList.add(todo);
-        int listSize = todoList.size();
-        todo.setPosition(listSize);
+    public void addExistingTodo(ToDo existingTodo) {
+        if (todoList.stream().anyMatch(todo -> todo.getId().equals(existingTodo.getId()))) {
+            System.err.println("Error: ToDo with ID '" + existingTodo.getId() + "' already exists on board " + this.name);
+            return;
+        }
+        todoList.add(existingTodo);
+    }
+
+    public void removeToDo(ToDo toDoToRemove) {
+        boolean removed = todoList.remove(toDoToRemove);
+        if (removed) {
+            for (int i = 0; i < todoList.size(); i++) {
+                todoList.get(i).setPosition(i + 1);
+            }
+            System.out.println("ToDo '" + toDoToRemove.getTitle() + "' removed from board '" + name + "'.");
+
+            if (this.owner.equals(toDoToRemove.getOwner())) {
+                System.out.println("This ToDo was created by the current user. Clearing shared users list...");
+                toDoToRemove.clearUsers();
+            }
+        } else {
+            System.out.println("ToDo '" + toDoToRemove.getTitle() + "' not found on board '" + name + "'.");
+        }
     }
 
     public List<ToDo> getTodoList() {
         return new ArrayList<>(todoList);
     }
 
-    public void shareTodo(User guest, ToDo todo) {
-        todo.addUser(guest);
-        Board guestBoard = guest.getBoard(name);
-        if (guestBoard != null) {
-            guestBoard.addExistingTodo(todo);
-        }
-    }
-
-    public void changePosition(ToDo todo, int newPosition) {
-        if (newPosition < 1 || newPosition > todoList.size()) {
-            System.out.println("Invalid position");
-            return;
-        }
-
-        int oldPosition = todo.getPosition();
-        if (oldPosition == newPosition) {
-            return;
-        }
-
-        todo.setPosition(newPosition);
-
-        for (int i = 0; i < todoList.size(); i++) {
-            ToDo item = todoList.get(i);
-            if (oldPosition < newPosition) {
-                // Moving down
-                if (i > oldPosition - 1 && i <= newPosition - 1) {
-                    item.setPosition(item.getPosition() - 1);
-                }
-            } else {
-                // Moving up
-                if (i >= newPosition - 1 && i < oldPosition) {
-                    item.setPosition(item.getPosition() + 1);
-                }
-            }
-        }
-
-        todoList.sort(Comparator.comparingInt(ToDo::getPosition));
-    }
-
-    public void deleteTodo(ToDo todo) {
-        int position = todo.getPosition();
-        todoList.remove(todo);
-
-        // Update positions of remaining todos
-        for (ToDo item : todoList) {
-            if (item.getPosition() > position) {
-                item.setPosition(item.getPosition() - 1);
-            }
-        }
-
-        //handle boards of other users where the to do is shared
-        Set<User> users = todo.getUsers();
-        if(!users.isEmpty()) { //if the list is not empty, the to do is shared (recursive case)
-            for (User user : users) {
-                Board board = user.getBoard(this.name);
-                board.deleteTodo(todo);
-            }
-        }
-    }
-
     public BoardName getName() {
         return name;
     }
 
-    public ArrayList<ToDo> sortDueDate(){
-        LocalDate today = LocalDate.now();
-        ArrayList<ToDo> filterList = new ArrayList<>();
-        for(ToDo todo:todoList){
-            if(todo.getDueDate().equals(today)){
-                filterList.add(todo);
-            }
-        }
-        return filterList;
+    public String getOwner() {
+        return owner;
     }
 
-    public ArrayList<ToDo> sortDueDate(LocalDate dueDate){
-        ArrayList<ToDo> filterList = new ArrayList<>();
-        for(ToDo todo:todoList){
-            if(todo.getDueDate().equals(dueDate)){
-                filterList.add(todo);
-            }
-        }
-        return filterList;
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Board board = (Board) o;
+        return id == board.id && name == board.name && Objects.equals(owner, board.owner);
     }
 
-    public ToDo SearchTitle(String title){
-        ArrayList<ToDo> filterList = new ArrayList<>();
-        for(ToDo todo:todoList) {
-            if (todo.getTitle().equals(title)) {
-                return todo;
-            }
-        }
-        return null;
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, name, owner);
     }
 }
