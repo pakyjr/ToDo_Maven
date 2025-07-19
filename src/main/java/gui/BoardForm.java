@@ -534,43 +534,62 @@ public class BoardForm {
         String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
         if ("Boards".equals(selectedBoardDisplayName)) {
             listModel.clear();
-            highlightDate = null;
+            // Do not reset highlightDate or dateChooserSearchDate here
             jList.repaint();
             return;
         }
 
         String searchText = textFieldSearchTitle.getText().toLowerCase();
-        ArrayList<String> allTodos = controller.getToDoListString(selectedBoardDisplayName);
+        BoardName boardNameEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
+        if (boardNameEnum == null) {
+            listModel.clear();
+            jList.repaint();
+            return;
+        }
+
+        List<ToDo> todosInCurrentBoard = controller.user.getBoard(boardNameEnum).getTodoList();
         listModel.clear();
 
-        for (String todoTitle : allTodos) {
-            if (todoTitle.toLowerCase().contains(searchText)) {
-                listModel.addElement(todoTitle);
+        for (ToDo todo : todosInCurrentBoard) {
+            // Apply title filter
+            boolean matchesTitle = todo.getTitle().toLowerCase().contains(searchText);
+
+            // Apply date filter if a date is selected
+            boolean matchesDate = true;
+            if (highlightDate != null) {
+                matchesDate = (todo.getDueDate() != null && todo.getDueDate().equals(highlightDate));
+            } else if (dateChooserSearchDate.getDate() != null) {
+                LocalDate selectedDateFromChooser = dateChooserSearchDate.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+                matchesDate = (todo.getDueDate() != null && todo.getDueDate().equals(selectedDateFromChooser));
+            }
+
+
+            if (matchesTitle && matchesDate) {
+                listModel.addElement(todo.getTitle());
             }
         }
+
         jList.clearSelection();
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
         deleteToDo.setEnabled(false);
         changeBoard.setEnabled(false);
-        highlightDate = null;
-        if (dateChooserSearchDate != null) {
-            dateChooserSearchDate.setDate(null);
-        }
-
         jList.repaint();
     }
+
 
     private void filterByDate() {
         String selectedBoardDisplayName = comboBoxBoards.getSelectedItem().toString();
         if ("Boards".equals(selectedBoardDisplayName)) {
             highlightDate = null;
+            listModel.clear();
             jList.repaint();
             return;
         }
         BoardName boardNameEnum = getBoardNameFromDisplayName(selectedBoardDisplayName);
         if (boardNameEnum == null) {
             highlightDate = null;
+            listModel.clear();
             jList.repaint();
             return;
         }
@@ -580,36 +599,15 @@ public class BoardForm {
             selectedDate = dateChooserSearchDate.getDate();
         }
 
-
+        // Always update highlightDate when the date chooser changes
         if (selectedDate == null) {
             highlightDate = null;
-            ArrayList<String> allTodos = controller.getToDoListString(selectedBoardDisplayName);
-            listModel.clear();
-            listModel.addAll(allTodos);
         } else {
-            try {
-                highlightDate = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-                ArrayList<String> todosToDisplay = new ArrayList<>();
-                for (ToDo todo : controller.user.getBoard(boardNameEnum).getTodoList()) {
-                    if (todo != null && todo.getDueDate() != null && todo.getDueDate().equals(highlightDate)) {
-                        todosToDisplay.add(todo.getTitle());
-                    }
-                }
-                listModel.clear();
-                listModel.addAll(todosToDisplay);
-
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(frameBoardForm, "An error occurred while setting the highlight date.", "Error", JOptionPane.ERROR_MESSAGE);
-                highlightDate = null;
-            }
+            highlightDate = selectedDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         }
-        textFieldSearchTitle.setText("");
-        jList.clearSelection();
-        MoveUp.setEnabled(false);
-        MoveDown.setEnabled(false);
-        deleteToDo.setEnabled(false);
-        changeBoard.setEnabled(false);
-        jList.repaint();
+
+        // Re-apply both title and date filters
+        filterToDoList();
     }
 
     private void showTodosToday() {
@@ -625,22 +623,15 @@ public class BoardForm {
             dateChooserSearchDate.setDate(Date.from(today.atStartOfDay(ZoneId.systemDefault()).toInstant()));
         }
 
-        ArrayList<String> todosToDisplay = new ArrayList<>();
-        for (ToDo todo : controller.user.getBoard(boardEnum).getTodoList()) {
-            if (todo != null && todo.getDueDate() != null && todo.getDueDate().equals(today)) {
-                todosToDisplay.add(todo.getTitle());
-            }
-        }
-        listModel.clear();
-        listModel.addAll(todosToDisplay);
-
+        // Re-apply both title and date filters, with highlightDate set to today
+        filterToDoList();
 
         jList.clearSelection();
         MoveUp.setEnabled(false);
         MoveDown.setEnabled(false);
         deleteToDo.setEnabled(false);
         changeBoard.setEnabled(false);
-        textFieldSearchTitle.setText("");
+        // Do not clear textFieldSearchTitle here, as user might want to search today's todos by title
         jList.repaint();
     }
 
