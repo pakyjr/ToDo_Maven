@@ -9,14 +9,39 @@ import java.sql.*;
 import java.sql.Date;
 import java.util.*;
 
+/**
+ * Implementazione concreta del Data Access Object per la gestione degli utenti e delle relative entità.
+ * Questa classe fornisce un'interfaccia per l'accesso ai dati persistenti nel database,
+ * gestendo operazioni CRUD per utenti, board e todo con le relative condivisioni.
+ */
 public class UserDAOImpl implements UserDAO {
 
+    /**
+     * Connessione al database utilizzata per tutte le operazioni di persistenza.
+     * Viene inizializzata tramite il singleton DatabaseConnection.
+     */
     private Connection connection;
 
+    /**
+     * Costruisce una nuova istanza di UserDAOImpl inizializzando la connessione al database.
+     *
+     * @throws SQLException se si verifica un errore durante l'ottenimento della connessione al database
+     */
     public UserDAOImpl() throws SQLException {
         this.connection = DatabaseConnection.getInstance();
     }
 
+    /**
+     * Salva un nuovo utente nel database con username, password hash e ID univoco.
+     *
+     * <p>Il metodo gestisce automaticamente i conflitti di username duplicati,
+     * restituendo false invece di lanciare un'eccezione per migliorare l'esperienza utente.</p>
+     *
+     * @param user l'oggetto User da salvare nel database
+     * @return true se l'utente è stato salvato con successo, false se esiste già un utente con lo stesso username
+     * @throws SQLException se si verifica un errore durante l'operazione di inserimento nel database
+     * @see User
+     */
     @Override
     public boolean saveUser(User user) throws SQLException {
         String sql = "INSERT INTO users (id, username, password_hash) VALUES (?, ?, ?)";
@@ -39,6 +64,18 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Salva una nuova board nel database associandola a un utente specifico.
+     *
+     * <p>Il metodo genera automaticamente un ID per la board e lo assegna all'oggetto
+     * passato come parametro, permettendo riferimenti futuri alla board salvata.</p>
+     *
+     * @param board la board da salvare contenente nome e colore
+     * @param userId l'UUID dell'utente proprietario della board
+     * @throws SQLException se si verifica un errore durante l'operazione di inserimento
+     * @see Board
+     * @see BoardName
+     */
     @Override
     public void saveBoard(Board board, UUID userId) throws SQLException {
         String sql = "INSERT INTO boards (name, color, user_id) VALUES (?, ?, ?)";
@@ -59,6 +96,16 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Aggiorna le proprietà di una board esistente nel database.
+     *
+     * <p>L'operazione viene eseguita solo se l'utente proprietario esiste nel database
+     * e corrisponde al proprietario specificato nella board.</p>
+     *
+     * @param board la board con le proprietà aggiornate da persistere
+     * @throws SQLException se si verifica un errore durante l'aggiornamento o se il proprietario non esiste
+     * @see Board
+     */
     @Override
     public void updateBoard(Board board) throws SQLException {
         String sql = "UPDATE boards SET name = ?, color = ? WHERE id = ? AND user_id = ?";
@@ -83,6 +130,15 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Recupera un utente dal database utilizzando il suo username come chiave di ricerca.
+     *
+     * @param username l'username dell'utente da recuperare
+     * @return Optional contenente l'utente se trovato, Optional vuoto altrimenti
+     * @throws SQLException se si verifica un errore durante la query
+     * @see User
+     * @see Optional
+     */
     @Override
     public Optional<User> getUserByUsername(String username) throws SQLException {
         String sql = "SELECT id, username, password_hash FROM users WHERE username = ?";
@@ -102,6 +158,24 @@ public class UserDAOImpl implements UserDAO {
         return Optional.empty();
     }
 
+    /**
+     * Carica tutte le board e i todo associati a un utente, inclusi quelli condivisi.
+     *
+     * <p>Questo metodo esegue un'operazione complessa che:</p>
+     * <ul>
+     *   <li>Pulisce le board esistenti dell'utente</li>
+     *   <li>Carica tutte le board di proprietà dell'utente</li>
+     *   <li>Per ogni board, carica tutti i todo di proprietà dell'utente</li>
+     *   <li>Carica tutti i todo condivisi con l'utente</li>
+     *   <li>Per ogni todo, carica le relative attività e utenti con cui è condiviso</li>
+     * </ul>
+     *
+     * @param user l'utente per cui caricare board e todo; se null, il metodo termina senza operazioni
+     * @throws SQLException se si verifica un errore durante il caricamento dei dati
+     * @see User
+     * @see Board
+     * @see ToDo
+     */
     @Override
     public void loadUserBoardsAndToDos(User user) throws SQLException {
         if (user == null) {
@@ -227,7 +301,6 @@ public class UserDAOImpl implements UserDAO {
                 Optional<User> currentUserOptional = getUserByUsername(user.getUsername());
                 currentUserOptional.ifPresent(sharedToDo::addSharedUser);
 
-
                 String originalBoardNameStr = rsSharedTodos.getString("original_board_name");
                 BoardName originalBoardName = null;
                 try {
@@ -255,6 +328,15 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Recupera l'ID numerico di una board specifica per un utente.
+     *
+     * @param boardName il nome della board da cercare
+     * @param username l'username del proprietario della board
+     * @return l'ID della board se trovata, -1 altrimenti
+     * @throws SQLException se si verifica un errore durante la query
+     * @see BoardName
+     */
     @Override
     public int getBoardId(BoardName boardName, String username) throws SQLException {
         String sql = "SELECT b.id FROM boards b JOIN users u ON b.user_id = u.id WHERE b.name = ? AND u.username = ?";
@@ -269,6 +351,17 @@ public class UserDAOImpl implements UserDAO {
         return -1;
     }
 
+    /**
+     * Salva un nuovo todo nel database associandolo a una board specifica.
+     *
+     * <p>Il metodo salva sia il todo principale che tutte le sue attività associate
+     * in un'operazione atomica per mantenere la consistenza dei dati.</p>
+     *
+     * @param toDo il todo da salvare con tutte le sue proprietà
+     * @param boardId l'ID della board a cui associare il todo
+     * @throws SQLException se si verifica un errore durante l'operazione di salvataggio
+     * @see ToDo
+     */
     @Override
     public void saveToDo(ToDo toDo, int boardId) throws SQLException {
 
@@ -292,6 +385,17 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Aggiorna un todo esistente nel database con nuovi valori per tutte le sue proprietà.
+     *
+     * <p>Il metodo sostituisce completamente le attività esistenti del todo
+     * con quelle fornite nell'oggetto todo aggiornato.</p>
+     *
+     * @param toDo il todo con i valori aggiornati
+     * @param boardId l'ID della board di appartenenza del todo
+     * @throws SQLException se si verifica un errore durante l'aggiornamento
+     * @see ToDo
+     */
     @Override
     public void updateToDo(ToDo toDo, int boardId) throws SQLException {
 
@@ -315,6 +419,13 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Sposta un todo da una board a un'altra aggiornando il suo board_id.
+     *
+     * @param toDoId l'ID stringa del todo da spostare
+     * @param newBoardId l'ID della board di destinazione
+     * @throws SQLException se si verifica un errore durante l'aggiornamento
+     */
     @Override
     public void updateToDoBoardId(String toDoId, int newBoardId) throws SQLException {
         String sql = "UPDATE todos SET board_id = ? WHERE id = ?";
@@ -325,6 +436,16 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Salva tutte le attività associate a un todo nel database.
+     *
+     * <p>Utilizza batch processing per ottimizzare le performance quando
+     * si salvano multiple attività contemporaneamente.</p>
+     *
+     * @param toDoId l'ID stringa del todo proprietario delle attività
+     * @param activities mappa delle attività con titolo come chiave e stato completamento come valore
+     * @throws SQLException se si verifica un errore durante il salvataggio delle attività
+     */
     private void saveActivities(String toDoId, Map<String, Boolean> activities) throws SQLException {
         String sql = "INSERT INTO activities (todo_id, activity_title, completed) VALUES (?, ?, ?)";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -338,6 +459,12 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Rimuove tutte le attività associate a un todo dal database.
+     *
+     * @param toDoId l'ID stringa del todo di cui rimuovere le attività
+     * @throws SQLException se si verifica un errore durante la rimozione
+     */
     private void clearActivities(String toDoId) throws SQLException {
         String sql = "DELETE FROM activities WHERE todo_id = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
@@ -346,6 +473,20 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Elimina completamente un todo dal database, incluse tutte le sue dipendenze.
+     *
+     * <p>L'operazione rimuove in sequenza:</p>
+     * <ol>
+     *   <li>Tutte le attività del todo</li>
+     *   <li>Tutte le condivisioni del todo</li>
+     *   <li>Il todo stesso</li>
+     * </ol>
+     *
+     * @param toDoId l'ID stringa del todo da eliminare
+     * @param username l'username del proprietario del todo (per validazione)
+     * @throws SQLException se si verifica un errore durante l'eliminazione
+     */
     @Override
     public void deleteToDo(String toDoId, String username) throws SQLException {
         clearActivities(toDoId);
@@ -359,6 +500,13 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Condivide un todo con un utente specifico creando un record di condivisione.
+     *
+     * @param toDoId l'ID stringa del todo da condividere
+     * @param sharedWithUsername l'username dell'utente con cui condividere il todo
+     * @throws SQLException se si verifica un errore durante la creazione della condivisione
+     */
     @Override
     public void shareToDo(String toDoId, String sharedWithUsername) throws SQLException {
         String sql = "INSERT INTO shared_todos (todo_id, shared_with_username) VALUES (?, ?)";
@@ -369,6 +517,13 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Rimuove la condivisione di un todo con un utente specifico.
+     *
+     * @param toDoId l'ID stringa del todo per cui rimuovere la condivisione
+     * @param sharedWithUsername l'username dell'utente da cui rimuovere la condivisione
+     * @throws SQLException se si verifica un errore durante la rimozione della condivisione
+     */
     @Override
     public void removeToDoSharing(String toDoId, String sharedWithUsername) throws SQLException {
         String sql = "DELETE FROM shared_todos WHERE todo_id = ? AND shared_with_username = ?";
@@ -379,6 +534,15 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Rimuove tutte le condivisioni di un todo specifico.
+     *
+     * <p>Utilizzato tipicamente prima dell'eliminazione di un todo per
+     * mantenere l'integrità referenziale del database.</p>
+     *
+     * @param toDoId l'ID stringa del todo per cui rimuovere tutte le condivisioni
+     * @throws SQLException se si verifica un errore durante la rimozione delle condivisioni
+     */
     @Override
     public void removeAllToDoSharing(String toDoId) throws SQLException {
         String sql = "DELETE FROM shared_todos WHERE todo_id = ?";
@@ -388,6 +552,14 @@ public class UserDAOImpl implements UserDAO {
         }
     }
 
+    /**
+     * Recupera tutti gli utenti registrati nel sistema.
+     *
+     * @return Set contenente tutti gli utenti senza duplicati
+     * @throws SQLException se si verifica un errore durante il recupero degli utenti
+     * @see User
+     * @see Set
+     */
     @Override
     public Set<User> getAllUsers() throws SQLException {
         Set<User> users = new HashSet<>();
@@ -406,6 +578,14 @@ public class UserDAOImpl implements UserDAO {
         return users;
     }
 
+    /**
+     * Recupera la lista di tutti gli username con cui è condiviso un todo specifico.
+     *
+     * @param toDoId l'ID stringa del todo per cui recuperare le condivisioni
+     * @return Lista degli username che hanno accesso al todo condiviso
+     * @throws SQLException se si verifica un errore durante il recupero delle condivisioni
+     * @see List
+     */
     @Override
     public List<String> getSharedUsernamesForToDo(String toDoId) throws SQLException {
         List<String> sharedUsernames = new ArrayList<>();
